@@ -1,0 +1,170 @@
+{
+  "@@locale": "en",
+  "appTitle": "Tidy Nook",
+  "daily": "Daily box",
+  "dailyReady": "Today's box is waiting for you",
+  "dailyDone": "Done · New box tomorrow",
+  "open": "Open",
+  "streak": "{n, plural, =1{1-day streak} other{{n}-day streak}}",
+  "@streak": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dailyWin": "Daily box done!",
+  "nextReward": "Next reward: {item} · {a}/{b}",
+  "@nextReward": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      },
+      "a": {
+        "type": "int"
+      },
+      "b": {
+        "type": "int"
+      }
+    }
+  },
+  "newFriend": "New in your home: {item}",
+  "@newFriend": {
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "allRewards": "You collected every reward",
+  "dailyTotal": "{n} daily boxes in total",
+  "@dailyTotal": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "level": "Level",
+  "hint": "Hint",
+  "next": "Next level",
+  "sound": "Sound",
+  "home": "Home",
+  "seeHouse": "See home",
+  "tut": "Drag each item to its spot",
+  "note": "No timers · No ads",
+  "sub": "One more box unpacked",
+  "newItem": "New for your home",
+  "hEye": "Your new home",
+  "hTitle": "{d}/{n} boxes unpacked",
+  "@hTitle": {
+    "placeholders": {
+      "d": {
+        "type": "int"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hAll": "Home is ready. Welcome in!",
+  "cont": "Continue · Level {n}",
+  "@cont": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "again": "Play again",
+  "support": "Support",
+  "settings": "Settings",
+  "language": "Language",
+  "soundLbl": "Sound effects",
+  "reset": "Reset progress",
+  "resetBtn": "Reset",
+  "resetQ": "All levels and your home will start over. Are you sure?",
+  "cancel": "Cancel",
+  "copy": "Copy",
+  "copied": "Copied",
+  "close": "Close",
+  "tapOpen": "Tap to open",
+  "style": "Pick a style",
+  "styleN": "Style {n}",
+  "@styleN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "houseTip": "Tap furniture to change its colour",
+  "roomDone": "{room} complete!",
+  "@roomDone": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "ver": "Version 1.0.1",
+  "@ver": {
+    "description": "App version label shown in settings"
+  },
+  "levelName0": "Egg Carton",
+  "levelName1": "Pencil Case",
+  "levelName2": "Sock Drawer",
+  "levelName3": "Cutlery Drawer",
+  "levelName4": "Bookshelf",
+  "levelName5": "Makeup Bag",
+  "levelName6": "Spice Rack",
+  "levelName7": "Fridge Door",
+  "levelName8": "Toolbox",
+  "levelName9": "Holiday Suitcase",
+  "levelName10": "Bathroom Cabinet",
+  "levelName11": "Towel Shelf",
+  "levelName12": "Toy Box",
+  "levelName13": "Shoe Rack",
+  "levelName14": "School Bag",
+  "levelName15": "Jewellery Box",
+  "levelName16": "Paint Set",
+  "levelName17": "Wardrobe",
+  "decorName0": "Potted plant",
+  "decorName1": "Floor lamp",
+  "decorName2": "Rug",
+  "decorName3": "Wall clock",
+  "decorName4": "Painting",
+  "decorName5": "Bed",
+  "decorName6": "Pendant lamp",
+  "decorName7": "Kitchen table",
+  "decorName8": "Armchair",
+  "decorName9": "Curtained window",
+  "decorName10": "Bathtub",
+  "decorName11": "Mirror",
+  "decorName12": "Play tent",
+  "decorName13": "Pouf",
+  "decorName14": "Kids' bed",
+  "decorName15": "Full-length mirror",
+  "decorName16": "Star garland",
+  "decorName17": "Clothes rack",
+  "roomName0": "Kitchen",
+  "roomName1": "Study",
+  "roomName2": "Bedroom",
+  "roomName3": "Bathroom",
+  "roomName4": "Kids' Room",
+  "roomName5": "Dressing Room",
+  "winTitle0": "Spotless!",
+  "winTitle1": "So neat!",
+  "winTitle2": "Just right!",
+  "petName0": "Cat",
+  "petName1": "Fishbowl",
+  "petName2": "Flower garden",
+  "dailyTheme0": "Surprise Box",
+  "dailyTheme1": "Treasure Chest",
+  "dailyTheme2": "Odds and Ends",
+  "dailyTheme3": "Junk Drawer",
+  "dailyTheme4": "Craft Box",
+  "@appTitle": {
+    "description": "Application name (not translated)"
+  }
+}
