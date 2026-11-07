@@ -10,6 +10,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -61,3 +64,15 @@ jobs:
             app/build/outputs/bundle/release/*.aab
             app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      # Also put the files on the repository's "latest-build" release page,
+      # so they can be downloaded without signing in.
+      - name: Publish to the latest-build release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out
+          cp app/build/outputs/bundle/release/*.aab app/build/outputs/apk/release/*.apk out/
+          gh release delete latest-build --yes --cleanup-tag || true
+          gh release create latest-build out/* --prerelease --title "Latest build" \
+            --notes "Built from ${GITHUB_SHA::7}. Signed: ${{ steps.key.outputs.signed }}."
