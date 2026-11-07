@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:tidy_nook/game/progress.dart';
+import 'package:tidy_nook/ui/app.dart';
 
-void main() => runApp(const TidyNookApp());
-
-class TidyNookApp extends StatelessWidget {
-  const TidyNookApp({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const MaterialApp(home: Scaffold(body: Center(child: Text('Tidy Nook'))));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final progress = await Progress.load();
+  runApp(TidyNookApp(progress: progress));
 }
