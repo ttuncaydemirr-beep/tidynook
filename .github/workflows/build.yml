@@ -33,14 +33,18 @@ jobs:
         run: flutter --version
 
       - name: Get packages
-        run: flutter pub get
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          flutter pub get 2>&1 | tee "$RUNNER_TEMP/logs/pub-get.txt"; exit ${PIPESTATUS[0]}
 
       # Only errors fail; infos and warnings are printed in full.
       - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee "$RUNNER_TEMP/logs/analyze.txt"; exit ${PIPESTATUS[0]}
 
       - name: Test
-        run: flutter test
+        run: |
+          flutter test 2>&1 | tee "$RUNNER_TEMP/logs/test.txt"; exit ${PIPESTATUS[0]}
 
       - name: Restore upload key
         id: key
@@ -61,7 +65,8 @@ jobs:
           TIDY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           TIDY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           TIDY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: flutter build appbundle --release
+        run: |
+          flutter build appbundle --release 2>&1 | tee "$RUNNER_TEMP/logs/build-aab.txt"; exit ${PIPESTATUS[0]}
 
       - name: Build APK
         env:
@@ -134,3 +139,15 @@ jobs:
           gh release create latest-build out/app-release.aab out/app-release.apk out/web.zip \
             --prerelease --title "Latest build" \
             --notes "Built from ${GITHUB_SHA::7}. ${FLUTTER_VER}. Signed: ${{ steps.key.outputs.signed }}."
+
+      # On failure, put the logs on a public "ci-logs" release so they can be read without signing in.
+      - name: Publish logs on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          (cd "$RUNNER_TEMP/logs" && zip -qr "$RUNNER_TEMP/ci-logs.zip" . ) || true
+          gh release delete ci-logs --yes --cleanup-tag || true
+          gh release create ci-logs "$RUNNER_TEMP"/logs/*.txt --prerelease --title "CI logs" \
+            --notes "Failed build ${GITHUB_SHA::7}." || true
