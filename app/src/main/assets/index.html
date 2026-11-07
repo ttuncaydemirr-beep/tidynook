@@ -332,8 +332,11 @@ const KINDS={};
 const kind=(n,main,prims)=>KINDS[n]={main,prims};
 
 kind("egg","#F6E7D3",[E(0,0,20,26,"#F6E7D3"),E(-6,-9,5,7,"#FFFDF8")]);
-const pencil=c=>[R(-7,-36,14,72,2,c),R(-7,-36,4,72,1,"rgba(255,255,255,.35)"),P("-7,-36 7,-36 0,-52","#F2D3A8"),P("-2.4,-46.6 2.4,-46.6 0,-52","#3B3346"),R(-7,34,14,5,1,"#C9C3CF"),R(-7,38,14,10,3,"#F4A7B9")];
-[["sun","#F6D26B"],["mint","#9FD3C0"],["rose","#F4A7B9"],["peach","#F2B48C"]].forEach(([n,c])=>kind("pencil-"+n,c,pencil(c)));
+const pencil=(c,mark)=>[R(-7,-36,14,72,2,c),R(-7,-36,4,72,1,"rgba(255,255,255,.35)"),P("-7,-36 7,-36 0,-52","#F2D3A8"),P("-2.4,-46.6 2.4,-46.6 0,-52","#3B3346"),...mark,R(-7,34,14,5,1,"#C9C3CF"),R(-7,38,14,10,3,"#F4A7B9")];
+kind("pencil-sun","#F6D26B",pencil("#F6D26B",[]));
+kind("pencil-mint","#9FD3C0",pencil("#9FD3C0",[R(-7,-4,14,4,0,"#FFFFFF")]));
+kind("pencil-rose","#F4A7B9",pencil("#F4A7B9",[R(-7,-10,14,4,0,"#FFFFFF"),R(-7,0,14,4,0,"#FFFFFF")]));
+kind("pencil-peach","#F2B48C",pencil("#F2B48C",[C(0,-14,3,"#FFFFFF"),C(0,-2,3,"#FFFFFF"),C(0,10,3,"#FFFFFF")]));
 kind("eraser","#F7B9C8",[R(-14,-20,28,40,6,"#F7B9C8"),R(-14,2,28,18,4,"#8FB8E8"),R(-14,2,28,3,1,"#7AA6DA")]);
 /* same-shape items carry a pattern too, so colour is never the only clue */
 const sock=(c,pat)=>[R(-17,-42,34,84,14,c),R(-17,-42,34,16,6,W),R(-17,-30,34,3,1,D),...pat,E(0,30,12,8,D)];
@@ -347,8 +350,10 @@ const book=(w,h,c)=>[R(-w/2,-h/2,w,h,3,c),R(-w/2,-h/2+10,w,5,1,W),R(-w/2,h/2-16,
 const BOOKS=[[28,96,"#F4A7B9"],[24,84,"#9FD3C0"],[32,104,"#8FB8E8"],[26,78,"#F6D26B"],[30,92,"#CDBFE3"],[22,88,"#F2B48C"],[34,100,"#E58FA6"]];
 BOOKS.forEach(([w,h,c],i)=>kind("book"+i,c,book(w,h,c)));
 kind("bookflat","#CDBFE3",[R(-32,-15,64,30,3,"#CDBFE3"),R(-22,-15,5,30,1,W),R(17,-15,5,30,1,W),R(-32,12,64,3,1,D)]);
-const lip=c=>[R(-9,0,18,30,3,"#D9CFE3"),R(-9,0,18,4,1,"#BFB2CC"),R(-7,-16,14,17,2,"#E9E3EF"),P("-6,-16 6,-16 6,-26 -6,-33",c)];
-[["red","#D9637A"],["berry","#9E4470"],["coral","#F08A6C"]].forEach(([n,c])=>kind("lip-"+n,c,lip(c)));
+const lip=(c,mark)=>[R(-9,0,18,30,3,"#D9CFE3"),R(-9,0,18,4,1,"#BFB2CC"),R(-7,-16,14,17,2,"#E9E3EF"),P("-6,-16 6,-16 6,-26 -6,-33",c),...mark];
+kind("lip-red","#D9637A",lip("#D9637A",[]));
+kind("lip-berry","#9E4470",lip("#9E4470",[R(-9,12,18,4,0,"#9E4470")]));
+kind("lip-coral","#F08A6C",lip("#F08A6C",[C(0,16,4,"#F08A6C")]));
 kind("compact","#F7C6D0",[C(0,0,26,"#F0AFC0"),C(0,0,19,"#FBE3E8"),C(-7,-7,5,"rgba(255,255,255,.85)")]);
 kind("brush","#E58FA6",[R(-5,-8,10,58,5,"#E6C9A8"),R(-6,-26,12,20,3,"#C9C3CF"),E(0,-38,8,14,"#E58FA6")]);
 kind("palette","#F2E6D8",[R(-36,-24,72,48,10,"#F2E6D8"),C(-20,-8,8,"#F4A7B9"),C(0,-8,8,"#F2B48C"),C(20,-8,8,"#CDBFE3"),C(-20,10,8,"#9FD3C0"),C(0,10,8,"#F6D26B"),C(20,10,8,"#E58FA6")]);
@@ -357,12 +362,12 @@ kind("jar-paprika","#E57A5B",jar("#E57A5B",[P("-8,4 6,-2 9,1 -5,6","#C9452E")]))
 kind("jar-turmeric","#F2C14E",jar("#F2C14E",[C(-5,2,3.5,"#D99A1E"),C(5,2,3.5,"#D99A1E")]));
 kind("jar-herb","#8FBF7A",jar("#8FBF7A",[E(0,2,9,4,"#5E9C4E")]));
 kind("jar-cinnamon","#B07D52",jar("#B07D52",[R(-9,-1,18,3,1.5,"#7A5435"),R(-9,4,18,3,1.5,"#7A5435")]));
-kind("jar-jam","#D9637A",jar("#D9637A",[]));
-kind("jar-pickle","#A8C686",jar("#A8C686",[]));
+kind("jar-jam","#D9637A",jar("#D9637A",[C(-4,1,3.5,"#B04060"),C(4,1,3.5,"#B04060"),P("-7.5,2.5 7.5,2.5 0,9","#B04060")]));
+kind("jar-pickle","#A8C686",jar("#A8C686",[R(-9,0,18,4,2,"#6F8F4E")]));
 const bottle=(c,cap,lab)=>[R(-15,-20,30,68,10,c),R(-7,-38,14,22,4,c),R(-8,-46,16,9,3,cap),R(-15,4,30,20,2,lab)];
-kind("milk","#F4F1EA",bottle("#F4F1EA","#8FB8E8","#8FB8E8"));
-kind("juice","#F6B26B",bottle("#F6B26B","#7FC4AA","#FFF3E0"));
-kind("shampoo","#CDBFE3",bottle("#CDBFE3","#E58FA6","#FFF3E0"));
+kind("milk","#F4F1EA",[...bottle("#F4F1EA","#8FB8E8","#8FB8E8"),P("0,7 5,15 0,20 -5,15","#FFFFFF")]);
+kind("juice","#F6B26B",[...bottle("#F6B26B","#7FC4AA","#FFF3E0"),C(0,14,6,"#F08A6C"),R(-1,6,2,4,1,"#5E9C6E")]);
+kind("shampoo","#CDBFE3",[...bottle("#CDBFE3","#E58FA6","#FFF3E0"),C(-5,12,3,"#CDBFE3"),C(3,17,4,"#CDBFE3"),C(6,9,2,"#CDBFE3")]);
 const can=(c,mark)=>[R(-18,-25,36,50,6,c),R(-18,-25,36,6,2,STEEL),R(-18,19,36,6,2,STEEL),R(-18,-6,36,10,0,W),...mark];
 kind("can-mint","#9FD3C0",can("#9FD3C0",[C(0,10,4,"#5E9C7E")])); kind("can-rose","#F4A7B9",can("#F4A7B9",[R(-6,7,12,6,2,"#C9587C")]));
 const sdriver=c=>[R(-2.5,-50,5,64,2,STEEL),R(-9,10,18,40,8,c),R(-9,10,18,6,3,"rgba(0,0,0,.12)")];
@@ -912,8 +917,7 @@ window.tidyBack=()=>{
   if(screen==="play"){freshDecor=-1;goHouse();return true;}
   return false;
 };
-window.claude?.hot?.snapshot?.(()=>({}));
-window.claude?.hot?.ready?window.claude.hot.ready(start):start();
+start();
 </script>
 
 </body>

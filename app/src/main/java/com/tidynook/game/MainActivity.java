@@ -10,12 +10,14 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.window.OnBackInvokedDispatcher;
 
 import java.io.IOException;
@@ -43,7 +45,18 @@ public class MainActivity extends Activity {
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(bg);
-        web = new WebView(this);
+        try {
+            web = new WebView(this);
+        } catch (RuntimeException e) {
+            // Android System WebView is missing or being updated: explain instead of crashing.
+            TextView msg = new TextView(this);
+            msg.setText("Tidy Nook needs Android System WebView. Please install or update it from Google Play.");
+            msg.setTextColor(Color.parseColor(night ? "#F1EAF6" : "#352D40"));
+            msg.setPadding(48, 48, 48, 48);
+            root.addView(msg);
+            setContentView(root);
+            return;
+        }
         web.setBackgroundColor(bg);
         root.addView(web, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -138,6 +151,19 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !HOST.equals(request.getUrl().getHost());
             }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                // The page's renderer was stopped (usually low memory). Start fresh instead of crashing;
+                // progress is safe in storage.
+                if (view == web) {
+                    ((FrameLayout) web.getParent()).removeView(web);
+                    web.destroy();
+                    web = null;
+                    recreate();
+                }
+                return true;
+            }
         });
     }
 
@@ -171,6 +197,7 @@ public class MainActivity extends Activity {
     }
 
     private void handleBack() {
+        if (web == null) { finish(); return; }
         web.evaluateJavascript("(window.tidyBack && window.tidyBack()) ? 'yes' : 'no'", result -> {
             if (!"\"yes\"".equals(result)) finish();
         });
@@ -179,24 +206,24 @@ public class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        web.saveState(outState);
+        if (web != null) web.saveState(outState);
     }
 
     @Override
     protected void onPause() {
-        web.onPause();
+        if (web != null) web.onPause();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        web.onResume();
+        if (web != null) web.onResume();
     }
 
     @Override
     protected void onDestroy() {
-        web.destroy();
+        if (web != null) web.destroy();
         super.onDestroy();
     }
 }
