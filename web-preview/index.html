@@ -1,15 +1,8 @@
-<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<style>
-@font-face{font-family:"Baloo Bhaijaan 2";src:url("fonts/BalooBhaijaan2.ttf") format("truetype");font-weight:400 800;font-display:block}
-html,body{margin:0}
-[hidden]{display:none!important}
-img{max-width:100%}
-</style>
 <title>Tidy Nook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&display=swap">
 <style>
 /* Layout: one-screen phone game — slim header; two screens: the house (progress) and the board (container above, rug below) */
 :root{
@@ -168,8 +161,6 @@ h1{margin:0;font-size:clamp(23px,7vw,32px);line-height:1.1;font-weight:800;text-
 }
 </style>
 
-</head>
-<body>
 <div id="app">
   <div class="bar">
     <span class="brand">
@@ -917,8 +908,6 @@ window.tidyBack=()=>{
   if(screen==="play"){freshDecor=-1;goHouse();return true;}
   return false;
 };
-start();
+window.claude?.hot?.snapshot?.(()=>({}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start();
 </script>
-
-</body>
-</html>
