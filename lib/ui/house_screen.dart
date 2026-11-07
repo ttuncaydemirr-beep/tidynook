@@ -116,6 +116,33 @@ class _HouseScreenState extends State<HouseScreen>
     }
   }
 
+  Widget _roomLabel(int ri, AppLocalizations t, Set<int> done) {
+    final lv = levelsOfRoom(ri);
+    final n = lv.where(done.contains).length;
+    final center = roomLabelCenter(ri) - _hOrigin;
+    return Positioned(
+      left: center.dx - 70,
+      top: center.dy - 10,
+      width: 140,
+      height: 20,
+      child: IgnorePointer(
+        child: ExcludeSemantics(
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '${t.roomName(ri)} · $n/${lv.length}',
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: tx(roomLabelFontSize, w: 700, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = TidyColors.of(context);
@@ -174,6 +201,8 @@ class _HouseScreenState extends State<HouseScreen>
                 ),
               ),
               ...taps,
+              for (var ri = 0; ri < rooms.length; ri++)
+                _roomLabel(ri, t, p.done),
               Positioned.fill(
                 child: IgnorePointer(
                   child: AnimatedBuilder(

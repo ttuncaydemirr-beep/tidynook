@@ -540,11 +540,11 @@ class _BoardViewState extends State<BoardView>
         ),
       );
     }
-    final lidKey = '${_lidText ? t.tapOpen : ''}|$_lidText|${identityHashCode(widget.level)}';
+    final lidKey = '${identityHashCode(widget.level)}';
     if (_lidKey != lidKey) {
       _lidKey = lidKey;
       _lidWidget = SvgPicture.string(
-        lidSvg(widget.level, tapText: _lidText ? t.tapOpen : null),
+        lidSvg(widget.level),
         width: _bw,
         height: _bh,
       );
@@ -570,7 +570,21 @@ class _BoardViewState extends State<BoardView>
           offset: Offset(0, _lidY),
           child: Opacity(
             opacity: _lidOp.clamp(0.0, 1.0),
-            child: _lidWidget!,
+            child: Stack(
+              children: <Widget>[
+                _lidWidget!,
+                if (_lidText)
+                  Positioned(
+                    left: lidTextCenter.dx - 140,
+                    top: lidTextCenter.dy - _top - 16,
+                    width: 280,
+                    height: 32,
+                    child: IgnorePointer(
+                      child: _BreatheText(text: t.tapOpen),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -600,6 +614,72 @@ class _BoardViewState extends State<BoardView>
             child: Stack(children: stack),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Tap to open" text on the lid with the gentle breathing pulse.
+class _BreatheText extends StatefulWidget {
+  const _BreatheText({required this.text});
+
+  final String text;
+
+  @override
+  State<_BreatheText> createState() => _BreatheTextState();
+}
+
+class _BreatheTextState extends State<_BreatheText>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  bool _reduce = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduce = MediaQuery.disableAnimationsOf(context);
+    if (_reduce) {
+      _c.stop();
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        widget.text,
+        maxLines: 1,
+        textAlign: TextAlign.center,
+        style: tx(lidTextFontSize, w: 700, color: Colors.white),
+      ),
+    );
+    if (_reduce) {
+      return Center(child: text);
+    }
+    return AnimatedBuilder(
+      animation: _c,
+      child: Center(child: text),
+      builder: (context, child) => Opacity(
+        opacity: .55 + .45 * (2 * _c.value - 1).abs(),
+        child: child,
       ),
     );
   }

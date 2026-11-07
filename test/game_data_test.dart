@@ -160,8 +160,9 @@ void main() {
 
       final lid = lidSvg(levels[3], tapText: 'Tap to open');
       expectFlutterSvgSafe(lid);
-      expect(lid, contains('Tap to open'));
-      expect(lidSvg(levels[3]).contains('<text'), isFalse);
+      expect(lid.contains('<text'), isFalse);
+      expect(lidTextCenter, const Offset(180, 226));
+      expect(lidTextFontSize, 17);
 
       final names = ['A', 'B', 'C', 'D', "Kids' Room", 'F'];
       final house = houseSvg(
@@ -172,7 +173,9 @@ void main() {
           houseLine: '#3A3046');
       expectFlutterSvgSafe(house);
       expect(house, contains('viewBox="10 -146 340 574"'));
-      expect(house, contains('A · 3/4'));
+      expect(house.contains('<text'), isFalse);
+      expect(roomLabelCenter(3), const Offset(255, 409));
+      expect(roomLabelFontSize, 12);
       expect(house, contains('stroke="#3A3046"'));
 
       final empty = houseSvg(
@@ -182,7 +185,6 @@ void main() {
           roomNames: names,
           houseLine: '#3A3046');
       expectFlutterSvgSafe(empty);
-      expect(empty, contains('A · 0/4'));
 
       for (var i = 0; i < decorCount; i++) {
         expectFlutterSvgSafe(decorPreviewSvg(i, 0));

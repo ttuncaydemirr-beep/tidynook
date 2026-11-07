@@ -7,7 +7,7 @@
 // or "rgba(r,g,b,a)". rgba() colours are converted to hex + opacity attributes.
 
 import 'dart:math' as math;
-import 'dart:ui' show Rect;
+import 'dart:ui' show Offset, Rect;
 
 import 'art.dart';
 
@@ -306,7 +306,22 @@ const List<_Pet> _pets = <_Pet>[
 // SVG builders
 // ---------------------------------------------------------------------------
 
-const String _fontFamily = 'Baloo, sans-serif';
+/// flutter_svg does not draw <text>, so the UI draws the texts itself.
+/// Font size of the room labels ("<room name> \u00B7 n/m") in house space.
+const double roomLabelFontSize = 12;
+
+/// Centre of the lid's "tap to open" text in board space (HTML baseline 232, size 17).
+const Offset lidTextCenter = Offset(180, 226);
+
+/// Font size of the lid text in board space.
+const double lidTextFontSize = 17;
+
+/// Visual centre of the label of [room] in house space (HTML baseline is
+/// room.y + 154 at font size 12). The UI draws "<room name> \u00B7 n/m" there.
+Offset roomLabelCenter(int room) {
+  final r = rooms[room];
+  return Offset(r.x + 75, r.y + 149);
+}
 
 /// Full board background as an <svg> with viewBox "0 40 360 594": box shadow,
 /// frame (outer), inside (inner), dividers, then the rug (mat) and its stitched
@@ -325,8 +340,8 @@ String boardSvg(Level level,
 }
 
 /// The closed lid as an <svg> with viewBox "0 40 360 594" (transparent outside
-/// the box). [tapText] is drawn as in drawLid() of the HTML; pass null to leave
-/// the text out (used when the lid closes on a win).
+/// the box). [tapText] is kept for compatibility but ignored: flutter_svg does
+/// not draw <text>, so the UI draws the text at [lidTextCenter] itself.
 String lidSvg(Level level, {String? tapText}) {
   final b = StringBuffer()
     ..write('<rect x="30" y="60" width="300" height="280" rx="24" fill="${level.outer}"/>')
@@ -335,11 +350,6 @@ String lidSvg(Level level, {String? tapText}) {
         'stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-dasharray="7 6"/>')
     ..write('<rect x="140" y="170" width="80" height="22" rx="11" fill="#2E2638" opacity=".85"/>')
     ..write('<rect x="150" y="176" width="60" height="6" rx="3" fill="rgba(255,255,255,.35)"/>');
-  if (tapText != null) {
-    b.write('<text x="180" y="232" text-anchor="middle" font-size="17" '
-        'font-weight="700" fill="#FFFFFF" font-family="$_fontFamily">'
-        '${xmlEscape(tapText)}</text>');
-  }
   return svgDocument('0 40 360 594', b.toString());
 }
 
@@ -382,10 +392,6 @@ String houseSvg({
         s.write(_boxArt(_decorBase[i]));
       }
     }
-    final name = ri < roomNames.length ? roomNames[ri] : '';
-    s.write('<text x="75" y="154" text-anchor="middle" font-size="12" '
-        'font-weight="700" fill="#FFFFFF" font-family="$_fontFamily">'
-        '${xmlEscape(name)} · $n/${lv.length}</text>');
     if (full) {
       s.write('<circle cx="136" cy="14" r="9" fill="#7FC4AA"/>'
           '<path d="M131.5 14l3 3 6-6" stroke="#173A2E" stroke-width="2.2" fill="none" stroke-linecap="round"/>');
