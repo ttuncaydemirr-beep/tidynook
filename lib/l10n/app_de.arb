@@ -10,7 +10,7 @@
   "nextReward": "Nächste Belohnung: {item} · {a}/{b}",
   "newFriend": "Neu in deinem Zuhause: {item}",
   "allRewards": "Du hast alle Belohnungen gesammelt",
-  "dailyTotal": "Insgesamt {n} Tagesboxen",
+  "dailyTotal": "{n, plural, =1{Insgesamt 1 Tagesbox} other{Insgesamt {n} Tagesboxen}}",
   "level": "Level",
   "hint": "Tipp",
   "next": "Nächstes Level",
@@ -42,7 +42,7 @@
   "styleN": "Stil {n}",
   "houseTip": "Tippe auf Möbel, um die Farbe zu ändern",
   "roomDone": "{room} fertig!",
-  "ver": "Version 1.0.1",
+  "ver": "Version 1.0.2",
   "levelName0": "Eierkarton",
   "levelName1": "Federmäppchen",
   "levelName2": "Sockenschublade",
@@ -74,7 +74,7 @@
   "decorName10": "Badewanne",
   "decorName11": "Spiegel",
   "decorName12": "Spielzelt",
-  "decorName13": "Sitzpuff",
+  "decorName13": "Pouf",
   "decorName14": "Kinderbett",
   "decorName15": "Standspiegel",
   "decorName16": "Sternengirlande",
@@ -95,5 +95,7 @@
   "dailyTheme1": "Schatztruhe",
   "dailyTheme2": "Krimskramskiste",
   "dailyTheme3": "Kramschublade",
-  "dailyTheme4": "Bastelkiste"
+  "dailyTheme4": "Bastelkiste",
+  "privacy": "Datenschutzerklärung",
+  "privacyText": "Gültig ab: 1. November 2026\nEntwickler: Tidy Nook (Einzelentwickler, Türkei)\n\nTidy Nook erhebt, speichert und teilt keine personenbezogenen Daten.\n\nErhobene Daten\n\nKeine. Das Spiel hat keine Konten, keine Registrierung, keine Werbung, keine Analysetools und keine Dienste von Drittanbietern. Die App fordert keinen Internetzugriff an und verbindet sich nie mit dem Internet.\n\nWas auf deinem Gerät bleibt\n\nDein Spielfortschritt wird nur auf deinem eigenen Gerät gespeichert: abgeschlossene Level, gewählte Möbelstile, deine Tagesbox-Serie sowie Sprach- und Toneinstellungen. Nichts davon wird an uns gesendet.\n\n• Unter Einstellungen > Fortschritt zurücksetzen kannst du alles löschen.\n• Beim Deinstallieren der App wird alles gelöscht.\n• Ist die Google-Sicherung auf deinem Telefon aktiv, kann Android diese Daten in deinem Google-Konto sichern. Diese Sicherung verwaltet Google; wir haben keinen Zugriff darauf.\n\nKinder\n\nDas Spiel erhebt von niemandem personenbezogene Daten, auch nicht von Kindern.\n\nÄnderungen\n\nÄndert sich diese Erklärung, wird die neue Fassung mit neuem Gültigkeitsdatum veröffentlicht.\n\nKontakt\n\nFragen an: nilkaren.tuncay.demir@gmail.com"
 }

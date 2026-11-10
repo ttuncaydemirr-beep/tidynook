@@ -40,9 +40,9 @@
   "tapOpen": "Açmak için dokun",
   "style": "Stilini seç",
   "styleN": "Stil {n}",
-  "houseTip": "Eşyalara dokunarak rengini değiştir",
+  "houseTip": "Rengini değiştirmek için eşyaya dokun",
   "roomDone": "{room} tamamlandı!",
-  "ver": "Sürüm 1.0.1",
+  "ver": "Sürüm 1.0.2",
   "levelName0": "Yumurta Kutusu",
   "levelName1": "Kalem Kutusu",
   "levelName2": "Çorap Çekmecesi",
@@ -95,5 +95,7 @@
   "dailyTheme1": "Hazine Sandığı",
   "dailyTheme2": "Ufak Tefek Kutusu",
   "dailyTheme3": "Karışık Çekmece",
-  "dailyTheme4": "Hobi Kutusu"
+  "dailyTheme4": "Hobi Kutusu",
+  "privacy": "Gizlilik politikası",
+  "privacyText": "Yürürlük tarihi: 1 Kasım 2026\nGeliştirici: Tidy Nook (bireysel geliştirici, Türkiye)\n\nTidy Nook hiçbir kişisel veri toplamaz, saklamaz ya da paylaşmaz.\n\nToplanan veriler\n\nYok. Oyunda hesap, kayıt, reklam, analiz aracı ya da üçüncü taraf hizmeti bulunmaz. Uygulama internet izni istemez ve internete bağlanmaz.\n\nCihazında kalan bilgiler\n\nOyun ilerlemen yalnızca kendi cihazında saklanır: bitirdiğin bölümler, seçtiğin eşya stilleri, günün kutusu serin, dil ve ses ayarın. Bu bilgiler bize gönderilmez.\n\n• Ayarlar > İlerlemeyi sıfırla ile hepsini silebilirsin.\n• Uygulamayı kaldırdığında hepsi silinir.\n• Telefonunda Google yedeklemesi açıksa Android bu bilgileri Google hesabına yedekleyebilir. Bu yedeklemeyi Google yönetir; bizim erişimimiz yoktur.\n\nÇocuklar\n\nOyun hiç kimseden kişisel bilgi toplamaz; bu çocuklar için de geçerlidir.\n\nDeğişiklikler\n\nBu politika değişirse güncel hâli yeni yürürlük tarihiyle yayımlanır.\n\nİletişim\n\nSorular için: nilkaren.tuncay.demir@gmail.com"
 }
