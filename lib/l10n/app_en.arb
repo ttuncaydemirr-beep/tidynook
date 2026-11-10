@@ -52,7 +52,7 @@
   "home": "Home",
   "seeHouse": "See home",
   "tut": "Drag each item to its spot",
-  "note": "No timers · No ads",
+  "note": "No timers · No fail",
   "sub": "One more box unpacked",
   "newItem": "New for your home",
   "hEye": "Your new home",
@@ -107,7 +107,7 @@
       }
     }
   },
-  "ver": "Version 1.0.2",
+  "ver": "Version 1.1.0",
   "@ver": {
     "description": "App version label shown in settings"
   },
@@ -129,6 +129,18 @@
   "levelName15": "Jewelry Box",
   "levelName16": "Paint Set",
   "levelName17": "Wardrobe",
+  "levelName18": "Sewing Box",
+  "levelName19": "Yarn Basket",
+  "levelName20": "Button Tin",
+  "levelName21": "Record Crate",
+  "levelName22": "Tea Caddy",
+  "levelName23": "Desk Organizer",
+  "levelName24": "Picnic Basket",
+  "levelName25": "Grill Tray",
+  "levelName26": "Beach Bag",
+  "levelName27": "Seed Box",
+  "levelName28": "Potting Bench",
+  "levelName29": "Fruit Crate",
   "decorName0": "Potted plant",
   "decorName1": "Floor lamp",
   "decorName2": "Rug",
@@ -147,28 +159,223 @@
   "decorName15": "Full-length mirror",
   "decorName16": "Star garland",
   "decorName17": "Clothes rack",
+  "decorName18": "Sewing table",
+  "decorName19": "Rocking chair",
+  "decorName20": "Easel",
+  "decorName21": "Record player",
+  "decorName22": "Beanbag",
+  "decorName23": "Bookcase",
+  "decorName24": "Garden table",
+  "decorName25": "String lights",
+  "decorName26": "Hammock",
+  "decorName27": "Raised flower bed",
+  "decorName28": "Birdhouse",
+  "decorName29": "Apple tree",
   "roomName0": "Kitchen",
   "roomName1": "Study",
   "roomName2": "Bedroom",
   "roomName3": "Bathroom",
   "roomName4": "Kids' Room",
   "roomName5": "Dressing Room",
+  "roomName6": "Attic Studio",
+  "roomName7": "Reading Nook",
+  "roomName8": "Patio",
+  "roomName9": "Garden",
   "winTitle0": "Spotless!",
   "winTitle1": "So neat!",
   "winTitle2": "Just right!",
   "petName0": "Cat",
   "petName1": "Fishbowl",
   "petName2": "Flower garden",
+  "petName3": "Bunny",
+  "petName4": "Songbird",
+  "petName5": "Puppy",
   "dailyTheme0": "Surprise Box",
   "dailyTheme1": "Treasure Chest",
   "dailyTheme2": "Odds and Ends",
   "dailyTheme3": "Junk Drawer",
   "dailyTheme4": "Craft Box",
+  "bonusTitle": "Bonus boxes",
+  "@bonusTitle": {
+    "description": "Title of the endless bonus boxes section"
+  },
+  "bonusLocked": "Finish 12 levels to unlock bonus boxes",
+  "@bonusLocked": {
+    "description": "Shown while bonus boxes are locked; 12 = bonusUnlockLevels"
+  },
+  "bonusBoxN": "Bonus box {n}",
+  "@bonusBoxN": {
+    "description": "Label of one bonus box",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "bonusProgress": "{a}/{b} to a new style",
+  "@bonusProgress": {
+    "description": "Progress to the next unlocked third style, e.g. 3/5",
+    "placeholders": {
+      "a": {
+        "type": "int"
+      },
+      "b": {
+        "type": "int"
+      }
+    }
+  },
+  "bonusPlay": "Play",
+  "@bonusPlay": {
+    "description": "Button that starts a bonus box"
+  },
+  "newStyleFor": "New style for the {item}!",
+  "@newStyleFor": {
+    "description": "Shown when a bonus box unlocks a third style; item is the furniture name",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "mysteryTip": "Mystery box: only the shapes are shown",
+  "@mysteryTip": {
+    "description": "Eyebrow text on mystery levels (grey shapes only)"
+  },
+  "surpriseTitle": "Surprise box",
+  "@surpriseTitle": {
+    "description": "Title of the rewarded surprise box dialog"
+  },
+  "surpriseText": "Watch a short ad to unlock a third style for this piece.",
+  "@surpriseText": {
+    "description": "Explains the rewarded ad that unlocks a third style"
+  },
+  "surpriseGot": "Third style unlocked!",
+  "@surpriseGot": {
+    "description": "Shown after the rewarded ad unlocked a third style"
+  },
+  "watchAd": "Watch ad",
+  "@watchAd": {
+    "description": "Button to watch an optional rewarded ad"
+  },
+  "noThanks": "No thanks",
+  "@noThanks": {
+    "description": "Button to decline an optional rewarded ad"
+  },
+  "adNotReady": "No ad available right now. Please try again later.",
+  "@adNotReady": {
+    "description": "Shown when no rewarded ad is ready; nothing is granted"
+  },
+  "streakSaveTitle": "Keep your streak",
+  "@streakSaveTitle": {
+    "description": "Title of the card that offers to keep the daily streak"
+  },
+  "streakSaveText": "{n, plural, =1{You missed a day. Watch a short ad to keep your 1-day streak.} other{You missed a day. Watch a short ad to keep your {n}-day streak.}}",
+  "@streakSaveText": {
+    "description": "Offer to keep the streak by watching a rewarded ad; n is the streak length in days (at least 2)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "streakSaved": "Streak saved!",
+  "@streakSaved": {
+    "description": "Shown after the streak was saved"
+  },
+  "shop": "Shop",
+  "@shop": {
+    "description": "Title of the shop section in settings"
+  },
+  "removeAds": "Remove ads",
+  "@removeAds": {
+    "description": "Name of the remove-ads purchase"
+  },
+  "removeAdsText": "One-time purchase. No banners and no ads between levels.",
+  "@removeAdsText": {
+    "description": "Description of the remove-ads purchase"
+  },
+  "supporterPack": "Supporter Pack",
+  "@supporterPack": {
+    "description": "Name of the Supporter Pack purchase"
+  },
+  "supporterText": "No ads, a third style for every piece and a puppy for your home.",
+  "@supporterText": {
+    "description": "Description of the Supporter Pack purchase"
+  },
+  "restorePurchases": "Restore purchases",
+  "@restorePurchases": {
+    "description": "Button that restores earlier purchases"
+  },
+  "purchaseThanks": "Thank you for your support!",
+  "@purchaseThanks": {
+    "description": "Shown after a successful purchase"
+  },
+  "purchasePending": "Your purchase is pending.",
+  "@purchasePending": {
+    "description": "Shown while a purchase is pending"
+  },
+  "purchaseFailed": "The purchase did not go through.",
+  "@purchaseFailed": {
+    "description": "Shown when a purchase failed or was cancelled"
+  },
+  "purchasesRestored": "Purchases restored.",
+  "@purchasesRestored": {
+    "description": "Shown after purchases were restored"
+  },
+  "owned": "Owned",
+  "@owned": {
+    "description": "Label on a purchase the player already owns"
+  },
+  "buyFor": "Buy for {price}",
+  "@buyFor": {
+    "description": "Buy button; price is the localized price from Google Play, e.g. $2.99",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyChoices": "Privacy choices",
+  "@privacyChoices": {
+    "description": "Settings row that opens the Google consent (UMP) privacy options; only shown where required"
+  },
+  "vibration": "Vibration",
+  "@vibration": {
+    "description": "Settings switch for haptic feedback"
+  },
+  "reminder": "Daily reminder",
+  "@reminder": {
+    "description": "Settings switch for the daily reminder notification"
+  },
+  "reminderText": "Remind me about the daily box at 7 pm",
+  "@reminderText": {
+    "description": "Subtitle of the daily reminder setting; the reminder fires at 19:00 local time"
+  },
+  "reminderAsk": "Want a reminder when a new daily box is ready?",
+  "@reminderAsk": {
+    "description": "Question asked once after the first daily box win"
+  },
+  "reminderYes": "Remind me",
+  "@reminderYes": {
+    "description": "Button that turns the daily reminder on"
+  },
+  "notifTitle": "Your daily box is ready",
+  "@notifTitle": {
+    "description": "Title of the daily reminder notification"
+  },
+  "notifBody": "A new box is waiting to be tidied.",
+  "@notifBody": {
+    "description": "Body of the daily reminder notification"
+  },
+  "adLabel": "Advertisement",
+  "@adLabel": {
+    "description": "Small label above or near an ad"
+  },
   "@appTitle": {
     "description": "Application name (not translated)"
   },
   "privacy": "Privacy policy",
-  "privacyText": "Effective date: 1 November 2026\nDeveloper: Tidy Nook (individual developer, Turkey)\n\nTidy Nook does not collect, store or share any personal data.\n\nData we collect\n\nNone. The game has no accounts, sign-up, ads, analytics or third-party services. The app does not request internet access and never connects to the internet.\n\nWhat stays on your device\n\nYour game progress is saved only on your own device: completed levels, the furniture styles you picked, your daily box streak, and your language and sound settings. None of it is sent to us.\n\n• You can erase it all with Settings > Reset progress.\n• Uninstalling the app erases it all.\n• If Google backup is turned on for your phone, Android may back this data up to your Google account. Google manages that backup; we have no access to it.\n\nChildren\n\nThe game collects no personal information from anyone, children included.\n\nChanges\n\nIf this policy changes, the new version is published with a new effective date.\n\nContact\n\nQuestions: nilkaren.tuncay.demir@gmail.com",
+  "privacyText": "Effective date: 15 November 2026\nDeveloper: Tidy Nook (individual developer, Turkey)\n\nTidy Nook has no accounts and never asks for your name, e-mail address or contact details. The game saves your progress on your own device. Ads, purchases and optional usage statistics involve Google services, explained below.\n\nAds\n\nThe game shows ads through Google AdMob: a short ad now and then when you leave a finished box (never during a level), an optional ad you choose to watch for a reward, and a small banner on the home screen. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.\n\nWhere the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase \"Remove ads\" removes the banner and the ads between levels.\n\nPurchases\n\nPurchases are handled entirely by Google Play. We never see or store your card or payment details. The app only learns whether a purchase is active, so it can unlock it on your device. \"Restore purchases\" in Settings brings it back after a reinstall.\n\nUsage statistics and crash reports\n\nTo fix bugs and improve levels, the game may send anonymous usage events (for example, that a level was started or finished) and crash reports to Google Firebase (Analytics and Crashlytics). They can include a random app instance ID, your device model, your Android version and the technical details of a crash. They do not include your name or e-mail address.\n\nNotifications\n\nThe optional daily reminder is scheduled on your device. It does not use a server, and nothing about it is sent to us. You can turn it off in Settings > Daily reminder or in your Android settings.\n\nInternet\n\nThe game works offline. It connects to the internet only to load ads, check purchases and send the statistics described above.\n\nWhat stays on your device\n\nYour game progress is saved on your own device: completed levels, bonus boxes, the furniture styles you picked and unlocked, your daily box streak, your purchases and your language, sound, vibration and reminder settings. We do not receive it.\n\n• You can erase it all with Settings > Reset progress.\n• Uninstalling the app erases it all.\n• If Google backup is turned on for your phone, Android may back this data up to your Google account. Google manages that backup; we have no access to it.\n\nSharing\n\nWe do not sell your data. The only companies involved are Google services that the app uses: AdMob (ads), Google Play (purchases and consent) and Firebase (statistics and crash reports). Their own privacy policies apply to the data they handle.\n\nChildren\n\nTidy Nook is made for a general audience and is not directed at children under 13. We do not knowingly collect personal information from children.\n\nChanges\n\nIf this policy changes, the new version is published with a new effective date.\n\nContact\n\nQuestions: nilkaren.tuncay.demir@gmail.com",
   "@privacy": {
     "description": "Settings row and title of the in-app privacy policy screen"
   },

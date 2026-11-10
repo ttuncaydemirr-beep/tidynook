@@ -1,0 +1,40 @@
+<tr-TR>
+1.1 ile yenilikler:
+- Çatı katı ve bahçeyle 12 yeni bölüm
+- Gizemli kutular: sadece şekle bakarak eşleştir
+- Sonsuz bonus kutular
+- Her eşya için üçüncü bir stil
+- Yeni günlük ödüller: tavşan ve şarkıcı kuş
+- İsteğe bağlı günlük hatırlatma
+- Reklamlar kısadır, bölüm sırasında asla çıkmaz ve mağazadan kaldırılabilir. İnternetsiz de çalışır.
+</tr-TR>
+<en-US>
+New in 1.1:
+- 12 new levels with an attic and a garden
+- Mystery boxes: match by shape alone
+- Endless bonus boxes
+- A third style for every piece of furniture
+- New daily rewards: a bunny and a songbird
+- Optional daily reminder
+- Ads are short, never appear during a level and can be removed in the shop. Still works offline.
+</en-US>
+<de-DE>
+Neu in 1.1:
+- 12 neue Level mit Dachboden und Garten
+- Geheimboxen: nur nach der Form zuordnen
+- Endlose Bonusboxen
+- Ein dritter Stil für jedes Möbelstück
+- Neue Tagesbelohnungen: ein Häschen und ein Singvogel
+- Optionale tägliche Erinnerung
+- Werbung ist kurz, erscheint nie während eines Levels und lässt sich im Shop entfernen. Funktioniert weiter offline.
+</de-DE>
+<ar>
+الجديد في 1.1:
+- 12 مرحلة جديدة مع علّية وحديقة
+- صناديق غامضة: طابق بالشكل وحده
+- صناديق إضافية بلا نهاية
+- نمط ثالث لكل قطعة أثاث
+- مكافآت يومية جديدة: أرنب وطائر مغرّد
+- تذكير يومي اختياري
+- الإعلانات قصيرة ولا تظهر أبداً أثناء المرحلة ويمكن إزالتها من المتجر. وما زالت اللعبة تعمل دون إنترنت.
+</ar>
