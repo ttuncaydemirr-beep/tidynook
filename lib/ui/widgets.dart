@@ -54,7 +54,26 @@ const String dailyBoxSvg =
     '<rect x="17" y="9" width="6" height="27" fill="#C9587C"/>'
     '<path d="M20 9c-3-6-11-6-9-1 1 2 6 2 9 1zm0 0c3-6 11-6 9-1-1 2-6 2-9 1z" fill="#E58FA6"/></svg>';
 
-/// 40 px round icon button (top bar, home, close).
+/// Separator between label parts; spaced so it never merges with a number.
+String sepOf(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'ar' ? ' \u2013 ' : ' \u00B7 ';
+
+/// Replaces Arabic-Indic and Persian digits with 0-9.
+String westernDigits(String s) {
+  final b = StringBuffer();
+  for (final u in s.runes) {
+    if (u >= 0x0660 && u <= 0x0669) {
+      b.writeCharCode(0x30 + u - 0x0660);
+    } else if (u >= 0x06F0 && u <= 0x06F9) {
+      b.writeCharCode(0x30 + u - 0x06F0);
+    } else {
+      b.writeCharCode(u);
+    }
+  }
+  return b.toString();
+}
+
+/// 48 px round icon button (top bar, home, close).
 class CircleIconButton extends StatelessWidget {
   const CircleIconButton({
     super.key,
@@ -85,7 +104,7 @@ class CircleIconButton extends StatelessWidget {
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
-          child: SizedBox(width: 40, height: 40, child: Center(child: child)),
+          child: SizedBox(width: 48, height: 48, child: Center(child: child)),
         ),
       ),
     );
@@ -137,7 +156,7 @@ class PillButton extends StatelessWidget {
         fg = c.danger;
         border = c.danger;
     }
-    final double minH = small ? 38 : (kind == PillKind.accent ? 44 : 48);
+    final double minH = 48;
     final double hPad = small
         ? 14
         : (kind == PillKind.accent ? 16 : (kind == PillKind.primary ? 24 : 20));

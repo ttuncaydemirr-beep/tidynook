@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 
 import 'controller.dart';
+import 'privacy_page.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -189,6 +190,29 @@ class _SettingsBodyState extends State<_SettingsBody> {
                 ),
               ],
             )),
+            row(Semantics(
+              button: true,
+              label: t.privacy,
+              excludeSemantics: true,
+              onTap: () => PrivacyPage.open(context, supportEmail),
+              child: InkWell(
+                onTap: () => PrivacyPage.open(context, supportEmail),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(child: label(t.privacy)),
+                      Icon(
+                        Directionality.of(context) == TextDirection.rtl
+                            ? Icons.chevron_left
+                            : Icons.chevron_right,
+                        color: c.muted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )),
             row(Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -258,12 +282,20 @@ class _MailText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = TidyColors.of(context);
+    // One line that shrinks instead of breaking in the middle of the address.
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: SelectableText(
-        supportEmail,
-        textAlign: TextAlign.start,
-        style: tx(14.5, color: c.fg),
+      child: SelectionArea(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            supportEmail,
+            maxLines: 1,
+            softWrap: false,
+            style: tx(14.5, color: c.fg),
+          ),
+        ),
       ),
     );
   }
@@ -297,7 +329,7 @@ class _LangChip extends StatelessWidget {
           customBorder: const StadiumBorder(),
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Center(
@@ -339,29 +371,36 @@ class _SoundSwitch extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onChanged,
-        child: AnimatedContainer(
-          duration: reduce ? Duration.zero : const Duration(milliseconds: 200),
-          width: 54,
-          height: 32,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: value ? c.mint : c.line,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          alignment: AlignmentDirectional(value ? 1 : -1, 0),
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, .25),
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
+        child: SizedBox(
+          width: 62,
+          height: 48,
+          child: Center(
+            child: AnimatedContainer(
+              duration:
+                  reduce ? Duration.zero : const Duration(milliseconds: 200),
+              width: 54,
+              height: 32,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: value ? c.mint : c.line,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              alignment: AlignmentDirectional(value ? 1 : -1, 0),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Color.fromRGBO(0, 0, 0, .25),
+                      blurRadius: 3,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

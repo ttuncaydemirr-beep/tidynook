@@ -57,7 +57,7 @@ class WinCard extends StatelessWidget {
       );
     } else {
       title = t.winTitle(i % 3);
-      sub = '${t.sub} · ${t.roomName(levelRoom[i])}';
+      sub = '${t.sub}${sepOf(context)}${t.roomName(levelRoom[i])}';
       rewardName = t.decorName(i);
       rewardNote = t.style;
       final cur = p.styleOf(i);

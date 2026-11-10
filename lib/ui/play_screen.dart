@@ -34,14 +34,14 @@ class _PlayScreenState extends State<PlayScreen> {
       final now = DateTime.now();
       String date;
       try {
-        date = DateFormat.MMMMd(locale).format(now);
+        date = westernDigits(DateFormat.MMMMd(locale).format(now));
       } catch (_) {
         date = '${now.day}/${now.month}';
       }
-      return '${t.daily} · $date';
+      return '${t.daily}${sepOf(context)}$date';
     }
     final i = _ctl.levelIndex;
-    return '${t.level} ${i + 1}/${levels.length} · ${t.roomName(levelRoom[i])}';
+    return '${t.level} ${i + 1}/${levels.length}${sepOf(context)}${t.roomName(levelRoom[i])}';
   }
 
   @override
@@ -134,8 +134,8 @@ class _PlayScreenState extends State<PlayScreen> {
         const SizedBox(height: 6),
         Wrap(
           alignment: WrapAlignment.center,
-          spacing: 4,
-          runSpacing: 4,
+          spacing: 0,
+          runSpacing: 0,
           children: <Widget>[
             for (var n = 0; n < levels.length; n++)
               _Dot(
@@ -190,18 +190,28 @@ class _Dot extends StatelessWidget {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: enabled ? onTap : null,
-          child: Container(
-            width: 24,
-            height: 24,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: done ? c.mint : null,
-              border: Border.all(color: border, width: current ? 3.5 : 1.5),
-            ),
-            child: Text(
-              '$number',
-              style: tx(12, w: 700, color: textColor),
+          child: SizedBox(
+            width: 48,
+            height: 44,
+            child: Center(
+              child: Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: done ? c.mint : null,
+                  border:
+                      Border.all(color: border, width: current ? 3.5 : 1.5),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$number',
+                    style: tx(12, w: 700, color: textColor),
+                  ),
+                ),
+              ),
             ),
           ),
         ),

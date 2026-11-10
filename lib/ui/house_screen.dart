@@ -130,11 +130,19 @@ class _HouseScreenState extends State<HouseScreen>
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                '${t.roomName(ri)} · $n/${lv.length}',
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                style: tx(roomLabelFontSize, w: 700, color: Colors.white),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(0, 0, 0, .5),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${t.roomName(ri)}${sepOf(context)}$n/${lv.length}',
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: tx(roomLabelFontSize, w: 700, color: Colors.white),
+                ),
               ),
             ),
           ),
@@ -309,7 +317,7 @@ class _DailyCard extends StatelessWidget {
     final done = p.dailyDoneToday(now);
     final st = p.liveStreak(now);
     final sub = done
-        ? '${t.dailyDone}${st > 1 ? ' · ${t.streak(st)}' : ''}'
+        ? '${t.dailyDone}${st > 1 ? '${sepOf(context)}${t.streak(st)}' : ''}'
         : (st > 0 ? t.streak(st) : t.dailyReady);
 
     final pill = Container(

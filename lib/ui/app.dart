@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tidy_nook/game/progress.dart';
@@ -22,26 +24,57 @@ class TidyNookApp extends StatefulWidget {
   State<TidyNookApp> createState() => _TidyNookAppState();
 }
 
-class _TidyNookAppState extends State<TidyNookApp> {
+class _TidyNookAppState extends State<TidyNookApp>
+    with WidgetsBindingObserver {
   late final GameController _ctl;
   final ThemeData _light = buildTheme(Brightness.light);
   final ThemeData _dark = buildTheme(Brightness.dark);
+  Timer? _midnight;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _ctl = GameController(
       progress: widget.progress,
       sounds: widget.sounds ??
           Sounds(enabled: () => widget.progress.sound),
     );
     _ctl.start();
+    _scheduleMidnight();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnight?.cancel();
     _ctl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // The date may have changed while the app was in the background.
+      _ctl.refresh();
+      _scheduleMidnight();
+    }
+  }
+
+  /// Wakes up just after the next local midnight so the house card, the daily
+  /// box and the streak text follow the new date.
+  void _scheduleMidnight() {
+    _midnight?.cancel();
+    final now = DateTime.now();
+    final next = DateTime(now.year, now.month, now.day + 1);
+    final wait = next.difference(now) + const Duration(seconds: 1);
+    _midnight = Timer(wait, () {
+      if (!mounted) {
+        return;
+      }
+      _ctl.refresh();
+      _scheduleMidnight();
+    });
   }
 
   Locale? _chosen() {
@@ -49,15 +82,16 @@ class _TidyNookAppState extends State<TidyNookApp> {
     return l == null ? null : Locale(l);
   }
 
-  static Locale _resolve(Locale? device, Iterable<Locale> supported) {
-    if (device != null) {
+  /// First language in the user's list that we support, otherwise English.
+  static Locale _resolve(List<Locale>? preferred, Iterable<Locale> supported) {
+    for (final p in preferred ?? const <Locale>[]) {
       for (final s in supported) {
-        if (s.languageCode == device.languageCode) {
+        if (s.languageCode == p.languageCode) {
           return s;
         }
       }
     }
-    return const Locale('tr');
+    return const Locale('en');
   }
 
   @override
@@ -70,7 +104,11 @@ class _TidyNookAppState extends State<TidyNookApp> {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: _chosen(),
-        localeResolutionCallback: _resolve,
+        localeListResolutionCallback: _resolve,
+        builder: (context, child) => MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.5,
+          child: child ?? const SizedBox.shrink(),
+        ),
         theme: _light,
         darkTheme: _dark,
         themeMode: ThemeMode.system,
