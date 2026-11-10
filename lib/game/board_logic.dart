@@ -3,7 +3,7 @@
 // shipped HTML game (web-preview/index.html).
 
 import 'dart:math' as math;
-import 'dart:ui' show Offset;
+import 'dart:ui' show Offset, Rect;
 
 import 'art.dart';
 import 'content.dart';
@@ -54,6 +54,41 @@ double _rnd(math.Random random, double a, double b) {
   return a + random.nextDouble() * (b - a);
 }
 
+const double _rugMargin = 6;
+
+/// [v] limited to lo..hi; when the range is empty (item bigger than the rug)
+/// the middle of it.
+double _fit(double v, double lo, double hi) {
+  if (lo > hi) {
+    return (lo + hi) / 2;
+  }
+  return math.max(lo, math.min(hi, v));
+}
+
+/// Bounding box of [box] (item-local, origin = item centre) after rotating it
+/// by [degrees] around that origin, still relative to the centre.
+Rect rotatedExtent(Rect box, double degrees) {
+  final a = degrees * math.pi / 180;
+  final c = math.cos(a);
+  final s = math.sin(a);
+  var minX = double.infinity, minY = double.infinity;
+  var maxX = -double.infinity, maxY = -double.infinity;
+  for (final p in <Offset>[
+    box.topLeft,
+    box.topRight,
+    box.bottomLeft,
+    box.bottomRight,
+  ]) {
+    final rx = p.dx * c - p.dy * s;
+    final ry = p.dx * s + p.dy * c;
+    minX = math.min(minX, rx);
+    maxX = math.max(maxX, rx);
+    minY = math.min(minY, ry);
+    maxY = math.max(maxY, ry);
+  }
+  return Rect.fromLTRB(minX, minY, maxX, maxY);
+}
+
 /// Initial scatter of a level's items on the rug: same grid / jitter / rotation
 /// rules as build() in the HTML. Item i belongs to slot i's kind.
 List<ItemState> scatter(Level level, math.Random random) {
@@ -68,14 +103,18 @@ List<ItemState> scatter(Level level, math.Random random) {
     final c = cells[i];
     final col = c % cols;
     final row = c ~/ cols;
-    final x = 14 + cw * (col + 0.5) + _rnd(random, -6, 6);
-    final y = 364 + ch * (row + 0.5) + _rnd(random, -5, 5);
+    var x = 14 + cw * (col + 0.5) + _rnd(random, -6, 6);
+    var y = 364 + ch * (row + 0.5) + _rnd(random, -5, 5);
     final kind = level.slots[i].kind;
     // tall pieces lie down, the others tilt a little
     final tall = itemGeometryBox(kind).height > 80;
     final rotation = tall
         ? (random.nextBool() ? -1 : 1) * _rnd(random, 62, 84)
         : _rnd(random, -28, 28);
+    // keep the whole rotated item box inside the rug
+    final ext = rotatedExtent(itemBox(kind), rotation);
+    x = _fit(x, 14 + _rugMargin - ext.left, 346 - _rugMargin - ext.right);
+    y = _fit(y, 364 + _rugMargin - ext.top, 626 - _rugMargin - ext.bottom);
     items.add(ItemState(
       id: i,
       kind: kind,

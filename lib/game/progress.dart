@@ -82,6 +82,13 @@ class Progress extends ChangeNotifier {
   /// The key used in shared_preferences (and in the web game's localStorage).
   static const String storageKey = 'tidynook-v1';
 
+  /// Where the raw text of an unreadable save is kept before starting fresh.
+  static const String corruptKey = 'tidynook-v1-corrupt';
+
+  /// Schema version written as "v" in the saved JSON (files without it are
+  /// still read).
+  static const int schemaVersion = 2;
+
   /// null = follow the device (tr if the device language is not one of the four).
   String? lang;
   bool sound;
@@ -144,23 +151,30 @@ class Progress extends ChangeNotifier {
   }
 
   /// Parses a saved JSON string; null or invalid text gives a fresh Progress.
-  factory Progress.fromJsonString(String? raw) {
+  factory Progress.fromJsonString(String? raw) => parseSaved(raw).progress;
+
+  /// Pure helper behind load(): parses [raw] and, when it is non-empty but
+  /// unreadable (not JSON, or not a JSON object), also returns it as
+  /// [corruptRaw] so the caller can keep a copy before starting fresh.
+  /// null or empty [raw] is a normal first start (corruptRaw is null).
+  static ({Progress progress, String? corruptRaw}) parseSaved(String? raw) {
     if (raw == null || raw.isEmpty) {
-      return Progress();
+      return (progress: Progress(), corruptRaw: null);
     }
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) {
-        return Progress.fromJson(decoded);
+        return (progress: Progress.fromJson(decoded), corruptRaw: null);
       }
     } catch (_) {
-      // fall through to a fresh game
+      // fall through to a fresh game, keeping the raw text
     }
-    return Progress();
+    return (progress: Progress(), corruptRaw: raw);
   }
 
   /// The web save() shape.
   Map<String, dynamic> toJson() => <String, dynamic>{
+        'v': schemaVersion,
         'lang': lang,
         'level': level,
         'done': done.toList(),
@@ -178,7 +192,28 @@ class Progress extends ChangeNotifier {
     Progress p;
     try {
       final prefs = await SharedPreferences.getInstance();
-      p = Progress.fromJsonString(prefs.getString(storageKey));
+      String? raw;
+      String? unreadable;
+      try {
+        raw = prefs.getString(storageKey);
+      } catch (_) {
+        // stored with a wrong type: keep what is there as the backup
+        final v = prefs.get(storageKey);
+        unreadable = v?.toString();
+      }
+      final parsed = parseSaved(raw);
+      p = parsed.progress;
+      final backup = parsed.corruptRaw ?? unreadable;
+      if (backup != null && backup.isNotEmpty) {
+        try {
+          // keep the first backup; never overwrite an earlier one
+          if (!prefs.containsKey(corruptKey)) {
+            await prefs.setString(corruptKey, backup);
+          }
+        } catch (_) {
+          // the backup is best effort
+        }
+      }
     } catch (_) {
       p = Progress();
     }
@@ -278,31 +313,42 @@ class Progress extends ChangeNotifier {
     return fresh ? level : -1;
   }
 
-  /// As dailyWin() in the HTML: counts today's box (once per day), updates the
+  /// As dailyWin() in the HTML: counts a box (once per day), updates the
   /// streak and returns the pet index (0 cat, 1 fishbowl, 2 garden) newly
   /// earned by this box, else -1.
-  int completeDaily(DateTime now) {
-    final today = dayString(now);
-    if (daily.last == today) {
+  ///
+  /// [day] ("YYYY-MM-DD") is the day the box was OPENED; when given it is
+  /// credited instead of today, so a box opened at 23:59 and finished at 00:01
+  /// still counts for the opening day. Returns -1 and changes nothing when that
+  /// day is already counted or when the last finished day is AFTER it (clock set
+  /// back, or travelling west): the streak is never reset by that.
+  int completeDaily(DateTime now, {String? day}) {
+    final credited =
+        day != null && _dayFormat.hasMatch(day) ? day : dayString(now);
+    // "YYYY-MM-DD" strings sort like dates
+    if (daily.last.compareTo(credited) >= 0) {
       return -1;
     }
-    daily.streak = daily.last == _yesterdayString(now) ? daily.streak + 1 : 1;
-    daily.last = today;
+    daily.streak = daily.last == _dayBefore(credited) ? daily.streak + 1 : 1;
+    daily.last = credited;
     daily.total += 1;
-    final all = <String>[...daily.days, today];
+    final all = <String>[...daily.days, credited];
     daily.days = all.length > 30 ? all.sublist(all.length - 30) : all;
     _changed();
     return milestones.indexOf(daily.total);
   }
 
-  bool dailyDoneToday(DateTime now) => daily.last == dayString(now);
+  /// True when today's box is counted, or a later day is (clock set back).
+  bool dailyDoneToday(DateTime now) => daily.last.compareTo(dayString(now)) >= 0;
 
-  /// Streak that is still alive: today's or yesterday's finished box keeps it.
+  /// Streak that is still alive: a finished box of today, yesterday or a later
+  /// day (clock set back, travelling west) keeps it.
   int liveStreak(DateTime now) {
     final last = daily.last;
-    return last == dayString(now) || last == _yesterdayString(now)
-        ? daily.streak
-        : 0;
+    if (last.isEmpty) {
+      return 0;
+    }
+    return last.compareTo(_yesterdayString(now)) >= 0 ? daily.streak : 0;
   }
 
   /// As the settings reset in the HTML: levels, styles and daily rewards start
@@ -314,6 +360,17 @@ class Progress extends ChangeNotifier {
     level = 0;
     _changed();
   }
+}
+
+final RegExp _dayFormat = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+
+/// The calendar day before [day] ("YYYY-MM-DD"), by date arithmetic (never by
+/// subtracting 24 hours, so DST changes cannot break it).
+String _dayBefore(String day) {
+  final y = int.parse(day.substring(0, 4));
+  final m = int.parse(day.substring(5, 7));
+  final d = int.parse(day.substring(8, 10));
+  return dayString(DateTime(y, m, d - 1));
 }
 
 String _yesterdayString(DateTime now) {
