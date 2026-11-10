@@ -4,7 +4,7 @@
 - Gizemli kutular: sadece şekle bakarak eşleştir
 - Sonsuz bonus kutular
 - Her eşya için üçüncü bir stil
-- Yeni günlük ödüller: tavşan ve şarkıcı kuş
+- Yeni günlük ödüller: tavşan ve ötücü kuş
 - İsteğe bağlı günlük hatırlatma
 - Reklamlar kısadır, bölüm sırasında asla çıkmaz ve mağazadan kaldırılabilir. İnternetsiz de çalışır.
 </tr-TR>
