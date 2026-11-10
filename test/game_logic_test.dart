@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tidy_nook/game/art.dart';
 import 'package:tidy_nook/game/board_logic.dart';
 import 'package:tidy_nook/game/content.dart';
 import 'package:tidy_nook/game/progress.dart';
@@ -163,7 +164,108 @@ void main() {
     });
   });
 
+  group('progress: daily robustness', () {
+    Progress withLast(String last, int streak, {int total = 5}) =>
+        Progress(daily: DailyState(last: last, streak: streak, total: total));
+
+    test('explicit day: opened 23:59, finished 00:01 credits the opening day',
+        () {
+      final p = withLast('2026-11-06', 2);
+      final pet = p.completeDaily(DateTime(2026, 11, 8, 0, 1), day: '2026-11-07');
+      expect(pet, -1); // total 6 is no milestone
+      expect(p.daily.last, '2026-11-07');
+      expect(p.daily.streak, 3);
+      expect(p.daily.total, 6);
+      expect(p.daily.days.last, '2026-11-07');
+      // after midnight the next box is offered and keeps the streak alive
+      final later = DateTime(2026, 11, 8, 0, 1);
+      expect(p.dailyDoneToday(later), isFalse);
+      expect(p.liveStreak(later), 3);
+      p.completeDaily(DateTime(2026, 11, 8, 9));
+      expect(p.daily.streak, 4);
+    });
+
+    test('explicit day: a malformed day falls back to now', () {
+      final p = Progress();
+      p.completeDaily(DateTime(2026, 11, 7, 12), day: 'garbage');
+      expect(p.daily.last, '2026-11-07');
+    });
+
+    test('clock set back one day: no reset and no double count', () {
+      final p = withLast('2026-11-07', 4);
+      final back = DateTime(2026, 11, 6, 10);
+      expect(p.dailyDoneToday(back), isTrue);
+      expect(p.liveStreak(back), 4);
+      expect(p.completeDaily(back), -1);
+      expect(p.daily.streak, 4);
+      expect(p.daily.total, 5);
+      expect(p.daily.last, '2026-11-07');
+      expect(p.daily.days, isEmpty);
+    });
+
+    test('travelling west (last = tomorrow) keeps the streak', () {
+      // finished 00:30 on the 8th in Istanbul, now 17:30 on the 7th in New York
+      final p = withLast('2026-11-08', 13, total: 13);
+      final ny = DateTime(2026, 11, 7, 17, 30);
+      expect(p.dailyDoneToday(ny), isTrue);
+      expect(p.liveStreak(ny), 13);
+      expect(p.completeDaily(ny), -1);
+      expect(p.daily.streak, 13);
+      expect(p.daily.total, 13);
+      // the next real day continues the streak
+      p.completeDaily(DateTime(2026, 11, 9, 8));
+      expect(p.daily.streak, 14);
+    });
+
+    test('explicit day older than last changes nothing', () {
+      final p = withLast('2026-11-07', 2);
+      expect(p.completeDaily(DateTime(2026, 11, 8), day: '2026-11-06'), -1);
+      expect(p.daily.streak, 2);
+      expect(p.daily.total, 5);
+    });
+
+    test('streak survives the DST change weeks', () {
+      for (final start in <DateTime>[
+        DateTime(2026, 3, 1), // EU change on 29 March, US on 8 March
+        DateTime(2026, 10, 18), // EU change on 25 October
+        DateTime(2026, 10, 25), // US change on 1 November
+      ]) {
+        final p = Progress();
+        for (var i = 0; i < 21; i++) {
+          p.completeDaily(DateTime(start.year, start.month, start.day + i, 0, 30));
+        }
+        expect(p.daily.streak, 21, reason: 'from $start');
+        expect(p.daily.total, 21);
+        final end = DateTime(start.year, start.month, start.day + 21, 23, 30);
+        expect(p.liveStreak(end), 21);
+      }
+    });
+  });
+
   group('progress: json', () {
+    test('saves carry the schema version and files without it still load', () {
+      expect(Progress().toJson()['v'], 2);
+      final p = Progress.fromJsonString('{"level":3,"done":[0]}');
+      expect(p.level, 3);
+      expect(p.done, {0});
+      final v2 = Progress.fromJsonString(jsonEncode(Progress(level: 2).toJson()));
+      expect(v2.level, 2);
+    });
+
+    test('corrupt text is handed back for a backup, good or empty is not', () {
+      final bad = Progress.parseSaved('{"level": 3,');
+      expect(bad.corruptRaw, '{"level": 3,');
+      expect(bad.progress.done, isEmpty);
+      expect(Progress.parseSaved('[1,2]').corruptRaw, '[1,2]');
+      expect(Progress.parseSaved('"text"').corruptRaw, '"text"');
+      expect(Progress.parseSaved(null).corruptRaw, isNull);
+      expect(Progress.parseSaved('').corruptRaw, isNull);
+      final ok = Progress.parseSaved('{"level":4}');
+      expect(ok.corruptRaw, isNull);
+      expect(ok.progress.level, 4);
+      expect(Progress.corruptKey, 'tidynook-v1-corrupt');
+    });
+
     const webSave =
         '{"lang":"de","level":4,"done":[0,1,2,4],"sound":false,'
         '"styles":{"3":1,"0":1},'
@@ -188,9 +290,9 @@ void main() {
     test('round trip keeps the web shape', () {
       final p = Progress.fromJsonString(webSave);
       final out = jsonDecode(jsonEncode(p.toJson())) as Map<String, dynamic>;
-      expect(out, jsonDecode(webSave));
+      expect(out, {...(jsonDecode(webSave) as Map<String, dynamic>), 'v': 2});
       expect(out.keys.toSet(),
-          {'lang', 'level', 'done', 'sound', 'styles', 'daily'});
+          {'v', 'lang', 'level', 'done', 'sound', 'styles', 'daily'});
       expect((out['styles'] as Map).keys.toSet(), {'3', '0'});
       final again = Progress.fromJson(out);
       expect(again.toJson(), p.toJson());
@@ -229,7 +331,6 @@ void main() {
         final level = levels[li];
         final items = scatter(level, math.Random(li));
         expect(items.length, level.slots.length);
-        final cells = <String>{};
         for (var i = 0; i < items.length; i++) {
           final it = items[i];
           expect(it.id, i);
@@ -239,13 +340,36 @@ void main() {
           expect(it.x, inInclusiveRange(14 + 83 / 2 - 6, 346 - 83 / 2 + 6));
           expect(it.y, inInclusiveRange(364, 626));
           expect(it.home, Offset(it.x, it.y));
-          // every item sits in its own grid cell
-          final col = ((it.x - 14) / 83).floor();
-          final rows = (level.slots.length / 4).ceil();
-          final row = ((it.y - 364) / (262 / rows)).floor();
-          expect(cells.add('$col,$row'), isTrue, reason: 'level $li item $i');
         }
       }
+    });
+
+    test('scatter keeps every rotated item box inside the rug', () {
+      for (var li = 0; li < levels.length; li++) {
+        final level = levels[li];
+        for (var seed = 0; seed < 200; seed++) {
+          final items = scatter(level, math.Random(seed));
+          for (final it in items) {
+            final ext = rotatedExtent(itemBox(it.kind), it.rotation);
+            final reason = 'level $li seed $seed item ${it.id} ${it.kind}';
+            expect(it.x + ext.left, greaterThanOrEqualTo(14 + 6 - 1e-6),
+                reason: reason);
+            expect(it.x + ext.right, lessThanOrEqualTo(346 - 6 + 1e-6),
+                reason: reason);
+            expect(it.y + ext.top, greaterThanOrEqualTo(364 + 6 - 1e-6),
+                reason: reason);
+            expect(it.y + ext.bottom, lessThanOrEqualTo(626 - 6 + 1e-6),
+                reason: reason);
+            expect(it.home, Offset(it.x, it.y));
+          }
+        }
+      }
+    });
+
+    test('rotatedExtent of a quarter turn swaps width and height', () {
+      final e = rotatedExtent(const Rect.fromLTRB(-10, -30, 10, 30), 90);
+      expect(e.width, closeTo(60, 1e-9));
+      expect(e.height, closeTo(20, 1e-9));
     });
 
     test('rotation rules: tall items lie down, others tilt', () {
