@@ -7,7 +7,7 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, 'v11-*' ]
 
 permissions:
   contents: write
@@ -135,9 +135,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           FLUTTER_VER=$(flutter --version | head -n 1)
-          gh release delete latest-build --yes --cleanup-tag || true
-          gh release create latest-build out/app-release.aab out/app-release.apk out/web.zip \
-            --prerelease --title "Latest build" \
+          # main publishes "latest-build"; a team branch such as v11-a publishes "build-v11-a".
+          if [ "$GITHUB_REF_NAME" = "main" ]; then TAG=latest-build; else TAG="build-$GITHUB_REF_NAME"; fi
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" out/app-release.aab out/app-release.apk out/web.zip \
+            --target "$GITHUB_SHA" --prerelease --title "Build $GITHUB_REF_NAME" \
             --notes "Built from ${GITHUB_SHA::7}. ${FLUTTER_VER}. Signed: ${{ steps.key.outputs.signed }}."
 
       # On failure, put the logs on a public "ci-logs" release so they can be read without signing in.
@@ -148,6 +150,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/logs"
           (cd "$RUNNER_TEMP/logs" && zip -qr "$RUNNER_TEMP/ci-logs.zip" . ) || true
-          gh release delete ci-logs --yes --cleanup-tag || true
-          gh release create ci-logs "$RUNNER_TEMP"/logs/*.txt --prerelease --title "CI logs" \
+          if [ "$GITHUB_REF_NAME" = "main" ]; then TAG=ci-logs; else TAG="ci-logs-$GITHUB_REF_NAME"; fi
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" "$RUNNER_TEMP"/logs/*.txt --target "$GITHUB_SHA" --prerelease --title "CI logs $GITHUB_REF_NAME" \
             --notes "Failed build ${GITHUB_SHA::7}." || true
