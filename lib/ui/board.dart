@@ -108,6 +108,7 @@ class _BoardViewState extends State<BoardView>
   double _hintStart = 0;
 
   bool _won = false;
+  bool _recorded = false;
   bool _reduce = false;
 
   // cached widgets
@@ -411,6 +412,7 @@ class _BoardViewState extends State<BoardView>
       widget.sounds.play('place');
       _sparkle(best.slot.x, best.slot.y);
       if (_items.every((i) => i.placed)) {
+        _recordWin();
         _later(480, _win);
       }
     } else if (isAboveRug(it.y)) {
@@ -428,13 +430,23 @@ class _BoardViewState extends State<BoardView>
 
   // ------------------------------------------------------------------- win
 
+  /// Saves the win the moment the last item lands, so leaving during the
+  /// celebration never loses it.
+  void _recordWin() {
+    if (_recorded) {
+      return;
+    }
+    _recorded = true;
+    widget.onWin();
+  }
+
   void _win() {
     if (_won) {
       return;
     }
     _won = true;
     _clearHint();
-    widget.onWin();
+    _recordWin();
     setState(() {
       _lidText = false;
       _lidOpen = false;

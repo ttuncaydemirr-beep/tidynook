@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -32,6 +33,9 @@ class GameController extends ChangeNotifier {
   Level? current;
   int dailyTheme = 0;
 
+  /// dayString captured when the daily box was opened (credited on win).
+  String? _dailyDay;
+
   /// Changes whenever a level or the daily box is (re)built: resets the board.
   int playSerial = 0;
 
@@ -49,6 +53,7 @@ class GameController extends ChangeNotifier {
 
   /// As start() in the HTML (no notification: called before the first build).
   void start() {
+    unawaited(sounds.preload());
     if (progress.done.isEmpty) {
       _buildLevel(0);
     } else {
@@ -84,7 +89,9 @@ class GameController extends ChangeNotifier {
       return;
     }
     isDaily = true;
-    final level = dailyLevel(dayString(now));
+    final day = dayString(now);
+    _dailyDay = day;
+    final level = dailyLevel(day);
     dailyTheme = level.theme;
     current = level;
     playSerial++;
@@ -112,7 +119,7 @@ class GameController extends ChangeNotifier {
   /// Bookkeeping when the last item is placed.
   void recordWin() {
     if (isDaily) {
-      freshPet = progress.completeDaily(DateTime.now());
+      freshPet = progress.completeDaily(DateTime.now(), day: _dailyDay);
     } else {
       final r = progress.completeLevel(levelIndex);
       if (r >= 0) {
