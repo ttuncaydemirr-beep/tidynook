@@ -279,11 +279,15 @@ class TitleBlock extends StatelessWidget {
               color: c.accent,
               letterSpacing: lang == 'ar' ? 0 : 12 * 0.08),
         ),
-        Text(
-          title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: tx(fs, w: 800, color: c.fg, height: 1.1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            title,
+            maxLines: 1,
+            softWrap: false,
+            style: tx(fs, w: 800, color: c.fg, height: 1.1),
+          ),
         ),
       ],
     );

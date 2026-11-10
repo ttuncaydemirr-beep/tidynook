@@ -132,25 +132,93 @@ class _PlayScreenState extends State<PlayScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 0,
-          runSpacing: 0,
-          children: <Widget>[
-            for (var n = 0; n < levels.length; n++)
-              _Dot(
-                number: n + 1,
-                label: '${t.level} ${n + 1}',
-                done: p.done.contains(n),
-                current: n == i && !daily,
-                enabled: n <= unlocked,
-                onTap: () => ctl.buildLevel(n),
-              ),
-          ],
+        _DotRow(
+          count: levels.length,
+          current: daily ? -1 : i,
+          itemBuilder: (n) => _Dot(
+            number: n + 1,
+            label: '${t.level} ${n + 1}',
+            done: p.done.contains(n),
+            current: n == i && !daily,
+            enabled: n <= unlocked,
+            onTap: () => ctl.buildLevel(n),
+          ),
         ),
         const SizedBox(height: 4),
         NoteText(note),
       ],
+    );
+  }
+}
+
+/// One horizontally scrolling row of level dots, centred on the current level
+/// when it opens, with a soft fade at both edges.
+class _DotRow extends StatefulWidget {
+  const _DotRow({
+    required this.count,
+    required this.current,
+    required this.itemBuilder,
+  });
+
+  final int count;
+  final int current;
+  final Widget Function(int) itemBuilder;
+
+  @override
+  State<_DotRow> createState() => _DotRowState();
+}
+
+class _DotRowState extends State<_DotRow> {
+  static const double _w = 48;
+  final ScrollController _sc = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _center());
+  }
+
+  void _center() {
+    if (!mounted || !_sc.hasClients) {
+      return;
+    }
+    final pos = _sc.position;
+    final cur = widget.current < 0 ? 0 : widget.current;
+    final target = cur * _w + _w / 2 - pos.viewportDimension / 2;
+    _sc.jumpTo(target.clamp(0.0, pos.maxScrollExtent));
+  }
+
+  @override
+  void dispose() {
+    _sc.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (rect) => const LinearGradient(
+          colors: <Color>[
+            Color(0x00FFFFFF),
+            Color(0xFFFFFFFF),
+            Color(0xFFFFFFFF),
+            Color(0x00FFFFFF),
+          ],
+          stops: <double>[0, 0.06, 0.94, 1],
+        ).createShader(rect),
+        child: SingleChildScrollView(
+          controller: _sc,
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: <Widget>[
+              for (var n = 0; n < widget.count; n++) widget.itemBuilder(n),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
