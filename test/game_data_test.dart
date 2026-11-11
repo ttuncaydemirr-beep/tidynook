@@ -48,26 +48,31 @@ String geometry(Prim p) {
 
 void main() {
   group('data counts', () {
-    test('18 levels, 6 rooms, 18 furniture pieces, 3 milestones', () {
-      expect(levels.length, 18);
-      expect(rooms.length, 6);
-      expect(levelRoom.length, 18);
-      expect(decorCount, 18);
-      expect(milestones, [3, 7, 14]);
+    test('30 levels, 10 rooms, 30 furniture pieces, 5 milestones', () {
+      expect(levels.length, 30);
+      expect(rooms.length, 10);
+      expect(levelRoom.length, 30);
+      expect(decorCount, 30);
+      expect(milestones, [3, 7, 14, 21, 30]);
+      expect(supporterPet, 5);
+      expect(styleCount, 3);
       for (final r in levelRoom) {
         expect(r >= 0 && r < rooms.length, isTrue);
       }
       for (var i = 0; i < decorCount; i++) {
-        expect(decorSvg(i, 0), isNotEmpty);
-        expect(decorSvg(i, 1), isNotEmpty);
+        for (var v = 0; v < styleCount; v++) {
+          expect(decorSvg(i, v), isNotEmpty);
+        }
       }
-      expect(kinds.length, 90);
+      expect(kinds.length, 157);
     });
 
     test('level slot counts match the HTML', () {
       final counts = levels.map((l) => l.slots.length).toList();
-      expect(counts,
-          [6, 5, 6, 6, 7, 6, 8, 10, 9, 7, 8, 9, 7, 8, 8, 8, 8, 9]);
+      expect(counts, [
+        6, 5, 6, 6, 7, 6, 8, 10, 9, 7, 8, 9, 7, 8, 8, 8, 8, 9, //
+        9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12,
+      ]);
     });
 
     test('every room has at least one level', () {
@@ -192,7 +197,7 @@ void main() {
         final hit = decorHitRect(i);
         expect(hit.width >= 40 && hit.height >= 40, isTrue);
       }
-      for (var p = 0; p < 3; p++) {
+      for (var p = 0; p < petCount; p++) {
         expectFlutterSvgSafe(petPreviewSvg(p, locked: false));
         final locked = petPreviewSvg(p, locked: true);
         expectFlutterSvgSafe(locked);

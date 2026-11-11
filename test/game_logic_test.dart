@@ -151,16 +151,16 @@ void main() {
       expect(p.daily.days.last, '2026-02-09');
     });
 
-    test('milestone pets at 3, 7 and 14', () {
+    test('milestone pets at 3, 7, 14, 21 and 30', () {
       final p = Progress();
       final earned = <int, int>{};
-      for (var i = 1; i <= 15; i++) {
+      for (var i = 1; i <= 31; i++) {
         final pet = p.completeDaily(DateTime(2026, 3, i));
         if (pet >= 0) {
           earned[i] = pet;
         }
       }
-      expect(earned, {3: 0, 7: 1, 14: 2});
+      expect(earned, {3: 0, 7: 1, 14: 2, 21: 3, 30: 4});
     });
   });
 
@@ -244,7 +244,7 @@ void main() {
 
   group('progress: json', () {
     test('saves carry the schema version and files without it still load', () {
-      expect(Progress().toJson()['v'], 2);
+      expect(Progress().toJson()['v'], 3);
       final p = Progress.fromJsonString('{"level":3,"done":[0]}');
       expect(p.level, 3);
       expect(p.done, {0});
@@ -290,9 +290,18 @@ void main() {
     test('round trip keeps the web shape', () {
       final p = Progress.fromJsonString(webSave);
       final out = jsonDecode(jsonEncode(p.toJson())) as Map<String, dynamic>;
-      expect(out, {...(jsonDecode(webSave) as Map<String, dynamic>), 'v': 2});
-      expect(out.keys.toSet(),
-          {'v', 'lang', 'level', 'done', 'sound', 'styles', 'daily'});
+      // the web keys are unchanged; schema 3 adds its own keys with defaults
+      final web = jsonDecode(webSave) as Map<String, dynamic>;
+      for (final k in web.keys) {
+        expect(out[k], web[k], reason: k);
+      }
+      expect(out['v'], 3);
+      expect(out.keys.toSet(), {
+        'v', 'lang', 'level', 'done', 'sound', 'styles', 'daily', //
+        'extraStyles', 'adsRemoved', 'supporter', 'bonusDone', 'vibration',
+        'reminderOn', 'reminderAsked', 'reviewAsked', 'adCounter', 'lastAdMs',
+        'streakSaveDay',
+      });
       expect((out['styles'] as Map).keys.toSet(), {'3', '0'});
       final again = Progress.fromJson(out);
       expect(again.toJson(), p.toJson());

@@ -4,6 +4,11 @@
 //   {"lang":"de","level":4,"done":[0,1,2],"sound":true,"styles":{"3":1},
 //    "daily":{"last":"2026-11-06","streak":2,"total":5,"days":["2026-11-06"]}}
 //
+// Schema 3 (1.1) adds, next to those keys: "extraStyles", "adsRemoved",
+// "supporter", "bonusDone", "vibration", "reminderOn", "reminderAsked",
+// "reviewAsked", "adCounter", "lastAdMs" and "streakSaveDay". Saves without
+// them (schema 2, or the web shape without "v") load with the defaults.
+//
 // The core logic (fromJson / toJson / every method) needs no plugin; only
 // load() and save() touch shared_preferences.
 
@@ -68,6 +73,13 @@ class DailyState {
   }
 }
 
+bool? _asBool(Object? v) => v is bool ? v : null;
+
+int _nonNegative(Object? v) {
+  final i = _asInt(v);
+  return i == null || i < 0 ? 0 : i;
+}
+
 int? _asInt(Object? v) {
   if (v is int) {
     return v;
@@ -87,7 +99,7 @@ class Progress extends ChangeNotifier {
 
   /// Schema version written as "v" in the saved JSON (files without it are
   /// still read).
-  static const int schemaVersion = 2;
+  static const int schemaVersion = 3;
 
   /// null = follow the device (tr if the device language is not one of the four).
   String? lang;
@@ -97,9 +109,36 @@ class Progress extends ChangeNotifier {
   int level;
   Set<int> done;
 
-  /// Level index -> 0/1.
+  /// Level index -> chosen style 0..2 (as stored; see [styleOf]).
   Map<int, int> styles;
   DailyState daily;
+
+  /// Levels whose 3rd style (index 2) is unlocked (bonus boxes, surprise box).
+  Set<int> extraStyles;
+
+  /// Cached entitlements, written by billing ([setEntitlements]).
+  bool adsRemoved;
+  bool supporter;
+
+  /// Finished bonus boxes.
+  int bonusDone;
+
+  /// Settings: haptic tick on snap, daily reminder, and whether the reminder
+  /// and the in-app review were asked already.
+  bool vibration;
+  bool reminderOn;
+  bool reminderAsked;
+  bool reviewAsked;
+
+  /// Boxes completed since the last interstitial.
+  int interstitialCounter;
+
+  /// Epoch milliseconds of the last full-screen ad (interstitial or rewarded).
+  int lastFullScreenAdMs;
+
+  /// The day ("YYYY-MM-DD") that the last streak save filled in, "" if none.
+  /// A save is only possible when the last finished day was really played.
+  String streakSaveDay;
 
   bool _autoSave = false;
 
@@ -110,9 +149,21 @@ class Progress extends ChangeNotifier {
     Set<int>? done,
     Map<int, int>? styles,
     DailyState? daily,
+    Set<int>? extraStyles,
+    this.adsRemoved = false,
+    this.supporter = false,
+    this.bonusDone = 0,
+    this.vibration = true,
+    this.reminderOn = false,
+    this.reminderAsked = false,
+    this.reviewAsked = false,
+    this.interstitialCounter = 0,
+    this.lastFullScreenAdMs = 0,
+    this.streakSaveDay = '',
   })  : done = done ?? <int>{},
         styles = styles ?? <int, int>{},
-        daily = daily ?? DailyState();
+        daily = daily ?? DailyState(),
+        extraStyles = extraStyles ?? <int>{};
 
   /// Builds a Progress from a decoded save (the web shape). Unknown or wrongly
   /// typed fields fall back to their defaults.
@@ -141,12 +192,33 @@ class Progress extends ChangeNotifier {
       rawStyles.forEach((k, v) {
         final i = k is int ? k : int.tryParse(k.toString());
         final s = _asInt(v);
-        if (i != null && s != null) {
-          p.styles[i] = s == 0 ? 0 : 1;
+        if (i != null && s != null && i >= 0 && i < levels.length) {
+          p.styles[i] = s < 0 ? 0 : (s > styleCount - 1 ? styleCount - 1 : s);
         }
       });
     }
     p.daily = DailyState.fromJson(json['daily']);
+    // schema 3 fields; missing or wrongly typed ones keep their defaults
+    final rawExtra = json['extraStyles'];
+    if (rawExtra is List) {
+      for (final d in rawExtra) {
+        final i = _asInt(d);
+        if (i != null && i >= 0 && i < levels.length) {
+          p.extraStyles.add(i);
+        }
+      }
+    }
+    p.adsRemoved = _asBool(json['adsRemoved']) ?? false;
+    p.supporter = _asBool(json['supporter']) ?? false;
+    p.bonusDone = _nonNegative(json['bonusDone']);
+    p.vibration = _asBool(json['vibration']) ?? true;
+    p.reminderOn = _asBool(json['reminderOn']) ?? false;
+    p.reminderAsked = _asBool(json['reminderAsked']) ?? false;
+    p.reviewAsked = _asBool(json['reviewAsked']) ?? false;
+    p.interstitialCounter = _nonNegative(json['adCounter']);
+    p.lastFullScreenAdMs = _nonNegative(json['lastAdMs']);
+    final ssd = json['streakSaveDay'];
+    p.streakSaveDay = ssd is String && _dayFormat.hasMatch(ssd) ? ssd : '';
     return p;
   }
 
@@ -183,6 +255,17 @@ class Progress extends ChangeNotifier {
           for (final e in styles.entries) '${e.key}': e.value,
         },
         'daily': daily.toJson(),
+        'extraStyles': (extraStyles.toList()..sort()),
+        'adsRemoved': adsRemoved,
+        'supporter': supporter,
+        'bonusDone': bonusDone,
+        'vibration': vibration,
+        'reminderOn': reminderOn,
+        'reminderAsked': reminderAsked,
+        'reviewAsked': reviewAsked,
+        'adCounter': interstitialCounter,
+        'lastAdMs': lastFullScreenAdMs,
+        'streakSaveDay': streakSaveDay,
       };
 
   /// Loads the saved progress (shared_preferences, key "tidynook-v1"). Never
@@ -283,10 +366,156 @@ class Progress extends ChangeNotifier {
     return -1;
   }
 
-  int styleOf(int level) => styles[level] ?? 0;
+  /// Style shown for [level]: 0..2. A stored 3rd style that is no longer
+  /// available (for example a refunded Supporter Pack) shows as style 0; it
+  /// comes back if the style becomes available again.
+  int styleOf(int level) {
+    final s = styles[level] ?? 0;
+    if (s < 0 || s >= styleCount) {
+      return 0;
+    }
+    return styleAvailable(level, s) ? s : 0;
+  }
 
+  /// Chooses style [variant] (0..2) for [level] and saves. Ignored when that
+  /// style is not available.
   void setStyle(int level, int variant) {
-    styles[level] = variant == 0 ? 0 : 1;
+    if (!styleAvailable(level, variant)) {
+      return;
+    }
+    styles[level] = variant;
+    _changed();
+  }
+
+  /// Styles 0 and 1 are always available; style 2 when it was unlocked for
+  /// [level] ([extraStyles]) or with the Supporter Pack.
+  bool styleAvailable(int level, int variant) {
+    if (variant == 0 || variant == 1) {
+      return true;
+    }
+    if (variant == 2) {
+      return supporter || extraStyles.contains(level);
+    }
+    return false;
+  }
+
+  /// Unlocks the 3rd style of [level]. Returns [level] if it was newly
+  /// unlocked, else -1.
+  int unlockExtraStyle(int level) {
+    if (level < 0 || level >= levels.length || extraStyles.contains(level)) {
+      return -1;
+    }
+    extraStyles.add(level);
+    _changed();
+    return level;
+  }
+
+  /// A done level whose 3rd style is not available yet, chosen by [seed]
+  /// (deterministic), or null when there is none.
+  int? nextExtraStyleCandidate(int seed) {
+    final c = <int>[
+      for (final d in done)
+        if (!styleAvailable(d, 2)) d,
+    ]..sort();
+    if (c.isEmpty) {
+      return null;
+    }
+    return c[seed.abs() % c.length];
+  }
+
+  /// No interstitials and no banner: Remove ads or the Supporter Pack.
+  bool get noAds => adsRemoved || supporter;
+
+  /// Stores the entitlements reported by billing and saves when they changed.
+  void setEntitlements({required bool adsRemoved, required bool supporter}) {
+    if (this.adsRemoved == adsRemoved && this.supporter == supporter) {
+      return;
+    }
+    this.adsRemoved = adsRemoved;
+    this.supporter = supporter;
+    _changed();
+  }
+
+  /// True when enough levels are done for the bonus boxes.
+  bool get bonusUnlocked => done.length >= bonusUnlockLevels;
+
+  /// Counts a finished bonus box. Every [bonusStyleEvery]-th box unlocks the
+  /// 3rd style of a done piece ([nextExtraStyleCandidate] with the new count as
+  /// seed); returns that level index, or -1 when nothing was unlocked.
+  int completeBonus() {
+    bonusDone += 1;
+    var got = -1;
+    if (bonusDone % bonusStyleEvery == 0) {
+      final c = nextExtraStyleCandidate(bonusDone);
+      if (c != null) {
+        extraStyles.add(c);
+        got = c;
+      }
+    }
+    _changed();
+    return got;
+  }
+
+  /// The streak a rewarded streak save would keep, or 0 when no save is
+  /// possible. A save is possible when exactly one day was missed (the last
+  /// box was finished the day before yesterday), the streak was at least 2
+  /// and that last day was really played (not filled in by an earlier save).
+  int streakAtRisk(DateTime now) {
+    final last = daily.last;
+    if (last.isEmpty || daily.streak < 2) {
+      return 0;
+    }
+    final yesterday = _yesterdayString(now);
+    if (last != _dayBefore(yesterday)) {
+      return 0;
+    }
+    if (streakSaveDay.isNotEmpty && streakSaveDay == last) {
+      return 0;
+    }
+    return daily.streak;
+  }
+
+  /// After a rewarded ad: fills in the missed day (yesterday) so the streak
+  /// continues with today's box. The streak value and the box total stay as
+  /// they are. Returns false (and changes nothing) when no save is possible.
+  bool saveStreak(DateTime now) {
+    if (streakAtRisk(now) == 0) {
+      return false;
+    }
+    final yesterday = _yesterdayString(now);
+    daily.last = yesterday;
+    streakSaveDay = yesterday;
+    _changed();
+    return true;
+  }
+
+  void setVibration(bool value) {
+    vibration = value;
+    _changed();
+  }
+
+  void setReminderOn(bool value) {
+    reminderOn = value;
+    _changed();
+  }
+
+  void setReminderAsked(bool value) {
+    reminderAsked = value;
+    _changed();
+  }
+
+  void setReviewAsked(bool value) {
+    reviewAsked = value;
+    _changed();
+  }
+
+  void setInterstitialCounter(int value) {
+    interstitialCounter = value < 0 ? 0 : value;
+    _changed();
+  }
+
+  void setLastFullScreenAdMs(int value) {
+    lastFullScreenAdMs = value < 0 ? 0 : value;
     _changed();
   }
 
@@ -352,12 +581,16 @@ class Progress extends ChangeNotifier {
   }
 
   /// As the settings reset in the HTML: levels, styles and daily rewards start
-  /// over; language and sound stay.
+  /// over (also bonus boxes, unlocked 3rd styles and the streak save); language,
+  /// sound, the other settings, purchases and the ad pacing stay.
   void reset() {
     done = <int>{};
     styles = <int, int>{};
     daily = DailyState();
     level = 0;
+    extraStyles = <int>{};
+    bonusDone = 0;
+    streakSaveDay = '';
     _changed();
   }
 }
