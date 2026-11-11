@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    TODO(owner): REPLACE BEFORE EARNING MONEY.
+    This is Google's official TEST AdMob APP id (no revenue). Create the Tidy Nook app in AdMob and paste its
+    App ID here (the one with "~", e.g. ca-app-pub-1234567890123456~1234567890). See docs/MONETIZATION.md.
+    The three AD UNIT ids live in lib/monet/ads_config.dart.
+    Debug builds use src/debug/res/values/ads.xml (always the test id).
+    Source: https://developers.google.com/admob/android/test-ads
+    -->
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+</resources>

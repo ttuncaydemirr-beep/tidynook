@@ -4,14 +4,32 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase (Analytics + Crashlytics) is optional. google-services.json is NOT in the repository; CI writes it
+// from the GOOGLE_SERVICES_JSON secret when that is set. Without the file the plugins are not applied and the
+// app builds and runs without Firebase (the Dart side then turns telemetry off).
+val hasGoogleServices = file("google-services.json").exists()
+if (hasGoogleServices) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 android {
     namespace = "com.tidynook.tidy_nook"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
+    // The release "lintVital" check crashes inside plugin sources (in_app_purchase_android, seen in Arrowtile);
+    // it is not a code error, so it is skipped for release builds.
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications needs core library desugaring (java.time on older Android).
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -45,6 +63,9 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (hasUploadKey) {
                 signingConfig = signingConfigs.getByName("release")
             }
@@ -60,4 +81,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

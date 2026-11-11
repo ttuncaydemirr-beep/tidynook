@@ -32,6 +32,32 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
+      # Optional Firebase (Analytics + Crashlytics). The repository never contains google-services.json;
+      # when the GOOGLE_SERVICES_JSON secret is set, its full content is written here and the Gradle
+      # Firebase plugins are applied (android/app/build.gradle.kts). Without it the app builds without Firebase.
+      - name: Write google-services.json from secret
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "GOOGLE_SERVICES_JSON is not set: building without Firebase (analytics and crash reports off)."
+            exit 0
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          python3 - <<'PY'
+          import json, sys
+          try:
+              d = json.load(open("android/app/google-services.json"))
+          except Exception:
+              print("::error title=GOOGLE_SERVICES_JSON is not valid JSON::Paste the WHOLE google-services.json file (from { to }) into the secret.")
+              sys.exit(1)
+          names = [c.get("client_info", {}).get("android_client_info", {}).get("package_name", "") for c in d.get("client", [])]
+          if "com.tidynook.game" not in names:
+              print("::error title=Wrong package in google-services.json::Add an Android app with package name com.tidynook.game to the Firebase project and download the file again (found: " + ", ".join(names) + ").")
+              sys.exit(1)
+          print("google-services.json OK for com.tidynook.game")
+          PY
+
       - name: Get packages
         run: |
           mkdir -p "$RUNNER_TEMP/logs"
@@ -76,7 +102,8 @@ jobs:
         run: |
           # An unsigned release APK is named app-release-unsigned.apk by AGP; the Flutter tool may
           # report an error for it even though the file exists, so accept that case when the file is there.
-          if ! flutter build apk --release; then
+          flutter build apk --release 2>&1 | tee "$RUNNER_TEMP/logs/build-apk.txt"
+          if [ "${PIPESTATUS[0]}" != "0" ]; then
             if [ "${{ steps.key.outputs.signed }}" != "true" ] && find build/app/outputs -name '*.apk' | grep -q .; then
               echo "::warning::flutter build apk reported an error for the unsigned APK, but an APK was produced."
             else
@@ -90,7 +117,7 @@ jobs:
           if flutter build web -h 2>&1 | grep -q -- '--no-web-resources-cdn'; then
             FLAGS="--no-web-resources-cdn"
           fi
-          flutter build web --release $FLAGS
+          flutter build web --release $FLAGS 2>&1 | tee "$RUNNER_TEMP/logs/build-web.txt"; exit ${PIPESTATUS[0]}
 
       - name: Collect files
         run: |
@@ -118,9 +145,20 @@ jobs:
               echo "::warning::16 KB page alignment check failed (see the log)"
             fi
             grep -E '\.so|Verification' "$RUNNER_TEMP/zipalign.log" || tail -n 20 "$RUNNER_TEMP/zipalign.log"
+            cp "$RUNNER_TEMP/zipalign.log" "$RUNNER_TEMP/logs/zipalign.txt" || true
           else
             echo "::warning::This zipalign has no -P option, so the 16 KB check was skipped."
           fi
+
+      # Facts about the release APK for review: min/target SDK, permissions, native libraries.
+      - name: APK facts
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          BT=$(ls -d "$SDK"/build-tools/*/ 2>/dev/null | sort -V | tail -n 1)
+          {
+            echo "== badging"; "${BT}aapt2" dump badging out/app-release.apk 2>&1 | grep -E "^(package|sdkVersion|targetSdkVersion|uses-permission|native-code)" || true
+            echo "== native libraries"; unzip -l out/app-release.apk | grep -E '\.so$' || true
+          } | tee "$RUNNER_TEMP/logs/apk-info.txt"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -138,7 +176,12 @@ jobs:
           # main publishes "latest-build"; a team branch such as v11-a publishes "build-v11-a".
           if [ "$GITHUB_REF_NAME" = "main" ]; then TAG=latest-build; else TAG="build-$GITHUB_REF_NAME"; fi
           gh release delete "$TAG" --yes --cleanup-tag || true
-          gh release create "$TAG" out/app-release.aab out/app-release.apk out/web.zip \
+          EXTRA=""
+          # team branches also get the build logs (minSdk/compileSdk, plugin warnings, 16 KB check) for review
+          if [ "$GITHUB_REF_NAME" != "main" ]; then
+            for f in "$RUNNER_TEMP"/logs/*.txt; do [ -f "$f" ] && EXTRA="$EXTRA $f"; done
+          fi
+          gh release create "$TAG" out/app-release.aab out/app-release.apk out/web.zip $EXTRA \
             --target "$GITHUB_SHA" --prerelease --title "Build $GITHUB_REF_NAME" \
             --notes "Built from ${GITHUB_SHA::7}. ${FLUTTER_VER}. Signed: ${{ steps.key.outputs.signed }}."
 
