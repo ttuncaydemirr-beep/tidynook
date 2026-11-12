@@ -13,6 +13,7 @@ import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'effects.dart';
 import 'sounds.dart';
 import 'theme.dart';
+import 'widgets.dart' show handSvg;
 
 const double _bw = 360;
 const double _bh = 594;
@@ -21,7 +22,11 @@ const double _top = 40; // viewBox origin y
 /// Lets the play screen ask the board for a hint.
 class BoardController {
   VoidCallback? _hint;
+  bool Function()? _canHint;
   void hint() => _hint?.call();
+
+  /// A hint can be shown now (the box is not finished and an item is loose).
+  bool get canHint => _canHint?.call() ?? false;
 }
 
 class _Tw {
@@ -54,11 +59,19 @@ class BoardView extends StatefulWidget {
     required this.sounds,
     required this.onWin,
     required this.onCelebrate,
+    this.onSnap,
+    this.idleHint = false,
   });
 
   final Level level;
   final BoardController controller;
   final Sounds sounds;
+
+  /// An item snapped into its slot (haptic tick).
+  final VoidCallback? onSnap;
+
+  /// Level 1 only: after 5 s without a drag a soft hand shows one move.
+  final bool idleHint;
 
   /// The last item was placed (record progress).
   final VoidCallback onWin;
@@ -107,6 +120,12 @@ class _BoardViewState extends State<BoardView>
   int _hintSlot = -1;
   double _hintStart = 0;
 
+  // idle hint hand (level 1)
+  Timer? _idleTimer;
+  int _handItem = -1;
+  int _handSlot = -1;
+  double _handStart = 0;
+
   bool _won = false;
   bool _recorded = false;
   bool _reduce = false;
@@ -131,6 +150,7 @@ class _BoardViewState extends State<BoardView>
       _zFree.add(it.id);
     }
     widget.controller._hint = _hint;
+    widget.controller._canHint = _canHint;
   }
 
   @override
@@ -142,6 +162,8 @@ class _BoardViewState extends State<BoardView>
   @override
   void dispose() {
     widget.controller._hint = null;
+    widget.controller._canHint = null;
+    _idleTimer?.cancel();
     for (final t in _timers) {
       t.cancel();
     }
@@ -235,10 +257,16 @@ class _BoardViewState extends State<BoardView>
       }
     }
 
+    final handBusy = _handItem >= 0;
+
     if (mounted) {
       setState(() {});
     }
-    if (_tweens.isEmpty && _sparks.isEmpty && !lidBusy && !hintBusy) {
+    if (_tweens.isEmpty &&
+        _sparks.isEmpty &&
+        !lidBusy &&
+        !hintBusy &&
+        !handBusy) {
       _ticker.stop();
     }
   }
@@ -272,6 +300,86 @@ class _BoardViewState extends State<BoardView>
     _lidOpen = true;
     _setLid(true);
     widget.sounds.play('lid_open');
+    _armIdle();
+  }
+
+  // ------------------------------------------------------- idle hint hand
+
+  void _armIdle() {
+    _idleTimer?.cancel();
+    _idleTimer = null;
+    if (!widget.idleHint || _won) {
+      return;
+    }
+    _idleTimer = Timer(const Duration(seconds: 5), _showHand);
+  }
+
+  void _showHand() {
+    _idleTimer = null;
+    if (!mounted || _won || _dragId >= 0 || !_lidOpen) {
+      return;
+    }
+    final h = pickHint(_items, _slots, _rng);
+    if (h == null) {
+      return;
+    }
+    setState(() {
+      _handItem = h.item.id;
+      _handSlot = h.slot.id;
+      _handStart = _now;
+    });
+    _ensureTicker();
+  }
+
+  void _hideHand() {
+    _idleTimer?.cancel();
+    _idleTimer = null;
+    _handItem = -1;
+    _handSlot = -1;
+  }
+
+  /// Pulse of the target slot when animations are reduced (no moving hand).
+  double _handPulse(double now) {
+    final p = ((now - _handStart) % 1600) / 1600;
+    return 1 - .55 * math.sin(p * math.pi);
+  }
+
+  /// The moving hand: from the item to its slot, then a short pause.
+  Widget? _handLayer(double now) {
+    if (_handItem < 0 || _handSlot < 0 || _reduce) {
+      return null;
+    }
+    final it = _items[_handItem];
+    final sl = _slots[_handSlot].slot;
+    final t = (now - _handStart) % 2200;
+    double k;
+    double op;
+    if (t < 300) {
+      k = 0;
+      op = t / 300;
+    } else if (t < 1400) {
+      k = Curves.easeInOut.transform((t - 300) / 1100);
+      op = 1;
+    } else if (t < 1800) {
+      k = 1;
+      op = 1 - (t - 1400) / 400;
+    } else {
+      k = 0;
+      op = 0;
+    }
+    final x = it.x + (sl.x - it.x) * k;
+    final y = it.y + (sl.y - it.y) * k;
+    // finger tip of the hand art is at (12, 2) of its 36 x 40 box
+    return Positioned(
+      left: x - 12,
+      top: y - _top + 4,
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: op.clamp(0.0, 1.0),
+          child: SvgPicture.string(handSvg, width: 36, height: 40),
+        ),
+      ),
+    );
   }
 
   // ------------------------------------------------------------------ hint
@@ -281,10 +389,13 @@ class _BoardViewState extends State<BoardView>
     _hintSlot = -1;
   }
 
+  bool _canHint() => !_won && _items.any((i) => !i.placed);
+
   void _hint() {
     if (_won) {
       return;
     }
+    _hideHand();
     _clearHint();
     _openLid();
     final h = pickHint(_items, _slots, _rng);
@@ -361,7 +472,10 @@ class _BoardViewState extends State<BoardView>
         continue;
       }
       _clearHint();
+      _hideHand();
       _openLid();
+      _idleTimer?.cancel();
+      _idleTimer = null;
       _dragId = it.id;
       _dragPointer = e.pointer;
       _dx = bx - it.x;
@@ -397,6 +511,7 @@ class _BoardViewState extends State<BoardView>
     final it = _items[_dragId];
     _dragId = -1;
     _dragPointer = -1;
+    _armIdle();
     final best = findSnap(_slots, it.kind, it.x, it.y);
     if (best != null) {
       best.filled = true;
@@ -410,6 +525,9 @@ class _BoardViewState extends State<BoardView>
           s: 1.08,
           done: () => _tween(it, 160, s: 1));
       widget.sounds.play('place');
+      try {
+        widget.onSnap?.call();
+      } catch (_) {}
       _sparkle(best.slot.x, best.slot.y);
       if (_items.every((i) => i.placed)) {
         _recordWin();
@@ -446,6 +564,7 @@ class _BoardViewState extends State<BoardView>
     }
     _won = true;
     _clearHint();
+    _hideHand();
     _recordWin();
     setState(() {
       _lidText = false;
@@ -481,9 +600,10 @@ class _BoardViewState extends State<BoardView>
   }
 
   Widget _ghostFor(String kind) {
-    return _ghosts.putIfAbsent(kind, () {
+    final mystery = widget.level.mystery;
+    return _ghosts.putIfAbsent('$kind|$mystery', () {
       final box = itemBox(kind);
-      return SvgPicture.string(ghostSvg(kind),
+      return SvgPicture.string(ghostSvg(kind, mystery: mystery),
           width: box.width, height: box.height);
     });
   }
@@ -563,6 +683,8 @@ class _BoardViewState extends State<BoardView>
     }
 
     final glow = _hintSlot >= 0 ? _glow(now) : 1.0;
+    final pulse = _handSlot >= 0 && _reduce ? _handPulse(now) : 1.0;
+    final hand = _handLayer(now);
     final stack = <Widget>[
       Positioned(left: 0, top: 0, child: _bgWidget!),
       for (final s in _slots)
@@ -570,7 +692,9 @@ class _BoardViewState extends State<BoardView>
           left: s.slot.x + itemBox(s.slot.kind).left,
           top: s.slot.y - _top + itemBox(s.slot.kind).top,
           child: Opacity(
-            opacity: s.id == _hintSlot ? glow : 1.0,
+            opacity: s.id == _hintSlot
+                ? glow
+                : (s.id == _handSlot ? pulse : 1.0),
             child: _ghostFor(s.slot.kind),
           ),
         ),
@@ -601,6 +725,7 @@ class _BoardViewState extends State<BoardView>
         ),
       ),
       for (final id in _zFree) _itemLayer(_items[id], now),
+      if (hand != null) hand,
       Positioned.fill(
         child: IgnorePointer(
           child: CustomPaint(

@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:tidy_nook/game/content.dart';
 import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'package:tidy_nook/l10n/l10n_ext.dart';
+import 'package:tidy_nook/monet/ad_rules.dart' show kPlacementHint;
 
 import 'board.dart';
 import 'controller.dart';
+import 'rewarded.dart';
 import 'theme.dart';
 import 'widgets.dart';
 import 'win_card.dart';
@@ -25,10 +27,71 @@ class _PlayScreenState extends State<PlayScreen> {
   final BoardController _board = BoardController();
   bool _won = false;
   bool _card = false;
+  bool _hintBusy = false;
 
   GameController get _ctl => widget.controller;
 
+  /// Hint button: a free hint while today's last (or unlimited with Remove
+  /// ads), else the optional rewarded offer. The board is never blocked.
+  Future<void> _onHint() async {
+    if (_won || _hintBusy || !_board.canHint) {
+      return;
+    }
+    final p = _ctl.progress;
+    if (p.useFreeHint(DateTime.now())) {
+      _board.hint();
+      return;
+    }
+    final t = AppLocalizations.of(context);
+    final c = TidyColors.of(context);
+    _hintBusy = true;
+    bool ok;
+    try {
+      ok = await offerRewarded(
+        context,
+        _ctl.services,
+        placement: kPlacementHint,
+        text: t.hintAdText,
+        iconSvg: bulbSvg(c.accent),
+      );
+    } finally {
+      _hintBusy = false;
+    }
+    if (!ok || !mounted || _won) {
+      return;
+    }
+    p.grantHint();
+    if (p.useFreeHint(DateTime.now())) {
+      _board.hint();
+    }
+  }
+
+  Widget _hintBadge(TidyColors c, int left) {
+    return ExcludeSemantics(
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: c.accentInk,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          left < 0 ? '\u221E' : '$left',
+          style: tx(12, w: 800, color: c.accent, height: 1.2),
+        ),
+      ),
+    );
+  }
+
   String _eyebrow(BuildContext context, AppLocalizations t) {
+    final level = _ctl.current;
+    if (_ctl.isBonus) {
+      return level != null && level.mystery ? t.mysteryTip : t.bonusTitle;
+    }
+    if (!_ctl.isDaily && level != null && level.mystery) {
+      return t.mysteryTip;
+    }
     if (_ctl.isDaily) {
       final locale = Localizations.localeOf(context).toString();
       final now = DateTime.now();
@@ -51,12 +114,19 @@ class _PlayScreenState extends State<PlayScreen> {
     final ctl = _ctl;
     final p = ctl.progress;
     final daily = ctl.isDaily;
+    final bonus = ctl.isBonus;
     final i = ctl.levelIndex;
     final level = ctl.current!;
     final unlocked = p.unlocked;
 
-    final title = daily ? t.dailyTheme(ctl.dailyTheme) : t.levelName(i);
-    final note = !daily && i == 0 && !p.done.contains(0) ? t.tut : t.note;
+    final title = daily
+        ? t.dailyTheme(ctl.dailyTheme)
+        : (bonus ? t.bonusBoxN(ctl.bonusIndex + 1) : t.levelName(i));
+    final firstLevel = !daily && !bonus && i == 0 && !p.done.contains(0);
+    final note = firstLevel ? t.tut : t.note;
+    final left = p.hintsLeft(DateTime.now());
+    final hintSemantics =
+        '${t.hint}. ${left < 0 ? t.hintsUnlimited : t.hintsLeft(left)}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,18 +144,21 @@ class _PlayScreenState extends State<PlayScreen> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: TitleBlock(eyebrow: _eyebrow(context, t), title: title),
+              child: TitleBlock(
+                eyebrow: _eyebrow(context, t),
+                title: title,
+                eyebrowLines: level.mystery ? 2 : 1,
+                upper: !level.mystery,
+              ),
             ),
             const SizedBox(width: 10),
             PillButton(
               label: t.hint,
+              semanticLabel: hintSemantics,
               kind: PillKind.accent,
               icon: svgIcon(bulbSvg(c.accentInk), size: 16),
-              onTap: _won
-                  ? null
-                  : () {
-                      _board.hint();
-                    },
+              trailing: _hintBadge(c, left),
+              onTap: _won ? null : _onHint,
             ),
           ],
         ),
@@ -101,6 +174,8 @@ class _PlayScreenState extends State<PlayScreen> {
                       level: level,
                       controller: _board,
                       sounds: ctl.sounds,
+                      onSnap: ctl.services.haptics.tick,
+                      idleHint: firstLevel,
                       onWin: () {
                         ctl.recordWin();
                         setState(() => _won = true);
@@ -132,18 +207,19 @@ class _PlayScreenState extends State<PlayScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        _DotRow(
-          count: levels.length,
-          current: daily ? -1 : i,
-          itemBuilder: (n) => _Dot(
-            number: n + 1,
-            label: '${t.level} ${n + 1}',
-            done: p.done.contains(n),
-            current: n == i && !daily,
-            enabled: n <= unlocked,
-            onTap: () => ctl.buildLevel(n),
+        if (!bonus)
+          _DotRow(
+            count: levels.length,
+            current: daily ? -1 : i,
+            itemBuilder: (n) => _Dot(
+              number: n + 1,
+              label: '${t.level} ${n + 1}',
+              done: p.done.contains(n),
+              current: n == i && !daily,
+              enabled: n <= unlocked,
+              onTap: () => ctl.buildLevel(n),
+            ),
           ),
-        ),
         const SizedBox(height: 4),
         NoteText(note),
       ],

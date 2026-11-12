@@ -326,6 +326,10 @@
   "@owned": {
     "description": "Label on a purchase the player already owns"
   },
+  "buy": "Buy",
+  "@buy": {
+    "description": "Buy button when Google Play gave no price (offline)"
+  },
   "buyFor": "Buy for {price}",
   "@buyFor": {
     "description": "Buy button; price is the localized price from Google Play, e.g. $2.99",

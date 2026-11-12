@@ -154,6 +154,7 @@
   "purchaseFailed": "Der Kauf ist nicht zustande gekommen.",
   "purchasesRestored": "Käufe wiederhergestellt.",
   "owned": "Gekauft",
+  "buy": "Kaufen",
   "buyFor": "Für {price} kaufen",
   "privacyChoices": "Datenschutzoptionen",
   "vibration": "Vibration",

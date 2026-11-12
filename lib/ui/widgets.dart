@@ -47,6 +47,36 @@ String weekCheckSvg(Color c) =>
     '<svg $_ns width="12" height="12" viewBox="0 0 12 12">'
     '<path d="M2.5 6.2l2.3 2.3 4.7-4.8" stroke="${hexOf(c)}" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
 
+String lockSvg(Color c) =>
+    '<svg $_ns width="16" height="16" viewBox="0 0 16 16">'
+    '<path d="M5 7V5.2a3 3 0 0 1 6 0V7" stroke="${hexOf(c)}" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+    '<rect x="3" y="7" width="10" height="7.5" rx="2" fill="${hexOf(c)}"/></svg>';
+
+String giftSvg(Color c, Color ribbon) =>
+    '<svg $_ns width="20" height="20" viewBox="0 0 20 20">'
+    '<rect x="3" y="8" width="14" height="9.5" rx="2" fill="${hexOf(c)}"/>'
+    '<rect x="2" y="5.5" width="16" height="4" rx="1.5" fill="${hexOf(c)}"/>'
+    '<rect x="9" y="5.5" width="2" height="12" fill="${hexOf(ribbon)}"/>'
+    '<path d="M10 5.5C8.5 2.5 5 2.5 6 4.5c.6 1 2.6 1.2 4 1zm0 0c1.5-3 5-3 4-1-.6 1-2.6 1.2-4 1z" fill="${hexOf(c)}"/></svg>';
+
+String flameSvg(Color c) =>
+    '<svg $_ns width="16" height="16" viewBox="0 0 16 16">'
+    '<path d="M8 1.5c.6 2.6 4.5 4.2 4.5 8A4.5 4.5 0 0 1 3.5 9.5c0-2 1.2-3.2 2-4 .2 1.4.9 2.3 1.6 2.6C6.6 5.6 7 3.4 8 1.5Z" fill="${hexOf(c)}"/></svg>';
+
+/// A soft pointing hand (idle hint on level 1). Finger tip at (12, 2).
+const String handSvg =
+    '<svg $_ns width="36" height="40" viewBox="0 0 36 40">'
+    '<path d="M12 2.5c-1.9 0-3 1.4-3 3.2V21l-2.3-2.4c-1.4-1.4-3.6-1.3-4.7.2-.9 1.2-.7 2.8.3 4l7.2 8.7C11.4 34 13.6 36 17.4 36h6.1c4.6 0 8-3.6 8-8.2V17.6c0-1.7-1.3-3-2.9-3-.9 0-1.6.4-2.1 1V15c0-1.7-1.3-3-2.9-3-.9 0-1.7.4-2.2 1.1-.4-1.3-1.5-2.1-2.8-2.1-.6 0-1.1.2-1.6.5V5.7c0-1.8-1.1-3.2-3-3.2Z" '
+    'fill="#FFFFFF" stroke="#2E2638" stroke-width="2.4" stroke-linejoin="round"/>'
+    '<path d="M15 19v-5M20 19v-4.5M25 19.5v-3" stroke="#2E2638" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+const String bonusBoxSvg =
+    '<svg $_ns width="40" height="40" viewBox="0 0 40 40">'
+    '<rect x="4" y="14" width="32" height="22" rx="4" fill="#7FB89C"/>'
+    '<rect x="2" y="9" width="36" height="9" rx="3" fill="#A6D3BC"/>'
+    '<rect x="17" y="9" width="6" height="27" fill="#F2C14E"/>'
+    '<path d="M20 3l1.6 3.3 3.6.5-2.6 2.5.6 3.6L20 11.2l-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#F2C14E" stroke="#B07D2A" stroke-width=".8"/></svg>';
+
 const String dailyBoxSvg =
     '<svg $_ns width="40" height="40" viewBox="0 0 40 40">'
     '<rect x="4" y="14" width="32" height="22" rx="4" fill="#E8A86E"/>'
@@ -123,6 +153,8 @@ class PillButton extends StatelessWidget {
     this.small = false,
     this.icon,
     this.minWidth,
+    this.trailing,
+    this.semanticLabel,
   });
 
   final String label;
@@ -132,6 +164,12 @@ class PillButton extends StatelessWidget {
   final Widget? icon;
   final double? minWidth;
 
+  /// Shown after the label (e.g. the hint counter badge).
+  final Widget? trailing;
+
+  /// Screen reader label when it should say more than [label].
+  final String? semanticLabel;
+
   @override
   Widget build(BuildContext context) {
     final c = TidyColors.of(context);
@@ -140,8 +178,8 @@ class PillButton extends StatelessWidget {
     Color? border;
     switch (kind) {
       case PillKind.primary:
-        bg = c.fg;
-        fg = c.bg;
+        bg = c.accent;
+        fg = c.accentInk;
         border = null;
       case PillKind.secondary:
         bg = Colors.transparent;
@@ -167,7 +205,8 @@ class PillButton extends StatelessWidget {
             : BorderSide(color: border, width: 1.5));
     return Semantics(
       button: true,
-      label: label,
+      enabled: onTap != null,
+      label: semanticLabel ?? label,
       excludeSemantics: true,
       onTap: onTap,
       child: Material(
@@ -197,6 +236,10 @@ class PillButton extends StatelessWidget {
                       style: tx(fs, w: 700, color: fg),
                     ),
                   ),
+                  if (trailing != null) ...<Widget>[
+                    const SizedBox(width: 6),
+                    trailing!,
+                  ],
                 ],
               ),
             ),
@@ -257,9 +300,21 @@ class NoteText extends StatelessWidget {
 
 /// eyebrow + h1 pair used by both screens.
 class TitleBlock extends StatelessWidget {
-  const TitleBlock({super.key, required this.eyebrow, required this.title});
+  const TitleBlock({
+    super.key,
+    required this.eyebrow,
+    required this.title,
+    this.eyebrowLines = 1,
+    this.upper = true,
+  });
   final String eyebrow;
   final String title;
+
+  /// Lines the eyebrow may use (2 for the longer mystery tip).
+  final int eyebrowLines;
+
+  /// Upper-case the eyebrow (never for Turkish or Arabic, see [upperFor]).
+  final bool upper;
 
   @override
   Widget build(BuildContext context) {
@@ -271,13 +326,13 @@ class TitleBlock extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          upperFor(eyebrow, lang),
-          maxLines: 1,
+          upper ? upperFor(eyebrow, lang) : eyebrow,
+          maxLines: eyebrowLines,
           overflow: TextOverflow.ellipsis,
           style: tx(12,
               w: 700,
               color: c.accent,
-              letterSpacing: lang == 'ar' ? 0 : 12 * 0.08),
+              letterSpacing: (upper && lang != 'ar' && lang != 'tr') ? 12 * 0.08 : 0),
         ),
         FittedBox(
           fit: BoxFit.scaleDown,

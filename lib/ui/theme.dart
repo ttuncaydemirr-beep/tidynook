@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Colour tokens copied from the CSS custom properties of the HTML game.
+/// Colour tokens. Visual identity "Butter & Sage" (owner-approved, 2026-11-12):
+/// cream page, terracotta primary/accent, sage secondary, warm brown text.
+/// Every text/background pair is measured for WCAG AA (see the C report).
 class TidyColors extends ThemeExtension<TidyColors> {
   const TidyColors({
     required this.dark,
@@ -18,26 +20,46 @@ class TidyColors extends ThemeExtension<TidyColors> {
     required this.houseLine,
     required this.danger,
     required this.scrim,
+    required this.toggleOff,
     required this.matCss,
     required this.stitchCss,
     required this.houseLineCss,
   });
 
   final bool dark;
+
+  /// Page background.
   final Color bg;
+
+  /// Main text.
   final Color fg;
+
+  /// Secondary text (>= 4.5:1 on bg and surface).
   final Color muted;
+
+  /// Cards and sheets.
   final Color surface;
+
+  /// Rug under the loose items.
   final Color mat;
   final Color stitch;
+
+  /// Decorative hairlines (never the only cue).
   final Color line;
+
+  /// Terracotta: buttons, active dots, links, eyebrows.
   final Color accent;
   final Color accentInk;
+
+  /// Sage: success, checks, toggles.
   final Color mint;
   final Color mintInk;
   final Color houseLine;
   final Color danger;
   final Color scrim;
+
+  /// Track of a switch that is off (>= 3:1 on surface).
+  final Color toggleOff;
 
   /// Strings handed to the SVG builders of the game layer.
   final String matCss;
@@ -46,44 +68,46 @@ class TidyColors extends ThemeExtension<TidyColors> {
 
   static const TidyColors light = TidyColors(
     dark: false,
-    bg: Color(0xFFF4EFF7),
-    fg: Color(0xFF352D40),
-    muted: Color(0xFF6B6178),
-    surface: Color(0xFFFFFFFF),
-    mat: Color(0xFFB3A5C6),
+    bg: Color(0xFFFFF6E5),
+    fg: Color(0xFF3B2A20),
+    muted: Color(0xFF6B5547),
+    surface: Color(0xFFFFFCF6),
+    mat: Color(0xFFCDBB9F),
     stitch: Color.fromRGBO(255, 255, 255, .55),
-    line: Color(0xFFDCD2E5),
-    accent: Color(0xFFA8456A),
+    line: Color(0xFFEADBC4),
+    accent: Color(0xFFB5452B),
     accentInk: Color(0xFFFFFFFF),
-    mint: Color(0xFF7FC4AA),
-    mintInk: Color(0xFF173A2E),
-    houseLine: Color(0xFF3A3046),
-    danger: Color(0xFFB23A55),
-    scrim: Color.fromRGBO(30, 20, 40, .45),
-    matCss: '#B3A5C6',
+    mint: Color(0xFF2A8363),
+    mintInk: Color(0xFFFFFFFF),
+    houseLine: Color(0xFF3A2A20),
+    danger: Color(0xFFA3302E),
+    scrim: Color.fromRGBO(40, 25, 15, .45),
+    toggleOff: Color(0xFF9A8676),
+    matCss: '#CDBB9F',
     stitchCss: 'rgba(255,255,255,.55)',
-    houseLineCss: '#3A3046',
+    houseLineCss: '#3A2A20',
   );
 
   static const TidyColors night = TidyColors(
     dark: true,
-    bg: Color(0xFF1F1A26),
-    fg: Color(0xFFF1EAF6),
-    muted: Color(0xFFA89DB4),
-    surface: Color(0xFF2B2433),
-    mat: Color(0xFF4A3F58),
+    bg: Color(0xFF1E1712),
+    fg: Color(0xFFF6EBDD),
+    muted: Color(0xFFC2B09E),
+    surface: Color(0xFF2A211B),
+    mat: Color(0xFF4D4036),
     stitch: Color.fromRGBO(255, 255, 255, .22),
-    line: Color(0xFF3C3447),
-    accent: Color(0xFFEC8FAD),
-    accentInk: Color(0xFF2A1720),
-    mint: Color(0xFF86CDB3),
-    mintInk: Color(0xFF123026),
-    houseLine: Color(0xFF0F0C14),
-    danger: Color(0xFFF08AA0),
+    line: Color(0xFF45372C),
+    accent: Color(0xFFE8866A),
+    accentInk: Color(0xFF2A120B),
+    mint: Color(0xFF62C29E),
+    mintInk: Color(0xFF0E2A1F),
+    houseLine: Color(0xFF120D0A),
+    danger: Color(0xFFF2958A),
     scrim: Color.fromRGBO(0, 0, 0, .6),
-    matCss: '#4A3F58',
+    toggleOff: Color(0xFF85735F),
+    matCss: '#4D4036',
     stitchCss: 'rgba(255,255,255,.22)',
-    houseLineCss: '#0F0C14',
+    houseLineCss: '#120D0A',
   );
 
   static TidyColors of(BuildContext context) =>
@@ -122,6 +146,12 @@ ThemeData buildTheme(Brightness brightness) {
     canvasColor: c.bg,
     fontFamily: 'Baloo',
     splashFactory: InkRipple.splashFactory,
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: c.fg,
+      contentTextStyle: tx(15, w: 700, color: c.bg),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
     extensions: <ThemeExtension<dynamic>>[c],
   );
 }
@@ -156,10 +186,12 @@ String hexOf(Color c) {
   return '#${v.toRadixString(16).padLeft(6, '0')}';
 }
 
-/// Upper-case like CSS text-transform does for the given language.
+/// Upper-case for the small eyebrow labels. Turkish text is never
+/// upper-cased (owner rule: no toUpperCase() on Turkish, the dotted and
+/// dotless i break), and Arabic has no case: both are returned unchanged.
 String upperFor(String s, String lang) {
-  if (lang == 'tr') {
-    return s.replaceAll('i', 'İ').replaceAll('ı', 'I').toUpperCase();
+  if (lang == 'tr' || lang == 'ar') {
+    return s;
   }
   return s.toUpperCase();
 }

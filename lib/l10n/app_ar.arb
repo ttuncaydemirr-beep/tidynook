@@ -154,6 +154,7 @@
   "purchaseFailed": "لم تكتمل عملية الشراء.",
   "purchasesRestored": "تمت استعادة المشتريات.",
   "owned": "تم الشراء",
+  "buy": "شراء",
   "buyFor": "اشترِ بـ {price}",
   "privacyChoices": "خيارات الخصوصية",
   "vibration": "الاهتزاز",

@@ -154,6 +154,7 @@
   "purchaseFailed": "Satın alma tamamlanamadı.",
   "purchasesRestored": "Satın alımlar geri yüklendi.",
   "owned": "Satın alındı",
+  "buy": "Satın al",
   "buyFor": "{price} karşılığında al",
   "privacyChoices": "Gizlilik tercihleri",
   "vibration": "Titreşim",
