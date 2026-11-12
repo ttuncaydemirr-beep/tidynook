@@ -156,7 +156,7 @@ jobs:
           SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           BT=$(ls -d "$SDK"/build-tools/*/ 2>/dev/null | sort -V | tail -n 1)
           {
-            echo "== badging"; "${BT}aapt2" dump badging out/app-release.apk 2>&1 | grep -E "^(package|sdkVersion|targetSdkVersion|uses-permission|native-code)" || true
+            echo "== badging"; "${BT}aapt2" dump badging out/app-release.apk 2>&1 | grep -E "^(package|sdkVersion|minSdkVersion|targetSdkVersion|uses-permission|native-code)" || true
             echo "== native libraries"; unzip -l out/app-release.apk | grep -E '\.so$' || true
           } | tee "$RUNNER_TEMP/logs/apk-info.txt"
 

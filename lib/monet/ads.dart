@@ -335,9 +335,9 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
 
   // ------------------------------------------------------------------ lifecycle
   @override
-  void didChangeAppLifecycleState(AppLifecycleState st) {
+  void didChangeAppLifecycleState(AppLifecycleState state) {
     final h = _hold;
-    if (st == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed) {
       consent.retryPending();
       if (h != null && (h.wentHard || (h.wentAway && h.onScreen))) {
         h.wentAway = false;
@@ -364,7 +364,7 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
     }
     // The AdMob activity is translucent: often only "inactive" arrives while it is open.
     h.wentAway = true;
-    if (st == AppLifecycleState.paused || st == AppLifecycleState.hidden) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       h.wentHard = true;
     }
     h.grace?.cancel();

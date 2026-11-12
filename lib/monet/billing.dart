@@ -324,7 +324,7 @@ class Billing {
       _emit(PurchaseEventKind.failed, id);
     }
 
-    if (isRestoreAnswer && rc != null) {
+    if (isRestoreAnswer) {
       _restore = null;
       rc.complete(bought.isNotEmpty);
     }
