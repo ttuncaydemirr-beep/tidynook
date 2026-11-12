@@ -92,10 +92,10 @@ const List<Room> rooms = <Room>[
   Room(180, 260, '#CFE8E3', '#5E8C93'),
   Room(30, -60, '#FFF0C9', '#C98F6B'),
   Room(180, -60, '#E6DDF3', '#8A7AA8'),
-  Room(30, -220, '#F4E4D2', '#A88464'),
-  Room(180, -220, '#DCE8D8', '#9C7A5C'),
-  Room(30, 436, '#CFE6F5', '#CDBDA4'),
-  Room(180, 436, '#D4EBF7', '#8CC084'),
+  Room(30, -220, '#FFF6E5', '#C98A6E'),
+  Room(180, -220, '#E4F0E7', '#B98E6A'),
+  Room(30, 436, '#DCEEEA', '#D9A48A'),
+  Room(180, 436, '#E2F1EC', '#8DBE9C'),
 ];
 
 /// Rooms of the attic floor and of the garden strip.
@@ -590,20 +590,20 @@ String _roomBackdrop(int ri) {
         return b.toString();
     }
     case 6:
-      return '<polygon points="0,0 56,0 0,56" fill="#E6D2BC"/>'
-          '<path d="M0 56 L56 0" stroke="#C9AE92" stroke-width="4"/>'
-          '<circle cx="104" cy="30" r="12" fill="#CFE6F5" stroke="#C9AE92" stroke-width="3"/>'
-          '<path d="M104 18V42M92 30H116" stroke="#C9AE92" stroke-width="2"/>';
+      return '<polygon points="0,0 56,0 0,56" fill="#F3E3C6"/>'
+          '<path d="M0 56 L56 0" stroke="#D9B98F" stroke-width="4"/>'
+          '<circle cx="104" cy="30" r="12" fill="#DCEEF2" stroke="#D9B98F" stroke-width="3"/>'
+          '<path d="M104 18V42M92 30H116" stroke="#D9B98F" stroke-width="2"/>';
     case 7:
-      return '<polygon points="94,0 150,0 150,56" fill="#C6D9C0"/>'
-          '<path d="M94 0 L150 56" stroke="#A9BFA2" stroke-width="4"/>';
+      return '<polygon points="94,0 150,0 150,56" fill="#CFE3D5"/>'
+          '<path d="M94 0 L150 56" stroke="#A3C6AE" stroke-width="4"/>';
     case 8: {
         final b = StringBuffer()
           ..write('<ellipse cx="44" cy="60" rx="15" ry="6" fill="#FFFFFF" opacity=".85"/>')
           ..write('<ellipse cx="54" cy="55" rx="10" ry="7" fill="#FFFFFF" opacity=".85"/>')
-          ..write('<rect x="0" y="106" width="150" height="32" fill="#8FC27E"/>');
+          ..write('<rect x="0" y="106" width="150" height="32" fill="#7DB592"/>');
         for (var x = 9; x < 150; x += 16) {
-          b.write('<circle cx="$x" cy="107" r="9" fill="#8FC27E"/>');
+          b.write('<circle cx="$x" cy="107" r="9" fill="#7DB592"/>');
         }
         b.write('<circle cx="30" cy="114" r="1.8" fill="#F4A7B9"/>'
             '<circle cx="98" cy="112" r="1.8" fill="#FFFFFF"/>'
@@ -638,10 +638,10 @@ String _floorDetail(int ri) {
         return b.toString();
     }
     case 9:
-      return '<polygon points="10,146 13,140 16,146" fill="#74AC6C"/>'
-          '<polygon points="52,152 55,146 58,152" fill="#74AC6C"/>'
-          '<polygon points="96,145 99,139 102,145" fill="#74AC6C"/>'
-          '<polygon points="132,153 135,147 138,153" fill="#74AC6C"/>';
+      return '<polygon points="10,146 13,140 16,146" fill="#6EA585"/>'
+          '<polygon points="52,152 55,146 58,152" fill="#6EA585"/>'
+          '<polygon points="96,145 99,139 102,145" fill="#6EA585"/>'
+          '<polygon points="132,153 135,147 138,153" fill="#6EA585"/>';
     default:
       return '';
   }
