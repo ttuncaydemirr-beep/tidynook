@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:tidy_nook/monet/billing.dart';
 import 'package:tidy_nook/monet/consent.dart';
+import 'package:flutter/foundation.dart';
 import 'package:tidy_nook/services/haptics.dart';
+import 'package:tidy_nook/services/licenses.dart';
 import 'package:tidy_nook/services/reminder.dart';
 import 'package:tidy_nook/services/review.dart';
 import 'package:tidy_nook/services/telemetry.dart';
@@ -213,5 +215,15 @@ void main() {
     h.success();
     Haptics.debugSink = null;
     expect(ticks, <String>['tick', 'success']);
+  });
+
+  testWidgets('the font license is registered once and readable', (WidgetTester tester) async {
+    registerFontLicense();
+    registerFontLicense();
+    final entries = await tester.runAsync(() => LicenseRegistry.licenses.toList());
+    final baloo = entries!.where((e) => e.packages.contains('Baloo Bhaijaan 2')).toList();
+    expect(baloo.length, 1);
+    final text = baloo.first.paragraphs.map((p) => p.text).join(' ');
+    expect(text, contains('Open Font License'));
   });
 }

@@ -31,8 +31,8 @@ class AdsConfig {
       kReleaseMode &&
       (isTestUnit(releaseInterstitialId) || isTestUnit(releaseRewardedId));
 
-  /// Single switch for interstitials. The owner has not yet decided whether this calm game shows
-  /// interstitials at all; false turns them off everywhere (boxes are still counted, rewarded ads stay).
+  /// Single switch for interstitials. ON: the owner approved the capped rules (2026-11-12).
+  /// false turns them off everywhere (boxes are still counted, rewarded ads stay).
   static const bool interstitialsEnabled = true;
 
   /// Highest ad content rating for every ad request (rewarded and interstitial): "T" (teen), matching the

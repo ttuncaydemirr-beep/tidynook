@@ -38,6 +38,7 @@ flutter:
   generate: true
   assets:
     - assets/sounds/
+    - assets/fonts/OFL.txt # Baloo Bhaijaan 2 license, shown via lib/services/licenses.dart
   fonts:
     - family: Baloo
       fonts:

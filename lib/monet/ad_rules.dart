@@ -171,8 +171,19 @@ int freeHintsLeft({required String usedDay, required int usedCount, required Str
   return left < 0 ? 0 : left;
 }
 
-HintOffer hintOffer({required String usedDay, required int usedCount, required String today}) =>
-    freeHintsLeft(usedDay: usedDay, usedCount: usedCount, today: today) > 0 ? HintOffer.free : HintOffer.rewarded;
+/// [adsRemoved] (remove_ads or supporter_pack): unlimited free hints (owner decision 2026-11-12).
+/// The day resets at local midnight because [today] is the local dayString.
+HintOffer hintOffer({
+  required String usedDay,
+  required int usedCount,
+  required String today,
+  bool adsRemoved = false,
+}) {
+  if (adsRemoved) {
+    return HintOffer.free;
+  }
+  return freeHintsLeft(usedDay: usedDay, usedCount: usedCount, today: today) > 0 ? HintOffer.free : HintOffer.rewarded;
+}
 
 /// The stored values after one free hint was given [today]. A hint earned by a rewarded ad does NOT
 /// call this (it does not use up a free hint).

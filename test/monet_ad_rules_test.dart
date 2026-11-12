@@ -186,6 +186,11 @@ void main() {
       expect(recordFreeHint(usedDay: today, usedCount: 99, today: today).count, kFreeHintsPerDay);
     });
 
+    test('remove_ads gives unlimited free hints', () {
+      expect(hintOffer(usedDay: today, usedCount: 50, today: today, adsRemoved: true), HintOffer.free);
+      expect(hintOffer(usedDay: today, usedCount: 50, today: today), HintOffer.rewarded);
+    });
+
     test('placement names', () {
       expect(<String>{kPlacementHint, kPlacementSurpriseBox, kPlacementStreakSave},
           <String>{'hint', 'surprise_box', 'streak_save'});

@@ -12,7 +12,7 @@ Part 3 is the ad formats decision summary.
 
 **Banner: none, per the owner's Banner Decisions doc.** Tidy Nook requests no banner ads and has no banner
 widget or banner ad unit. Ads are: optional rewarded ads (main spot: the hint button) and interstitials between
-boxes behind one switch (`AdsConfig.interstitialsEnabled`, default true until the owner decides).
+boxes with the capped rules (owner approved; one switch `AdsConfig.interstitialsEnabled = true`).
 
 ---
 
@@ -31,6 +31,7 @@ boxes behind one switch (`AdsConfig.interstitialsEnabled`, default true until th
 | `lib/services/haptics.dart` | `Haptics.tick()` on snap, honouring Settings > Vibration. |
 | `lib/services/review.dart` | `ReviewPrompt.maybeAsk(...)`: Play in-app review, once. |
 | `lib/services/reminder.dart` | `Reminder`: daily 19:00 local notification for the next 7 evenings. |
+| `lib/services/licenses.dart` | `registerFontLicense()`: adds the Baloo Bhaijaan 2 OFL text (`assets/fonts/OFL.txt`, listed in pubspec) to Flutter's LicenseRegistry. Call once in `main()` before `runApp`. |
 | `lib/services/telemetry.dart` | `Telemetry`: Firebase Analytics + Crashlytics; no-op without `google-services.json`. |
 
 ### Public API (signatures)
@@ -43,7 +44,7 @@ const String kPlacementHint = 'hint', kPlacementSurpriseBox = 'surprise_box', kP
 const int kFreeHintsPerDay = 3;
 enum HintOffer { free, rewarded }
 int freeHintsLeft({required String usedDay, required int usedCount, required String today});
-HintOffer hintOffer({required String usedDay, required int usedCount, required String today});
+HintOffer hintOffer({required String usedDay, required int usedCount, required String today, bool adsRemoved = false});
 ({String day, int count}) recordFreeHint({required String usedDay, required int usedCount, required String today});
 bool shouldShowInterstitial({required int completedLevelIndex, required bool isDaily, required int counter,
                              required int lastAdMs, required int nowMs, required bool adsRemoved});
@@ -88,6 +89,7 @@ class Billing {
 }
 
 // lib/services/*
+void registerFontLicense();   // lib/services/licenses.dart, call in main() before runApp
 class Haptics { Haptics({bool Function()? enabled}); void tick(); void success(); }
 class ReviewPrompt { Future<bool> maybeAsk({required bool alreadyAsked, required int completedLevels,
                      required int lastFullScreenAdMs, required VoidCallback markAsked, int? nowMs}); }
@@ -180,7 +182,7 @@ consent form). Also call `consent.retryPending()` when the player leaves a level
    `hintsUsed`; A's Progress does not have them yet, so phase 2 must add them). On tap:
    ```dart
    final today = dayString(DateTime.now());
-   switch (hintOffer(usedDay: p.hintDay, usedCount: p.hintsUsed, today: today)) {
+   switch (hintOffer(usedDay: p.hintDay, usedCount: p.hintsUsed, today: today, adsRemoved: p.adsRemoved)) {
      case HintOffer.free:
        final r = recordFreeHint(usedDay: p.hintDay, usedCount: p.hintsUsed, today: today);
        p.setHintUse(r.day, r.count);  showHint();
@@ -190,6 +192,8 @@ consent form). Also call `consent.retryPending()` when the player leaves a level
        if (await ads.showRewarded(kPlacementHint)) showHint();   // does NOT use up a free hint
    }
    ```
+   Owner decision: 3 free hints per local day (reset at local midnight), then an optional rewarded ad for one
+   more hint; remove_ads / supporter_pack = unlimited free hints (pass `adsRemoved`; skip `recordFreeHint` then).
    Show the number of free hints left on the button (`freeHintsLeft(...)`); needs new ARB texts (team B).
    **Rewarded (surprise box, streak save)**: always show the "Watch ad" / "No thanks" choice. On "Watch ad":
    ```dart
@@ -230,7 +234,7 @@ In `flutter test` nothing touches a plugin: `Ads(state: MemoryAdsState())`, `Bil
 
 ### Ad settings that matter for policy
 
-- `AdsConfig.interstitialsEnabled` (default `true`): one switch for all interstitials. With `false`,
+- `AdsConfig.interstitialsEnabled` (`true`, owner approved): one switch for all interstitials. With `false`,
   `maybeInterstitial` never shows anything (it still counts boxes); rewarded ads are unaffected.
 - Every ad request (rewarded and interstitial) uses `RequestConfiguration(maxAdContentRating: 'T')`: teen-rated
   content at most, matching the 13+ target audience in Play Console. `tagForChildDirectedTreatment` and
@@ -353,5 +357,5 @@ arrives at 19:00 (Android 13+ asks for permission first).
 | --- | --- | --- |
 | Banner | nowhere | **None, per the owner's Banner Decisions doc** (no widget, no ad unit, no request). |
 | Rewarded | hint button after the free hints of the day (`kFreeHintsPerDay` = 3), surprise box, streak save | On; always optional ("Watch ad" / "No thanks"); max content rating T. |
-| Interstitial | only when leaving a win card; rules in `ad_rules.dart` | Behind `AdsConfig.interstitialsEnabled` (default true) until the owner decides; never waits for a load. |
+| Interstitial | only when leaving a win card; rules in `ad_rules.dart` | ON (owner approved the capped rules); one switch `AdsConfig.interstitialsEnabled`; never waits for a load. |
 | Purchases | `remove_ads`, `supporter_pack` | On (Play Billing). |
