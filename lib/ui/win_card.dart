@@ -34,14 +34,14 @@ class _WinCardState extends State<WinCard> {
   GameController get controller => widget.controller;
 
   /// Next / See house. Double taps are ignored; there is never a spinner.
-  Future<void> _leave({required bool next}) async {
+  Future<void> _leave({required bool next, bool toBonus = false}) async {
     if (_leaving) {
       return;
     }
     _leaving = true;
     controller.sounds.play('pick');
     try {
-      await controller.leaveWin(next: next);
+      await controller.leaveWin(next: next, toBonus: toBonus);
     } finally {
       if (mounted) {
         _leaving = false;
@@ -323,6 +323,14 @@ class _WinCardState extends State<WinCard> {
                   PillButton(
                     label: t.next,
                     onTap: () => unawaited(_leave(next: true)),
+                  )
+                else if (!daily && p.bonusUnlocked)
+                  // All 30 done: replaying a level has no "Next", so offer
+                  // the next bonus box instead.
+                  PillButton(
+                    label: t.bonusBoxN(p.bonusDone + 1),
+                    onTap: () =>
+                        unawaited(_leave(next: false, toBonus: true)),
                   ),
               ],
             ),

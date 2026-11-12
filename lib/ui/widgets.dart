@@ -304,13 +304,13 @@ class TitleBlock extends StatelessWidget {
     super.key,
     required this.eyebrow,
     required this.title,
-    this.eyebrowLines = 1,
+    this.eyebrowLines = 2,
     this.upper = true,
   });
   final String eyebrow;
   final String title;
 
-  /// Lines the eyebrow may use (2 for the longer mystery tip).
+  /// Lines the eyebrow may wrap to (3, at a smaller size, for the mystery tip).
   final int eyebrowLines;
 
   /// Upper-case the eyebrow (never for Turkish or Arabic, see [upperFor]).
@@ -328,8 +328,8 @@ class TitleBlock extends StatelessWidget {
         Text(
           upper ? upperFor(eyebrow, lang) : eyebrow,
           maxLines: eyebrowLines,
-          overflow: TextOverflow.ellipsis,
-          style: tx(12,
+          overflow: TextOverflow.fade,
+          style: tx(eyebrowLines > 2 ? 11 : 12,
               w: 700,
               color: c.accent,
               letterSpacing: (upper && lang != 'ar' && lang != 'tr') ? 12 * 0.08 : 0),

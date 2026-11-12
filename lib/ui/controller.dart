@@ -211,7 +211,7 @@ class GameController extends ChangeNotifier {
   /// The ONLY place an interstitial may appear: after a regular level or a
   /// bonus box, never after the daily box. Never waits for a load: when no
   /// ad is ready it returns at once and the game continues.
-  Future<void> leaveWin({required bool next}) async {
+  Future<void> leaveWin({required bool next, bool toBonus = false}) async {
     if (_leaving) {
       return;
     }
@@ -234,7 +234,9 @@ class GameController extends ChangeNotifier {
     if (serial != playSerial || screen != AppScreen.play) {
       return; // the player already went somewhere else
     }
-    if (next && bonus) {
+    if (toBonus && !daily) {
+      startBonus();
+    } else if (next && bonus) {
       startBonus();
     } else if (next && !daily) {
       playNext();

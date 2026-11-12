@@ -165,6 +165,24 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('rapid hint taps use only one free hint while it plays',
+      (WidgetTester tester) async {
+    final progress = Progress(lang: 'en');
+    await _pumpApp(tester, progress);
+
+    await tester.tap(find.text('Hint'));
+    await tester.pump();
+    await tester.tap(find.text('Hint'));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.tap(find.text('Hint'));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(progress.hintsLeft(DateTime.now()), 2);
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('bonus card is locked before 12 levels',
       (WidgetTester tester) async {
     final progress = Progress(lang: 'en', done: <int>{0, 1, 2});

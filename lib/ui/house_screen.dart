@@ -629,7 +629,7 @@ class _BonusCard extends StatelessWidget {
     final hasCandidate = p.nextExtraStyleCandidate(0) != null;
     final sub = hasCandidate
         ? t.bonusProgress(p.bonusDone % bonusStyleEvery, bonusStyleEvery)
-        : t.bonusTitle;
+        : t.allRewards;
     final title = t.bonusBoxN(p.bonusDone + 1);
     return _CardFrame(
       semanticsLabel: '$title. $sub. ${t.bonusPlay}',

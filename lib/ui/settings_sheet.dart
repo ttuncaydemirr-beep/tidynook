@@ -71,6 +71,7 @@ class _SettingsBody extends StatefulWidget {
 
 class _SettingsBodyState extends State<_SettingsBody> {
   bool _confirm = false;
+  final GlobalKey _confirmKey = GlobalKey();
   bool _copied = false;
   bool _reminderBusy = false;
   Timer? _copyTimer;
@@ -393,10 +394,26 @@ class _SettingsBodyState extends State<_SettingsBody> {
                     label: t.resetBtn,
                     kind: PillKind.danger,
                     small: true,
-                    onTap: () => setState(() => _confirm = true),
+                    onTap: () {
+                      setState(() => _confirm = true);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        final ctx = _confirmKey.currentContext;
+                        if (ctx == null || !ctx.mounted) {
+                          return;
+                        }
+                        Scrollable.ensureVisible(
+                          ctx,
+                          alignment: 1.0,
+                          duration: MediaQuery.disableAnimationsOf(ctx)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 200),
+                        );
+                      });
+                    },
                   )
                 else
                   SizedBox(
+                    key: _confirmKey,
                     width: double.infinity,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

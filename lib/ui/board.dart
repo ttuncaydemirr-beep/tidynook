@@ -23,10 +23,14 @@ const double _top = 40; // viewBox origin y
 class BoardController {
   VoidCallback? _hint;
   bool Function()? _canHint;
+  bool Function()? _hintActive;
   void hint() => _hint?.call();
 
   /// A hint can be shown now (the box is not finished and an item is loose).
   bool get canHint => _canHint?.call() ?? false;
+
+  /// A hint highlight is still playing; further hint taps are ignored.
+  bool get hintActive => _hintActive?.call() ?? false;
 }
 
 class _Tw {
@@ -151,6 +155,7 @@ class _BoardViewState extends State<BoardView>
     }
     widget.controller._hint = _hint;
     widget.controller._canHint = _canHint;
+    widget.controller._hintActive = () => _hintItem >= 0;
   }
 
   @override
@@ -163,6 +168,7 @@ class _BoardViewState extends State<BoardView>
   void dispose() {
     widget.controller._hint = null;
     widget.controller._canHint = null;
+    widget.controller._hintActive = null;
     _idleTimer?.cancel();
     for (final t in _timers) {
       t.cancel();
@@ -808,16 +814,30 @@ class _BreatheTextState extends State<_BreatheText>
         style: tx(lidTextFontSize, w: 700, color: Colors.white),
       ),
     );
+    // Soft dark pill (black 60%) keeps white text >= 4.5:1 on every lid colour;
+    // only the text breathes (never below 85%), the pill stays put.
+    Widget pill(Widget child) => Center(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0x99000000),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: child,
+            ),
+          ),
+        );
     if (_reduce) {
-      return Center(child: text);
+      return pill(text);
     }
     return AnimatedBuilder(
       animation: _c,
-      child: Center(child: text),
-      builder: (context, child) => Opacity(
-        opacity: .55 + .45 * (2 * _c.value - 1).abs(),
+      child: text,
+      builder: (context, child) => pill(Opacity(
+        opacity: .85 + .15 * (2 * _c.value - 1).abs(),
         child: child,
-      ),
+      )),
     );
   }
 }

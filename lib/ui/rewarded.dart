@@ -121,11 +121,15 @@ Future<bool> offerRewarded(
     iconSvg: iconSvg,
   );
   if (!yes) {
-    services.telemetry.logRewarded(placement, 'declined');
+    try {
+      services.telemetry.logRewarded(placement, 'declined');
+    } catch (_) {}
     return false;
   }
   if (!services.ads.rewardedReady) {
-    services.telemetry.logRewarded(placement, 'unavailable');
+    try {
+      services.telemetry.logRewarded(placement, 'unavailable');
+    } catch (_) {}
     services.ads.preload();
     if (context.mounted) {
       showToast(context, t.adNotReady);
@@ -138,6 +142,8 @@ Future<bool> offerRewarded(
   } catch (_) {
     ok = false;
   }
-  services.telemetry.logRewarded(placement, ok ? 'rewarded' : 'closed');
+  try {
+    services.telemetry.logRewarded(placement, ok ? 'rewarded' : 'closed');
+  } catch (_) {}
   return ok;
 }

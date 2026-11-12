@@ -34,7 +34,7 @@ class _PlayScreenState extends State<PlayScreen> {
   /// Hint button: a free hint while today's last (or unlimited with Remove
   /// ads), else the optional rewarded offer. The board is never blocked.
   Future<void> _onHint() async {
-    if (_won || _hintBusy || !_board.canHint) {
+    if (_won || _hintBusy || _board.hintActive || !_board.canHint) {
       return;
     }
     final p = _ctl.progress;
@@ -147,7 +147,7 @@ class _PlayScreenState extends State<PlayScreen> {
               child: TitleBlock(
                 eyebrow: _eyebrow(context, t),
                 title: title,
-                eyebrowLines: level.mystery ? 2 : 1,
+                eyebrowLines: level.mystery ? 3 : 2,
                 upper: !level.mystery,
               ),
             ),
