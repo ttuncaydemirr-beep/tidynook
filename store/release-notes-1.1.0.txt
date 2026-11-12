@@ -6,6 +6,7 @@
 - Her eşya için üçüncü bir stil
 - Yeni günlük ödüller: tavşan ve ötücü kuş
 - İsteğe bağlı günlük hatırlatma
+- Günde 3 ücretsiz ipucu; reklamları kaldırınca ipuçları sınırsız
 - Reklamlar kısadır, bölüm sırasında asla çıkmaz ve mağazadan kaldırılabilir. İnternetsiz de çalışır.
 </tr-TR>
 <en-US>
@@ -16,6 +17,7 @@ New in 1.1:
 - A third style for every piece of furniture
 - New daily rewards: a bunny and a songbird
 - Optional daily reminder
+- 3 free hints a day, unlimited with Remove ads
 - Ads are short, never appear during a level and can be removed in the shop. Still works offline.
 </en-US>
 <de-DE>
@@ -26,6 +28,7 @@ Neu in 1.1:
 - Ein dritter Stil für jedes Möbelstück
 - Neue Tagesbelohnungen: ein Häschen und ein Singvogel
 - Optionale tägliche Erinnerung
+- 3 kostenlose Tipps pro Tag, mit „Werbung entfernen“ unbegrenzt
 - Werbung ist kurz, erscheint nie während eines Levels und lässt sich im Shop entfernen. Funktioniert weiter offline.
 </de-DE>
 <ar>
@@ -36,5 +39,6 @@ Neu in 1.1:
 - نمط ثالث لكل قطعة أثاث
 - مكافآت يومية جديدة: أرنب وطائر مغرّد
 - تذكير يومي اختياري
+- 3 تلميحات مجانية يومياً، وغير محدودة مع إزالة الإعلانات
 - الإعلانات قصيرة ولا تظهر أبداً أثناء المرحلة ويمكن إزالتها من المتجر. وما زالت اللعبة تعمل دون إنترنت.
 </ar>

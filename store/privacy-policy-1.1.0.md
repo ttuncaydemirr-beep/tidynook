@@ -10,15 +10,15 @@ Languages: [Türkçe](#türkçe) · [English](#english) · [Deutsch](#deutsch) �
 
 _Yürürlük tarihi: 15 Kasım 2026_
 
-Geliştirici: Tidy Nook (bireysel geliştirici, Türkiye)
+Geliştirici: Demir Games Studio (bireysel geliştirici, Türkiye)
 
 **Tidy Nook'ta hesap yoktur; senden ad, e-posta adresi ya da iletişim bilgisi istemez. Oyun ilerlemeni kendi cihazında saklar. Reklamlar, satın almalar ve isteğe bağlı kullanım istatistikleri Google hizmetleriyle çalışır; aşağıda açıkladık.**
 
 ### Reklamlar
 
-Oyun, reklamları Google AdMob ile gösterir: bitirdiğin bir kutudan çıkarken ara sıra kısa bir reklam (bölüm sırasında asla), ödül için izlemeyi sen seçtiğin isteğe bağlı bir reklam ve ev ekranının altında küçük bir banner. AdMob, reklamları göstermek ve ölçmek için cihazının reklam kimliğini, yaklaşık konumunu (IP adresinden çıkarılır), cihaz ve uygulama bilgilerini ve reklamlarla etkileşimini kullanabilir. Bu verileri biz almayız ve bunlardan seni tanıyamayız.
+Oyun, reklamları Google AdMob ile gösterir: bitirdiğin bir kutudan çıkarken ara sıra kısa bir tam ekran reklam (bölüm sırasında asla, ilk bölümlerde de hayır) ve ödül için izlemeyi sen seçtiğin isteğe bağlı reklamlar (sürpriz kutu, seriyi koruma ya da bir ipucu daha). AdMob, reklamları göstermek ve ölçmek için cihazının reklam kimliğini, yaklaşık konumunu (IP adresinden çıkarılır), cihaz ve uygulama bilgilerini ve reklamlarla etkileşimini kullanabilir. Bu verileri biz almayız ve bunlardan seni tanıyamayız.
 
-Yasaların gerektirdiği yerlerde (örneğin AEA ve Birleşik Krallık) uygulama açılırken Google'ın onay formuyla (UMP) iznini isteriz. Seçimini istediğin zaman Ayarlar > Gizlilik tercihleri bölümünden değiştirebilirsin (bu satır yalnızca gerekli olan bölgelerde görünür). Reklam kimliğini Android ayarlarından sıfırlayabilir ya da silebilirsin. Tek seferlik "Reklamları kaldır" satın alımı banner'ı ve bölümler arasındaki reklamları kaldırır.
+Yasaların gerektirdiği yerlerde (örneğin AEA ve Birleşik Krallık) uygulama açılırken Google'ın onay formuyla (UMP) iznini isteriz. Seçimini istediğin zaman Ayarlar > Gizlilik tercihleri bölümünden değiştirebilirsin (bu satır yalnızca gerekli olan bölgelerde görünür). Reklam kimliğini Android ayarlarından sıfırlayabilir ya da silebilirsin. Tek seferlik "Reklamları kaldır" satın alımı bölümler arasındaki reklamları kaldırır ve ipuçlarını sınırsız yapar.
 
 Ödüllü reklamlar yalnızca "Reklam izle" düğmesine dokunursan oynar. Reklam yoksa oyun olduğu gibi devam eder.
 
@@ -54,7 +54,7 @@ Verilerini satmayız. Yalnızca uygulamanın kullandığı Google hizmetleri dev
 
 - Reklam iznini değiştir: Ayarlar > Gizlilik tercihleri.
 - Reklam kimliğini sıfırla: Android Ayarlar > Gizlilik > Reklamlar.
-- Reklamları kaldır: Ayarlar > Mağaza.
+- Reklamları kaldır ve ipuçlarını sınırsız yap: Ayarlar > Mağaza.
 - Cihazındaki oyun verilerini sil: Ayarlar > İlerlemeyi sıfırla ya da uygulamayı kaldır.
 
 Verilerinle ilgili bir sorun varsa ya da bir konuya bakmamızı istersen aşağıdaki adrese yaz.
@@ -79,15 +79,15 @@ Sorular için: nilkaren.tuncay.demir@gmail.com
 
 _Effective date: 15 November 2026_
 
-Developer: Tidy Nook (individual developer, Turkey)
+Developer: Demir Games Studio (individual developer, Turkey)
 
 **Tidy Nook has no accounts and never asks for your name, e-mail address or contact details. The game saves your progress on your own device. Ads, purchases and optional usage statistics involve Google services, explained below.**
 
 ### Ads
 
-The game shows ads through Google AdMob: a short ad now and then when you leave a finished box (never during a level), an optional ad you choose to watch for a reward, and a small banner on the home screen. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.
+The game shows ads through Google AdMob: a short full-screen ad now and then when you leave a finished box (never during a level, and not in the first levels), and optional ads you choose to watch for a reward, such as a surprise box, saving a streak or one more hint. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.
 
-Where the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase "Remove ads" removes the banner and the ads between levels.
+Where the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase "Remove ads" removes the ads between levels and makes hints unlimited.
 
 Ads are optional rewards only when you tap "Watch ad". If no ad is available, the game simply continues.
 
@@ -123,7 +123,7 @@ We do not sell your data. The only companies involved are Google services that t
 
 - Change your ad consent: Settings > Privacy choices.
 - Reset your advertising ID: Android Settings > Privacy > Ads.
-- Remove ads: Settings > Shop.
+- Remove ads and get unlimited hints: Settings > Shop.
 - Delete the game data on your device: Settings > Reset progress, or uninstall the app.
 
 If you have a question about your data or want us to look into something, write to the address below.
@@ -148,15 +148,15 @@ Questions: nilkaren.tuncay.demir@gmail.com
 
 _Gültig ab: 15. November 2026_
 
-Entwickler: Tidy Nook (Einzelentwickler, Türkei)
+Entwickler: Demir Games Studio (Einzelentwickler, Türkei)
 
 **Tidy Nook hat keine Konten und fragt nie nach deinem Namen, deiner E-Mail-Adresse oder Kontaktdaten. Das Spiel speichert deinen Fortschritt auf deinem eigenen Gerät. Werbung, Käufe und optionale Nutzungsstatistiken laufen über Google-Dienste, siehe unten.**
 
 ### Werbung
 
-Das Spiel zeigt Werbung über Google AdMob: ab und zu eine kurze Anzeige, wenn du eine fertige Box verlässt (nie während eines Levels), eine optionale Anzeige, die du für eine Belohnung selbst wählst, und ein kleines Banner auf dem Zuhause-Bildschirm. Um Anzeigen auszuspielen und zu messen, kann AdMob die Werbe-ID deines Geräts, den ungefähren Standort (aus deiner IP-Adresse abgeleitet), Geräte- und App-Informationen und deine Interaktion mit Anzeigen verwenden. Wir erhalten diese Daten nicht und können dich daraus nicht identifizieren.
+Das Spiel zeigt Werbung über Google AdMob: ab und zu eine kurze Vollbild-Anzeige, wenn du eine fertige Box verlässt (nie während eines Levels und nicht in den ersten Leveln), sowie optionale Anzeigen, die du für eine Belohnung selbst wählst (Überraschungsbox, Serie retten oder ein weiterer Tipp). Um Anzeigen auszuspielen und zu messen, kann AdMob die Werbe-ID deines Geräts, den ungefähren Standort (aus deiner IP-Adresse abgeleitet), Geräte- und App-Informationen und deine Interaktion mit Anzeigen verwenden. Wir erhalten diese Daten nicht und können dich daraus nicht identifizieren.
 
-Wo das Gesetz es verlangt (zum Beispiel im EWR und im Vereinigten Königreich), fragen wir beim Start der App mit dem Einwilligungsformular von Google (UMP) nach deiner Einwilligung. Du kannst deine Wahl jederzeit unter Einstellungen > Datenschutzoptionen ändern (diese Zeile erscheint nur dort, wo sie nötig ist). Außerdem kannst du deine Werbe-ID in den Android-Einstellungen zurücksetzen oder löschen. Der einmalige Kauf "Werbung entfernen" entfernt das Banner und die Werbung zwischen den Leveln.
+Wo das Gesetz es verlangt (zum Beispiel im EWR und im Vereinigten Königreich), fragen wir beim Start der App mit dem Einwilligungsformular von Google (UMP) nach deiner Einwilligung. Du kannst deine Wahl jederzeit unter Einstellungen > Datenschutzoptionen ändern (diese Zeile erscheint nur dort, wo sie nötig ist). Außerdem kannst du deine Werbe-ID in den Android-Einstellungen zurücksetzen oder löschen. Der einmalige Kauf "Werbung entfernen" entfernt die Werbung zwischen den Leveln und macht die Tipps unbegrenzt.
 
 Belohnungsanzeigen laufen nur, wenn du auf "Werbung ansehen" tippst. Ist keine Anzeige verfügbar, geht das Spiel einfach weiter.
 
@@ -192,7 +192,7 @@ Wir verkaufen deine Daten nicht. Beteiligt sind nur Google-Dienste, die die App 
 
 - Werbe-Einwilligung ändern: Einstellungen > Datenschutzoptionen.
 - Werbe-ID zurücksetzen: Android-Einstellungen > Datenschutz > Werbung.
-- Werbung entfernen: Einstellungen > Shop.
+- Werbung entfernen und unbegrenzte Tipps: Einstellungen > Shop.
 - Spieldaten auf deinem Gerät löschen: Einstellungen > Fortschritt zurücksetzen oder die App deinstallieren.
 
 Wenn du eine Frage zu deinen Daten hast oder möchtest, dass wir etwas prüfen, schreib an die Adresse unten.
@@ -219,15 +219,15 @@ Fragen an: nilkaren.tuncay.demir@gmail.com
 
 _تاريخ السريان: 15 نوفمبر 2026_
 
-المطوّر: Tidy Nook (مطوّر فردي، تركيا)
+المطوّر: Demir Games Studio (مطوّر فردي، تركيا)
 
 **لا توجد في Tidy Nook حسابات، ولا نطلب منك اسمك ولا بريدك الإلكتروني ولا بيانات اتصالك. تحفظ اللعبة تقدّمك على جهازك. أما الإعلانات والمشتريات وإحصاءات الاستخدام الاختيارية فتعمل عبر خدمات Google، كما نشرح أدناه.**
 
 ### الإعلانات
 
-تعرض اللعبة الإعلانات عبر Google AdMob: إعلان قصير بين حين وآخر عندما تغادر صندوقاً أكملته (وليس أثناء المرحلة أبداً)، وإعلان اختياري تقرّر أنت مشاهدته مقابل مكافأة، ولافتة صغيرة في شاشة البيت. لعرض الإعلانات وقياسها قد يستخدم AdMob معرّف الإعلانات في جهازك، وموقعك التقريبي (يُستنتج من عنوان IP)، ومعلومات الجهاز والتطبيق، وطريقة تفاعلك مع الإعلانات. لا نتلقى هذه البيانات ولا يمكننا التعرّف عليك منها.
+تعرض اللعبة الإعلانات عبر Google AdMob: إعلان قصير بملء الشاشة بين حين وآخر عندما تغادر صندوقاً أكملته (وليس أثناء المرحلة أبداً ولا في المراحل الأولى)، وإعلانات اختيارية تقرّر أنت مشاهدتها مقابل مكافأة (صندوق مفاجآت أو إنقاذ سلسلتك أو تلميح إضافي). لعرض الإعلانات وقياسها قد يستخدم AdMob معرّف الإعلانات في جهازك، وموقعك التقريبي (يُستنتج من عنوان IP)، ومعلومات الجهاز والتطبيق، وطريقة تفاعلك مع الإعلانات. لا نتلقى هذه البيانات ولا يمكننا التعرّف عليك منها.
 
-عندما يشترط القانون ذلك (مثل المنطقة الاقتصادية الأوروبية والمملكة المتحدة) نطلب موافقتك عند بدء التطبيق عبر نموذج الموافقة من Google (UMP). يمكنك تغيير اختيارك في أي وقت من الإعدادات > خيارات الخصوصية (يظهر هذا الصف فقط حيث يكون مطلوباً). ويمكنك أيضاً إعادة ضبط معرّف الإعلانات أو حذفه من إعدادات أندرويد. وعملية الشراء لمرة واحدة "إزالة الإعلانات" تزيل اللافتة والإعلانات بين المراحل.
+عندما يشترط القانون ذلك (مثل المنطقة الاقتصادية الأوروبية والمملكة المتحدة) نطلب موافقتك عند بدء التطبيق عبر نموذج الموافقة من Google (UMP). يمكنك تغيير اختيارك في أي وقت من الإعدادات > خيارات الخصوصية (يظهر هذا الصف فقط حيث يكون مطلوباً). ويمكنك أيضاً إعادة ضبط معرّف الإعلانات أو حذفه من إعدادات أندرويد. وعملية الشراء لمرة واحدة "إزالة الإعلانات" تزيل الإعلانات بين المراحل وتجعل التلميحات غير محدودة.
 
 تُعرض الإعلانات المكافِئة فقط عندما تضغط على "شاهد الإعلان". وإن لم يتوفر إعلان تتابع اللعبة ببساطة.
 
@@ -263,7 +263,7 @@ _تاريخ السريان: 15 نوفمبر 2026_
 
 - لتغيير موافقتك على الإعلانات: الإعدادات > خيارات الخصوصية.
 - لإعادة ضبط معرّف الإعلانات: إعدادات أندرويد > الخصوصية > الإعلانات.
-- لإزالة الإعلانات: الإعدادات > المتجر.
+- لإزالة الإعلانات والحصول على تلميحات غير محدودة: الإعدادات > المتجر.
 - لحذف بيانات اللعبة من جهازك: الإعدادات > إعادة ضبط التقدم، أو ألغِ تثبيت التطبيق.
 
 إذا كان لديك سؤال عن بياناتك أو تريد منا النظر في أمر ما، فراسلنا على العنوان أدناه.

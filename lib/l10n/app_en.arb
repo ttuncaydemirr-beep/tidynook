@@ -290,7 +290,7 @@
   "@removeAds": {
     "description": "Name of the remove-ads purchase"
   },
-  "removeAdsText": "One-time purchase. No banners and no ads between levels.",
+  "removeAdsText": "One-time purchase. No ads between levels and unlimited hints.",
   "@removeAdsText": {
     "description": "Description of the remove-ads purchase"
   },
@@ -298,7 +298,7 @@
   "@supporterPack": {
     "description": "Name of the Supporter Pack purchase"
   },
-  "supporterText": "No ads, a third style for every piece and a puppy for your home.",
+  "supporterText": "No ads, unlimited hints, a third style for every piece and a puppy for your home.",
   "@supporterText": {
     "description": "Description of the Supporter Pack purchase"
   },
@@ -367,6 +367,23 @@
   "@notifBody": {
     "description": "Body of the daily reminder notification"
   },
+  "hintsLeft": "{n, plural, =0{No free hints left today} =1{1 free hint left today} other{{n} free hints left today}}",
+  "@hintsLeft": {
+    "description": "Shown near the hint button; n is the number of free hints left today (3 per day, resets at local midnight)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hintAdText": "No free hints left today. Watch a short ad for one more hint?",
+  "@hintAdText": {
+    "description": "Asks whether to watch an optional rewarded ad for one more hint once the free hints are used up"
+  },
+  "hintsUnlimited": "Unlimited hints",
+  "@hintsUnlimited": {
+    "description": "Shown instead of the hint counter when the player owns Remove ads or the Supporter Pack"
+  },
   "adLabel": "Advertisement",
   "@adLabel": {
     "description": "Small label above or near an ad"
@@ -375,7 +392,7 @@
     "description": "Application name (not translated)"
   },
   "privacy": "Privacy policy",
-  "privacyText": "Effective date: 15 November 2026\nDeveloper: Tidy Nook (individual developer, Turkey)\n\nTidy Nook has no accounts and never asks for your name, e-mail address or contact details. The game saves your progress on your own device. Ads, purchases and optional usage statistics involve Google services, explained below.\n\nAds\n\nThe game shows ads through Google AdMob: a short ad now and then when you leave a finished box (never during a level), an optional ad you choose to watch for a reward, and a small banner on the home screen. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.\n\nWhere the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase \"Remove ads\" removes the banner and the ads between levels.\n\nPurchases\n\nPurchases are handled entirely by Google Play. We never see or store your card or payment details. The app only learns whether a purchase is active, so it can unlock it on your device. \"Restore purchases\" in Settings brings it back after a reinstall.\n\nUsage statistics and crash reports\n\nTo fix bugs and improve levels, the game may send anonymous usage events (for example, that a level was started or finished) and crash reports to Google Firebase (Analytics and Crashlytics). They can include a random app instance ID, your device model, your Android version and the technical details of a crash. They do not include your name or e-mail address.\n\nNotifications\n\nThe optional daily reminder is scheduled on your device. It does not use a server, and nothing about it is sent to us. You can turn it off in Settings > Daily reminder or in your Android settings.\n\nInternet\n\nThe game works offline. It connects to the internet only to load ads, check purchases and send the statistics described above.\n\nWhat stays on your device\n\nYour game progress is saved on your own device: completed levels, bonus boxes, the furniture styles you picked and unlocked, your daily box streak, your purchases and your language, sound, vibration and reminder settings. We do not receive it.\n\n• You can erase it all with Settings > Reset progress.\n• Uninstalling the app erases it all.\n• If Google backup is turned on for your phone, Android may back this data up to your Google account. Google manages that backup; we have no access to it.\n\nSharing\n\nWe do not sell your data. The only companies involved are Google services that the app uses: AdMob (ads), Google Play (purchases and consent) and Firebase (statistics and crash reports). Their own privacy policies apply to the data they handle.\n\nChildren\n\nTidy Nook is made for a general audience and is not directed at children under 13. We do not knowingly collect personal information from children.\n\nChanges\n\nIf this policy changes, the new version is published with a new effective date.\n\nContact\n\nQuestions: nilkaren.tuncay.demir@gmail.com",
+  "privacyText": "Effective date: 15 November 2026\nDeveloper: Demir Games Studio (individual developer, Turkey)\n\nTidy Nook has no accounts and never asks for your name, e-mail address or contact details. The game saves your progress on your own device. Ads, purchases and optional usage statistics involve Google services, explained below.\n\nAds\n\nThe game shows ads through Google AdMob: a short full-screen ad now and then when you leave a finished box (never during a level, and not in the first levels), and optional ads you choose to watch for a reward, such as a surprise box, saving a streak or one more hint. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.\n\nWhere the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase \"Remove ads\" removes the ads between levels and makes hints unlimited.\n\nPurchases\n\nPurchases are handled entirely by Google Play. We never see or store your card or payment details. The app only learns whether a purchase is active, so it can unlock it on your device. \"Restore purchases\" in Settings brings it back after a reinstall.\n\nUsage statistics and crash reports\n\nTo fix bugs and improve levels, the game may send anonymous usage events (for example, that a level was started or finished) and crash reports to Google Firebase (Analytics and Crashlytics). They can include a random app instance ID, your device model, your Android version and the technical details of a crash. They do not include your name or e-mail address.\n\nNotifications\n\nThe optional daily reminder is scheduled on your device. It does not use a server, and nothing about it is sent to us. You can turn it off in Settings > Daily reminder or in your Android settings.\n\nInternet\n\nThe game works offline. It connects to the internet only to load ads, check purchases and send the statistics described above.\n\nWhat stays on your device\n\nYour game progress is saved on your own device: completed levels, bonus boxes, the furniture styles you picked and unlocked, your daily box streak, your purchases and your language, sound, vibration and reminder settings. We do not receive it.\n\n• You can erase it all with Settings > Reset progress.\n• Uninstalling the app erases it all.\n• If Google backup is turned on for your phone, Android may back this data up to your Google account. Google manages that backup; we have no access to it.\n\nSharing\n\nWe do not sell your data. The only companies involved are Google services that the app uses: AdMob (ads), Google Play (purchases and consent) and Firebase (statistics and crash reports). Their own privacy policies apply to the data they handle.\n\nChildren\n\nTidy Nook is made for a general audience and is not directed at children under 13. We do not knowingly collect personal information from children.\n\nChanges\n\nIf this policy changes, the new version is published with a new effective date.\n\nContact\n\nQuestions: nilkaren.tuncay.demir@gmail.com",
   "@privacy": {
     "description": "Settings row and title of the in-app privacy policy screen"
   },
