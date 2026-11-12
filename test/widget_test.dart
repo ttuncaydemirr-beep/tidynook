@@ -10,6 +10,7 @@ import 'package:tidy_nook/ui/widgets.dart';
 
 Future<void> _pumpApp(WidgetTester tester, Progress progress,
     {AppServices? services}) async {
+  SharedPreferences.setMockInitialValues(<String, Object>{});
   tester.view.physicalSize = const Size(1080, 1920); // 360 x 640 dp
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -35,6 +36,7 @@ Future<void> _openSettings(WidgetTester tester) async {
 void main() {
   testWidgets('plugins are off in widget tests', (WidgetTester tester) async {
     // Ads, billing, reminder, review and telemetry must all be no-ops here.
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     expect(MonetEnv.pluginsEnabled, isFalse);
     final services = AppServices.create(Progress());
     expect(services.ads.enabled, isFalse);

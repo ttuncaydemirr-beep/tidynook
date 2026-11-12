@@ -178,6 +178,7 @@ class _PlayScreenState extends State<PlayScreen> {
                       idleHint: firstLevel,
                       onWin: () {
                         ctl.recordWin();
+                        ctl.services.haptics.success();
                         setState(() => _won = true);
                       },
                       onCelebrate: () => setState(() => _card = true),
