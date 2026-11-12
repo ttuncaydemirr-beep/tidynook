@@ -1,10 +1,12 @@
 // Haptic tick when an item snaps into its slot (Settings > Vibration, default on).
 // Uses Flutter's HapticFeedback (the system "click"): no plugin and no VIBRATE permission needed
-// for it. Does nothing on the web and never throws.
+// for it. Does nothing on the web or in tests and never throws.
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+import '../monet/env.dart';
 
 class Haptics {
   /// [enabled] is read on every call; wire it to Progress.vibration: `Haptics(enabled: () => progress.vibration)`.
@@ -35,7 +37,7 @@ class Haptics {
       return;
     }
     debugSink?.call(kind);
-    if (kIsWeb) {
+    if (kIsWeb || MonetEnv.inTest) {
       return;
     }
     try {

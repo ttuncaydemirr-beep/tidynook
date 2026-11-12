@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart' show AppLifecycleState;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tidy_nook/monet/ad_rules.dart';
 import 'package:tidy_nook/monet/ads.dart';
+import 'package:tidy_nook/monet/ads_config.dart';
 import 'package:tidy_nook/monet/env.dart';
 
 class FakeBackend implements FullScreenAdsBackend {
@@ -96,7 +97,6 @@ void main() {
     expect(await ads.maybeInterstitial(completedLevelIndex: 8, isDaily: false), isFalse);
     expect(state.interstitialCounter, 6);
     expect(await ads.showRewarded('surprise_box'), isFalse);
-    expect(ads.bannerAllowed, isFalse);
     expect(ads.privacyOptionsRequired, isFalse);
     await ads.init(); // no-op, no throw
     ads.dispose();
@@ -172,6 +172,23 @@ void main() {
     expect(await f.timeout(const Duration(seconds: 2)), isTrue);
     expect(backend.releases, 1);
     ads.dispose();
+  });
+
+  test('the hint placement works like the others', () async {
+    final ads = make();
+    expect(await ads.showRewarded(kPlacementHint), isFalse);
+    backend.rReady = true;
+    final f = ads.showRewarded(kPlacementHint);
+    await Future<void>.delayed(Duration.zero);
+    backend.onScreen?.call();
+    backend.onReward?.call();
+    backend.rShow!.complete();
+    expect(await f, isTrue);
+    ads.dispose();
+  });
+
+  test('ad content rating is T (13+)', () {
+    expect(AdsConfig.maxAdContentRating, 'T');
   });
 
   test('showRewarded is false at once when no rewarded ad is ready', () async {

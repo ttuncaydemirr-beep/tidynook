@@ -5,8 +5,14 @@ team member M. Ported from the owner's Arrowtile game (`/home/claude/Arrowtile/f
 lessons (Arrowtile docs 13, 16, 18, 19, 21): never wait for an ad to load, never show a spinner for an ad, show
 the consent form only outside a level, and never let an ad appear in the middle of a level.
 
+Developer / studio name in every text: **Demir Games Studio**.
+
 Part 1 is for the UI owner (how to connect everything). Part 2 is the owner's checklist in plain words.
-Part 3 lists every place a banner could go, with the risk of losing players.
+Part 3 is the ad formats decision summary.
+
+**Banner: none, per the owner's Banner Decisions doc.** Tidy Nook requests no banner ads and has no banner
+widget or banner ad unit. Ads are: optional rewarded ads (main spot: the hint button) and interstitials between
+boxes behind one switch (`AdsConfig.interstitialsEnabled`, default true until the owner decides).
 
 ---
 
@@ -17,11 +23,10 @@ Part 3 lists every place a banner could go, with the risk of losing players.
 | File | What it does |
 | --- | --- |
 | `lib/monet/env.dart` | `MonetEnv.pluginsEnabled`: true only on a real Android device outside `flutter test`. Every plugin call below is behind it, so on the web, in widget tests and on desktop everything is a silent no-op (no platform channel, no pending timer). |
-| `lib/monet/ads_config.dart` | Ad unit IDs (Google TEST IDs now, `TODO(owner)` slots for the real ones). Debug/profile builds always use test IDs. |
-| `lib/monet/ad_rules.dart` | Pure pacing rules + `AdsState` (the persisted counters, an interface so lib/monet does not import Progress). |
+| `lib/monet/ads_config.dart` | Ad unit IDs (Google TEST IDs now, `TODO(owner)` slots for the real ones; interstitial + rewarded only). Debug/profile builds always use test IDs. `interstitialsEnabled` switch, `maxAdContentRating = 'T'`. |
+| `lib/monet/ad_rules.dart` | Pure pacing rules, free-hints-per-day rules, placement names + `AdsState` (the persisted counters, an interface so lib/monet does not import Progress). |
 | `lib/monet/consent.dart` | Google UMP consent (EEA/UK/CH), the "when may the form appear" gate, Firebase consent signals. |
 | `lib/monet/ads.dart` | `Ads`: interstitial + rewarded, privacy options. `AdMobBackend` is the real SDK side. |
-| `lib/monet/house_banner.dart` | `HouseBanner`: adaptive anchored banner widget for the house screen bottom. |
 | `lib/monet/billing.dart` | `Billing`: Play Billing for `remove_ads` and `supporter_pack` (non-consumable). |
 | `lib/services/haptics.dart` | `Haptics.tick()` on snap, honouring Settings > Vibration. |
 | `lib/services/review.dart` | `ReviewPrompt.maybeAsk(...)`: Play in-app review, once. |
@@ -34,6 +39,12 @@ Part 3 lists every place a banner could go, with the risk of losing players.
 // lib/monet/ad_rules.dart
 const int kFirstAdLevelIndex = 3, kInterstitialEvery = 3, kMinFullScreenGapMs = 90000;
 const int kBonusBoxLevelIndex;   // pass as completedLevelIndex for a bonus box
+const String kPlacementHint = 'hint', kPlacementSurpriseBox = 'surprise_box', kPlacementStreakSave = 'streak_save';
+const int kFreeHintsPerDay = 3;
+enum HintOffer { free, rewarded }
+int freeHintsLeft({required String usedDay, required int usedCount, required String today});
+HintOffer hintOffer({required String usedDay, required int usedCount, required String today});
+({String day, int count}) recordFreeHint({required String usedDay, required int usedCount, required String today});
 bool shouldShowInterstitial({required int completedLevelIndex, required bool isDaily, required int counter,
                              required int lastAdMs, required int nowMs, required bool adsRemoved});
 int counterAfterBox({required int counter, required bool isDaily});
@@ -57,16 +68,12 @@ class Ads extends ChangeNotifier {
   Future<void> init();                       // once, after the first frame; never waits for the consent form
   bool get sdkReady; bool get interstitialReady; bool get rewardedReady;
   bool get isShowingFullScreen;              // pause music/sounds while true (listen to Ads)
-  bool get bannerAllowed;
   Future<bool> maybeInterstitial({required int completedLevelIndex, required bool isDaily, VoidCallback? onSlow});
-  Future<bool> showRewarded(String placement, {VoidCallback? onSlow});   // 'surprise_box' | 'streak_save'
+  Future<bool> showRewarded(String placement, {VoidCallback? onSlow});   // kPlacementHint | kPlacementSurpriseBox | kPlacementStreakSave
   void preload();                            // optional, e.g. when a level starts
-  void entitlementsChanged();                // after a purchase/restore, hides the banner at once
+  void entitlementsChanged();                // after a purchase/restore (listeners refresh)
   bool get privacyOptionsRequired; Future<void> showPrivacyOptions();
 }
-
-// lib/monet/house_banner.dart
-class HouseBanner extends StatefulWidget { const HouseBanner({Key? key, required Ads? ads, bool visible = true, String? label}); }
 
 // lib/monet/billing.dart
 enum PurchaseEventKind { success, pending, failed, cancelled, restored }
@@ -169,20 +176,29 @@ consent form). Also call `consent.retryPending()` when the player leaves a level
    Optional `onSlow`: after 20 s without the ad opening, show a small hint ("Leave the app and come back to
    continue"); the wait itself continues (Arrowtile 1.1.4 lesson).
 2. **Sounds**: listen to `ads` and mute while `ads.isShowingFullScreen` is true.
-3. **Rewarded (surprise box, streak save)**: always show the "Watch ad" / "No thanks" choice. On "Watch ad":
+3. **Hint button (main rewarded spot)**: store two values (e.g. new Progress fields `hintDay` and
+   `hintsUsed`; A's Progress does not have them yet, so phase 2 must add them). On tap:
+   ```dart
+   final today = dayString(DateTime.now());
+   switch (hintOffer(usedDay: p.hintDay, usedCount: p.hintsUsed, today: today)) {
+     case HintOffer.free:
+       final r = recordFreeHint(usedDay: p.hintDay, usedCount: p.hintsUsed, today: today);
+       p.setHintUse(r.day, r.count);  showHint();
+     case HintOffer.rewarded:
+       // dialog: "Watch an ad for a hint?"  Watch ad / No thanks
+       if (!ads.rewardedReady) { showToast(t.adNotReady); ads.preload(); return; }
+       if (await ads.showRewarded(kPlacementHint)) showHint();   // does NOT use up a free hint
+   }
+   ```
+   Show the number of free hints left on the button (`freeHintsLeft(...)`); needs new ARB texts (team B).
+   **Rewarded (surprise box, streak save)**: always show the "Watch ad" / "No thanks" choice. On "Watch ad":
    ```dart
    if (!ads.rewardedReady) { showToast(t.adNotReady); ads.preload(); return; }
    final ok = await ads.showRewarded('surprise_box');   // or 'streak_save'
    if (ok) { /* grant */ } // not ok: grant nothing, say nothing (they closed it)
    telemetry.logRewarded('surprise_box', ok ? 'rewarded' : 'closed');
    ```
-4. **Banner**: only at the bottom of the house screen. Recommended: in `GameShell`, as the last child of the
-   outer Column when `screen == AppScreen.house`, OUTSIDE the 16 px side padding so it is full width, with at
-   least 8 px between it and the "Continue" button above (AdMob accidental-click policy):
-   ```dart
-   if (!onPlay) HouseBanner(ads: ads, label: t.adLabel, visible: progress.done.length >= 3),
-   ```
-   It takes no space until an ad is loaded. Never put it on the play screen, win card, daily box or settings.
+4. **Banner**: none (owner's Banner Decisions doc). The ARB key `adLabel` is not needed for a banner.
 5. **Settings**: a "Privacy choices" row only when `ads.privacyOptionsRequired` (rebuild with
    `AnimatedBuilder(animation: ads)`), tap -> `ads.showPrivacyOptions()`. "Restore purchases" ->
    `billing.restore()`. Vibration switch -> Progress. Daily reminder switch: on -> `reminder.requestAndEnable(...)`
@@ -210,8 +226,17 @@ consent form). Also call `consent.retryPending()` when the player leaves a level
 ### Tests
 
 In `flutter test` nothing touches a plugin: `Ads(state: MemoryAdsState())`, `Billing(...)`, `Reminder()`,
-`ReviewPrompt()`, `Telemetry()` can be created in widget tests without mocks. `HouseBanner` is an empty box
-there. `test/monet_ads_test.dart` shows a fake `FullScreenAdsBackend` for logic tests.
+`ReviewPrompt()`, `Telemetry()` can be created in widget tests without mocks. `test/monet_ads_test.dart` shows a fake `FullScreenAdsBackend` for logic tests.
+
+### Ad settings that matter for policy
+
+- `AdsConfig.interstitialsEnabled` (default `true`): one switch for all interstitials. With `false`,
+  `maybeInterstitial` never shows anything (it still counts boxes); rewarded ads are unaffected.
+- Every ad request (rewarded and interstitial) uses `RequestConfiguration(maxAdContentRating: 'T')`: teen-rated
+  content at most, matching the 13+ target audience in Play Console. `tagForChildDirectedTreatment` and
+  `tagForUnderAgeOfConsent` are set to UNSPECIFIED (-1): the game is not made for children, but it does not tag
+  requests as "not child-directed" either. If the owner ever adds under-13 age groups in Play Console, this must
+  change (Families policy: certified ad SDK settings, child-directed treatment) before that release.
 
 ### Platform setup done in this branch
 
@@ -244,12 +269,13 @@ Do these in order. Until steps 1-3 are done the game runs fine and shows Google'
    Until AdMob approves it ("limited ad serving"), real ads rarely appear; the game simply skips them (no freeze).
 3. Copy the **App ID** (looks like `ca-app-pub-1234567890123456~1234567890`). Paste it into
    `android/app/src/main/res/values/ads.xml`, replacing `ca-app-pub-3940256099942544~3347511713`.
-4. In the app: **Ad units > Add ad unit**, three times:
+4. In the app: **Ad units > Add ad unit**, two times (no banner: owner's Banner Decisions doc):
    - **Interstitial**, name "Tidy Nook between boxes";
-   - **Rewarded**, name "Tidy Nook rewarded" (reward: 1, "style" - the value is not used by the game);
-   - **Banner**, name "Tidy Nook house banner".
-5. Copy the three **ad unit IDs** (they contain `/`) into `lib/monet/ads_config.dart`:
-   `releaseInterstitialId`, `releaseRewardedId`, `releaseBannerId`.
+   - **Rewarded**, name "Tidy Nook rewarded" (reward: 1, "hint" - the value is not used by the game).
+   In the app's **Blocking controls > Sensitive categories / Ad content rating**, choose max rating **T** (Teen)
+   to match the code.
+5. Copy the two **ad unit IDs** (they contain `/`) into `lib/monet/ads_config.dart`:
+   `releaseInterstitialId`, `releaseRewardedId`.
    Leave the `test...` lines as they are (debug builds must keep test ads; never tap your own real ads).
 6. **Privacy & messaging > European regulations (GDPR)**: create a message for Tidy Nook and **publish** it
    (languages: Turkish, English, German, Arabic). Without it, players in Europe get no consent form and almost no ads.
@@ -265,7 +291,7 @@ Do these in order. Until steps 1-3 are done the game runs fine and shows Google'
 1. **Monetize > Monetization setup**: a payments profile must exist (needed once per developer account).
 2. **Monetize > Products > In-app products > Create product**:
    - Product ID **`remove_ads`** (exactly, it can never be changed), name "Remove ads", description
-     "One-time purchase. No banners and no ads between levels.", price **₺59.99** (and **$2.99** for the
+     "One-time purchase. No ads between levels.", price **₺59.99** (and **$2.99** for the
      US; "update prices in other countries" is fine). **Activate**.
    - Product ID **`supporter_pack`**, name "Supporter Pack", description "No ads, a third style for every piece
      and a puppy for your home.", price **₺119.99** / **$4.99**. **Activate**.
@@ -314,31 +340,18 @@ Do these in order. Until steps 1-3 are done the game runs fine and shows Google'
 ### 5. Test before release
 
 Upload the AAB to **Internal testing**, install from Play on your phone and check: an ad appears only after
-leaving the win card of the 4th level, at most every 3 boxes; "Watch ad" works or says "No ad available";
-buying with your license-test account removes the banner at once; Restore works after reinstalling; the reminder
+leaving the win card of the 4th level, at most every 3 boxes; after the free hints of the day the hint button
+offers an ad and "Watch ad" works or says "No ad available"; buying with your license-test account stops the
+interstitials at once; Restore works after reinstalling; the reminder
 arrives at 19:00 (Android 13+ asks for permission first).
 
 ---
 
-## Part 3. Banner placement candidates
+## Part 3. Ad formats (decision summary)
 
-The owner's rule: the team proposes banner spots, the manager picks only those that do not lose players.
-Risk = how likely the spot makes players leave or get annoyed (also counts AdMob policy risk, which can stop all ads).
-
-| # | Place | Impressions | Player-loss risk | Policy risk | Recommendation |
-| --- | --- | --- | --- | --- | --- |
-| 1 | **House screen, bottom** (adaptive anchored, below the Continue button) | Medium-high: players pass through the house between boxes and admire furniture there | **Low**: the house is a resting screen; the banner does not cover the house (it pushes it up a little) | Low, if 8+ px gap to Continue | **Yes (the plan's choice).** Extra safety: show it only after 3 levels are done (`visible: progress.done.length >= 3`), so the first session stays clean. |
-| 2 | House screen, top (under the title) | Medium | Medium: pushes the title and daily card down, competes with the main visual | Low | No: same impressions as #1 with more clutter. |
-| 3 | Play screen, under the rug | Very high | **High**: breaks the calm no-fail mood; drags near the bottom edge cause accidental taps | **High** (accidental clicks during play) | No. Also forbidden by the owner's rules ("never during a level"). |
-| 4 | Win card (inside or under the card) | High | Medium-high: spoils the reward moment and the style choice | **High**: right next to Next / See house buttons | No. |
-| 5 | Daily box screen | Medium | High: it is the retention feature (streaks) | High (gameplay) | No. |
-| 6 | Settings sheet bottom | Low (short visits) | Low-medium | Medium (next to switches and links) | No: almost no money, looks cheap. |
-| 7 | Shop / "Remove ads" sheet | Low | Medium: an ad inside the place where we sell "no ads" feels pushy | Low | No. |
-| 8 | Privacy policy page | Very low | Low | Low | No: no value. |
-| 9 | Bonus boxes list (if phase 2 adds a separate bonus menu) | Medium for engaged players | Low-medium | Low | Maybe later, after 1.1 data shows banner revenue and retention on #1. |
-| 10 | Collapsible / large banners anywhere | - | High (covers content) | Medium | No. |
-
-Summary: only **#1, house screen bottom**, ideally hidden until 3 levels are done. Everything else either breaks
-the owner's "never during a level" rule, risks accidental clicks (an AdMob policy problem that can stop all ads),
-or earns too little to justify it. Most of the money in 1.1 should come from the interstitial (every 3rd box),
-the optional rewarded ads and the two purchases, not from banners.
+| Format | Where | Status |
+| --- | --- | --- |
+| Banner | nowhere | **None, per the owner's Banner Decisions doc** (no widget, no ad unit, no request). |
+| Rewarded | hint button after the free hints of the day (`kFreeHintsPerDay` = 3), surprise box, streak save | On; always optional ("Watch ad" / "No thanks"); max content rating T. |
+| Interstitial | only when leaving a win card; rules in `ad_rules.dart` | Behind `AdsConfig.interstitialsEnabled` (default true) until the owner decides; never waits for a load. |
+| Purchases | `remove_ads`, `supporter_pack` | On (Play Billing). |

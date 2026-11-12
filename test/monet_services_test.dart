@@ -1,11 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:tidy_nook/monet/ad_rules.dart';
-import 'package:tidy_nook/monet/ads.dart';
 import 'package:tidy_nook/monet/billing.dart';
 import 'package:tidy_nook/monet/consent.dart';
-import 'package:tidy_nook/monet/house_banner.dart';
 import 'package:tidy_nook/services/haptics.dart';
 import 'package:tidy_nook/services/reminder.dart';
 import 'package:tidy_nook/services/review.dart';
@@ -217,52 +213,5 @@ void main() {
     h.success();
     Haptics.debugSink = null;
     expect(ticks, <String>['tick', 'success']);
-  });
-
-  testWidgets('house banner takes no space without ads', (WidgetTester tester) async {
-    final ads = Ads(state: MemoryAdsState());
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: Column(children: <Widget>[
-        const Expanded(child: SizedBox()),
-        HouseBanner(ads: ads),
-        const HouseBanner(ads: null),
-      ]),
-    ));
-    expect(find.byKey(const ValueKey<String>('house-banner')), findsNothing);
-    final sizes = tester.widgetList<HouseBanner>(find.byType(HouseBanner)).map((w) => tester.getSize(find.byWidget(w)));
-    expect(sizes.every((s) => s.height == 0), isTrue);
-    ads.dispose();
-  });
-
-  testWidgets('house banner shows a loaded ad and hides it when ads are removed', (WidgetTester tester) async {
-    final state = MemoryAdsState();
-    final ads = Ads(state: state);
-    HouseBanner.debugForceEnabled = true;
-    HouseBanner.debugLoader = (int width, {required onLoaded, required onFailed}) {
-      onLoaded(BannerHandle(const ColoredBox(color: Color(0xFF00FF00)), const Size(320, 50), () {}));
-    };
-    addTearDown(() {
-      HouseBanner.debugForceEnabled = false;
-      HouseBanner.debugLoader = null;
-    });
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: Column(children: <Widget>[
-        const Expanded(child: SizedBox()),
-        HouseBanner(ads: ads),
-      ]),
-    ));
-    await tester.pump();
-    await tester.pump();
-    expect(find.byKey(const ValueKey<String>('house-banner')), findsOneWidget);
-    expect(tester.getSize(find.byKey(const ValueKey<String>('house-banner'))).height, 50);
-
-    state.adsRemoved = true;
-    ads.entitlementsChanged();
-    await tester.pump();
-    await tester.pump();
-    expect(find.byKey(const ValueKey<String>('house-banner')), findsNothing);
-    ads.dispose();
   });
 }

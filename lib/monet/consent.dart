@@ -174,7 +174,7 @@ class Consent {
   /// Returns false while the player is in a level (the form is postponed until they leave it).
   bool Function()? canInterrupt;
 
-  /// Called when [privacyOptionsRequired] or [canRequestAds] changes (Settings / banner can refresh).
+  /// Called when [privacyOptionsRequired] or [canRequestAds] changes (Settings can refresh).
   VoidCallback? onChanged;
 
   /// Called with the UMP status name (notRequired | required | obtained | unknown) after every update.

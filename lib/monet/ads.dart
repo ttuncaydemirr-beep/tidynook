@@ -11,7 +11,8 @@
 //    show a hint; the wait still continues. Real devices open the ad within about a second.
 //  - Ads are requested only after UMP says canRequestAds(); loads retry with a growing back-off;
 //    a loaded ad is refreshed after 55 minutes (AdMob ads expire after one hour).
-//  - Content rating PG (the game is for everyone 13+, not for children).
+//  - Max ad content rating T (13+ audience), child-directed treatment and under-age-of-consent tags
+//    UNSPECIFIED (AdsConfig.maxAdContentRating). Tidy Nook has no banner (owner's Banner Decisions doc).
 // Everything is a no-op on the web, in tests and off Android ([MonetEnv.pluginsEnabled]); nothing throws.
 import 'dart:async';
 import 'dart:math' as math;
@@ -105,9 +106,6 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
   /// A full-screen ad is being shown (show() was called and has not finished).
   bool get isShowingFullScreen => _hold != null;
 
-  /// The house banner may be requested now.
-  bool get bannerAllowed => sdkReady && !state.adsRemoved;
-
   bool get privacyOptionsRequired => enabled && consent.privacyOptionsRequired;
 
   Future<void> showPrivacyOptions() async {
@@ -118,7 +116,7 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  /// Call after the entitlements changed (purchase/restore) so the banner disappears at once.
+  /// Call after the entitlements changed (purchase/restore) so listeners refresh.
   void entitlementsChanged() {
     if (!_disposed) {
       notifyListeners();
@@ -160,7 +158,7 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
       await b.start();
     } catch (_) {}
     if (!_disposed) {
-      notifyListeners(); // the banner may load now
+      notifyListeners();
     }
   }
 
@@ -202,7 +200,8 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
       return false;
     }
     final now = _clock();
-    final due = shouldShowInterstitial(
+    final due = AdsConfig.interstitialsEnabled &&
+        shouldShowInterstitial(
       completedLevelIndex: completedLevelIndex,
       isDaily: isDaily,
       counter: counter,
@@ -235,7 +234,8 @@ class Ads extends ChangeNotifier with WidgetsBindingObserver {
     return shown;
   }
 
-  /// Shows a rewarded ad for [placement] ('surprise_box' | 'streak_save').
+  /// Shows a rewarded ad for [placement]: [kPlacementHint] (main spot: an extra hint once the free hints of
+  /// the day are used, see [hintOffer]), [kPlacementSurpriseBox] or [kPlacementStreakSave].
   ///
   /// Completes true only if the reward was earned. Returns false AT ONCE when no rewarded ad is
   /// ready (the UI shows "No ad available right now"); a load is started for next time.
@@ -460,7 +460,14 @@ class AdMobBackend implements FullScreenAdsBackend {
     _started = true;
     try {
       await MobileAds.instance.updateRequestConfiguration(
-        RequestConfiguration(maxAdContentRating: MaxAdContentRating.pg),
+        RequestConfiguration(
+          maxAdContentRating: AdsConfig.maxAdContentRating, // 'T' == MaxAdContentRating.t
+          // Not child-directed, but not tagged "no" either: UNSPECIFIED (-1). Explicit on purpose.
+          // ignore: deprecated_member_use
+          tagForChildDirectedTreatment: TagForChildDirectedTreatment.unspecified,
+          // ignore: deprecated_member_use
+          tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.unspecified,
+        ),
       );
       await MobileAds.instance.initialize();
       _sdkReady = true;

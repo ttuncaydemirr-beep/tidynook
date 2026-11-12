@@ -136,3 +136,48 @@ class MemoryAdsState implements AdsState {
     writes++;
   }
 }
+
+// ------------------------------------------------------------------ rewarded placements
+/// Rewarded placement names (passed to Ads.showRewarded and to analytics).
+const String kPlacementHint = 'hint';
+const String kPlacementSurpriseBox = 'surprise_box';
+const String kPlacementStreakSave = 'streak_save';
+
+// ------------------------------------------------------------------ hints (main rewarded spot)
+// The hint button is the main rewarded placement (owner's Banner Decisions doc): a few free hints every
+// local day; after that the player MAY choose to watch a rewarded ad for one more hint (always optional,
+// "Watch ad" / "No thanks"). Persist two values (e.g. in Progress): the day of the last free hint
+// ("YYYY-MM-DD", dayString) and how many free hints were used that day.
+
+/// Free hints per local day.
+const int kFreeHintsPerDay = 3;
+
+/// What tapping the hint button should do.
+enum HintOffer {
+  /// A free hint is left: give it at once and call [recordFreeHint].
+  free,
+
+  /// No free hint left today: offer "Watch ad for a hint" / "No thanks".
+  rewarded,
+}
+
+/// Free hints still available [today]. A different stored day means a new day: all free hints are back
+/// (also when the clock went back, so the player is never locked out).
+int freeHintsLeft({required String usedDay, required int usedCount, required String today}) {
+  if (usedDay != today) {
+    return kFreeHintsPerDay;
+  }
+  final left = kFreeHintsPerDay - (usedCount < 0 ? 0 : usedCount);
+  return left < 0 ? 0 : left;
+}
+
+HintOffer hintOffer({required String usedDay, required int usedCount, required String today}) =>
+    freeHintsLeft(usedDay: usedDay, usedCount: usedCount, today: today) > 0 ? HintOffer.free : HintOffer.rewarded;
+
+/// The stored values after one free hint was given [today]. A hint earned by a rewarded ad does NOT
+/// call this (it does not use up a free hint).
+({String day, int count}) recordFreeHint({required String usedDay, required int usedCount, required String today}) {
+  final base = usedDay == today ? (usedCount < 0 ? 0 : usedCount) : 0;
+  final next = base + 1;
+  return (day: today, count: next > kFreeHintsPerDay ? kFreeHintsPerDay : next);
+}

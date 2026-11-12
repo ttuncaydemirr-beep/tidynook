@@ -152,4 +152,44 @@ void main() {
     expect(cb.interstitialCounter, 5);
     expect(cb.lastFullScreenAdMs, 9);
   });
+
+  group('hints', () {
+    const today = '2026-11-12';
+    test('a few free hints per day, then the rewarded offer', () {
+      var day = '';
+      var used = 0;
+      final offers = <HintOffer>[];
+      for (var i = 0; i < kFreeHintsPerDay + 2; i++) {
+        final o = hintOffer(usedDay: day, usedCount: used, today: today);
+        offers.add(o);
+        if (o == HintOffer.free) {
+          final r = recordFreeHint(usedDay: day, usedCount: used, today: today);
+          day = r.day;
+          used = r.count;
+        }
+      }
+      expect(offers.where((o) => o == HintOffer.free).length, kFreeHintsPerDay);
+      expect(offers.sublist(kFreeHintsPerDay), everyElement(HintOffer.rewarded));
+      expect(freeHintsLeft(usedDay: day, usedCount: used, today: today), 0);
+    });
+
+    test('a new day (or a clock set back) gives the free hints back', () {
+      expect(freeHintsLeft(usedDay: '2026-11-11', usedCount: kFreeHintsPerDay, today: today), kFreeHintsPerDay);
+      expect(freeHintsLeft(usedDay: '2026-11-13', usedCount: kFreeHintsPerDay, today: today), kFreeHintsPerDay);
+      final r = recordFreeHint(usedDay: '2026-11-11', usedCount: 3, today: today);
+      expect(r, (day: today, count: 1));
+    });
+
+    test('bad stored values are clamped', () {
+      expect(freeHintsLeft(usedDay: today, usedCount: -5, today: today), kFreeHintsPerDay);
+      expect(freeHintsLeft(usedDay: today, usedCount: 99, today: today), 0);
+      expect(recordFreeHint(usedDay: today, usedCount: 99, today: today).count, kFreeHintsPerDay);
+    });
+
+    test('placement names', () {
+      expect(<String>{kPlacementHint, kPlacementSurpriseBox, kPlacementStreakSave},
+          <String>{'hint', 'surprise_box', 'streak_save'});
+      expect(kFreeHintsPerDay, greaterThan(0));
+    });
+  });
 }

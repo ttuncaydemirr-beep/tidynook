@@ -1,6 +1,6 @@
 // Google Play Billing for Tidy Nook (ported from Arrowtile's services/billing_service.dart), two
 // NON-consumable products:
-//   remove_ads      no interstitials, no banner (rewarded ads stay available as an optional choice)
+//   remove_ads      no interstitials (rewarded ads stay available as an optional choice; there is no banner)
 //   supporter_pack  everything in remove_ads + the 3rd style of every piece + the puppy
 //
 //  - At start (and on restore) Play is asked what the player owns; the result is pushed through the
