@@ -300,7 +300,7 @@ void main() {
         'v', 'lang', 'level', 'done', 'sound', 'styles', 'daily', //
         'extraStyles', 'adsRemoved', 'supporter', 'bonusDone', 'vibration',
         'reminderOn', 'reminderAsked', 'reviewAsked', 'adCounter', 'lastAdMs',
-        'streakSaveDay',
+        'streakSaveDay', 'hintDay', 'hintsUsed', 'extraHints',
       });
       expect((out['styles'] as Map).keys.toSet(), {'3', '0'});
       final again = Progress.fromJson(out);

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -46,6 +47,26 @@ void _expectNoLookAlikes(Level l, String name) {
           reason: '$name: ${ks[a]} and ${ks[b]} have the same silhouette');
     }
   }
+}
+
+double _lum(String hex) {
+  double ch(int v) {
+    final c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
+  }
+
+  final v = int.parse(hex.substring(1), radix: 16);
+  return 0.2126 * ch((v >> 16) & 255) + 0.7152 * ch((v >> 8) & 255) + 0.0722 * ch(v & 255);
+}
+
+double _ratio(double a, double b) =>
+    (math.max(a, b) + 0.05) / (math.min(a, b) + 0.05);
+
+/// The UI's room label pill: black at 50% over the floor colour.
+String _pillOver(String hex) {
+  final v = int.parse(hex.substring(1), radix: 16);
+  String h(int c) => (c / 2).round().toRadixString(16).padLeft(2, '0');
+  return '#${h((v >> 16) & 255)}${h((v >> 8) & 255)}${h(v & 255)}';
 }
 
 Set<String> _fills(String svg) => RegExp(r'fill="([^"]*)"')
@@ -210,6 +231,16 @@ void main() {
       expect(legacy.contains(decorSvg(18, 0)), isFalse);
       expect(legacy.contains('-298'), isFalse);
       expect(legacy, contains(decorSvg(17, 2)));
+    });
+
+    test('room label pills stand out from every floor (WCAG)', () {
+      for (var ri = 0; ri < rooms.length; ri++) {
+        final floor = _lum(rooms[ri].floor);
+        final pill = _lum(_pillOver(rooms[ri].floor));
+        expect(_ratio(pill, floor) >= 3.0, isTrue,
+            reason: 'room $ri pill/floor ${_ratio(pill, floor)}');
+        expect(_ratio(1.0, pill) >= 4.5, isTrue, reason: 'room $ri text');
+      }
     });
 
     test('pet previews for all six pets', () {
@@ -393,6 +424,49 @@ void main() {
       expect(r.streakAtRisk(DateTime(2026, 11, 1)), 2);
     });
 
+    test('3 free hints a day, then granted ones; unlimited without ads', () {
+      expect(freeHintsPerDay, 3);
+      final p = Progress();
+      final d1 = DateTime(2026, 11, 12, 9);
+      expect(p.hintsUsedToday(d1), 0);
+      expect(p.hintsLeft(d1), 3);
+      expect(p.useFreeHint(d1), isTrue);
+      expect(p.useFreeHint(d1), isTrue);
+      expect(p.useFreeHint(DateTime(2026, 11, 12, 23, 59)), isTrue);
+      expect(p.hintsUsedToday(d1), 3);
+      expect(p.hintsLeft(d1), 0);
+      var calls = 0;
+      p.addListener(() => calls++);
+      expect(p.useFreeHint(d1), isFalse);
+      expect(calls, 0);
+      p.grantHint();
+      expect(p.hintsLeft(d1), 1);
+      expect(p.useFreeHint(d1), isTrue);
+      expect(p.useFreeHint(d1), isFalse);
+      // a clock set back keeps today's count
+      expect(p.useFreeHint(DateTime(2026, 11, 11, 20)), isFalse);
+      // next day: three again
+      final d2 = DateTime(2026, 11, 13, 0, 1);
+      expect(p.hintsUsedToday(d2), 0);
+      expect(p.useFreeHint(d2), isTrue);
+      expect(p.hintsUsedToday(d2), 1);
+      // persisted with the date
+      final q = Progress.fromJsonString(jsonEncode(p.toJson()));
+      expect(q.hintsUsedToday(d2), 1);
+      expect(q.hintDay, '2026-11-13');
+      expect(q.hintsUsedToday(DateTime(2026, 11, 14)), 0);
+      // Remove ads: unlimited
+      q.setEntitlements(adsRemoved: true, supporter: false);
+      expect(q.hintsLeft(d2), -1);
+      for (var i = 0; i < 10; i++) {
+        expect(q.useFreeHint(d2), isTrue);
+      }
+      // old saves have no hint data
+      final old = Progress.fromJsonString('{"level":2}');
+      expect(old.hintsUsedToday(d1), 0);
+      expect(old.extraHints, 0);
+    });
+
     test('simple prefs and ad pacing setters', () {
       final p = Progress();
       expect(p.vibration, isTrue);
@@ -429,6 +503,8 @@ void main() {
       p.setInterstitialCounter(2);
       p.setLastFullScreenAdMs(1762000000000);
       p.streakSaveDay = '2026-11-06';
+      p.grantHint();
+      p.useFreeHint(DateTime(2026, 11, 12));
       final text = jsonEncode(p.toJson());
       final q = Progress.fromJsonString(text);
       expect(q.toJson(), p.toJson());

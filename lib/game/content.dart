@@ -82,18 +82,19 @@ const List<int> levelRoom = [
   6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9,
 ];
 
-/// The ten rooms: 0..5 as ROOMS in the HTML, 6 Attic Studio and 7 Reading Nook
+/// The ten rooms: 0..5 as ROOMS in the HTML (1.1: lighter, warm floors so the
+/// room label pill and the furniture stand out; Butter & Sage identity), 6 Attic Studio and 7 Reading Nook
 /// on the attic floor, 8 Patio and 9 Garden in the garden strip (open air:
 /// [Room.wall] is the sky there and [Room.floor] the ground).
 const List<Room> rooms = <Room>[
-  Room(30, 100, '#F6E3C6', '#B98A5E'),
-  Room(180, 100, '#D6E4F0', '#8C6A52'),
-  Room(30, 260, '#F3D6DE', '#A0765A'),
-  Room(180, 260, '#CFE8E3', '#5E8C93'),
-  Room(30, -60, '#FFF0C9', '#C98F6B'),
-  Room(180, -60, '#E6DDF3', '#8A7AA8'),
-  Room(30, -220, '#FFF6E5', '#C98A6E'),
-  Room(180, -220, '#E4F0E7', '#B98E6A'),
+  Room(30, 100, '#F6E3C6', '#D6A77C'),
+  Room(180, 100, '#D6E4F0', '#CFA27C'),
+  Room(30, 260, '#F3D6DE', '#DDA98E'),
+  Room(180, 260, '#CFE8E3', '#86BCA2'),
+  Room(30, -60, '#FFF0C9', '#D69C78'),
+  Room(180, -60, '#E6DDF3', '#C4ACCB'),
+  Room(30, -220, '#FFF6E5', '#DE9F84'),
+  Room(180, -220, '#E4F0E7', '#D2A682'),
   Room(30, 436, '#DCEEEA', '#D9A48A'),
   Room(180, 436, '#E2F1EC', '#8DBE9C'),
 ];

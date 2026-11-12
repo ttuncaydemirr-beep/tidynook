@@ -21,6 +21,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'content.dart';
 import 'daily.dart';
 
+/// Free hints per local day (owner decision 2026-11-12); after that the hint
+/// button offers an optional rewarded ad for one more ([Progress.grantHint]).
+/// Unlimited with Remove ads or the Supporter Pack.
+const int freeHintsPerDay = 3;
+
 /// Languages the game ships with.
 const List<String> supportedLanguages = <String>['tr', 'en', 'de', 'ar'];
 
@@ -140,6 +145,15 @@ class Progress extends ChangeNotifier {
   /// A save is only possible when the last finished day was really played.
   String streakSaveDay;
 
+  /// Day ("YYYY-MM-DD") of [hintsUsed]; the count starts over on a new day.
+  String hintDay;
+
+  /// Free hints used on [hintDay].
+  int hintsUsed;
+
+  /// Hints granted by rewarded ads and not used yet (kept across days).
+  int extraHints;
+
   bool _autoSave = false;
 
   Progress({
@@ -160,6 +174,9 @@ class Progress extends ChangeNotifier {
     this.interstitialCounter = 0,
     this.lastFullScreenAdMs = 0,
     this.streakSaveDay = '',
+    this.hintDay = '',
+    this.hintsUsed = 0,
+    this.extraHints = 0,
   })  : done = done ?? <int>{},
         styles = styles ?? <int, int>{},
         daily = daily ?? DailyState(),
@@ -219,6 +236,10 @@ class Progress extends ChangeNotifier {
     p.lastFullScreenAdMs = _nonNegative(json['lastAdMs']);
     final ssd = json['streakSaveDay'];
     p.streakSaveDay = ssd is String && _dayFormat.hasMatch(ssd) ? ssd : '';
+    final hd = json['hintDay'];
+    p.hintDay = hd is String && _dayFormat.hasMatch(hd) ? hd : '';
+    p.hintsUsed = p.hintDay.isEmpty ? 0 : _nonNegative(json['hintsUsed']);
+    p.extraHints = _nonNegative(json['extraHints']);
     return p;
   }
 
@@ -266,6 +287,9 @@ class Progress extends ChangeNotifier {
         'adCounter': interstitialCounter,
         'lastAdMs': lastFullScreenAdMs,
         'streakSaveDay': streakSaveDay,
+        'hintDay': hintDay,
+        'hintsUsed': hintsUsed,
+        'extraHints': extraHints,
       };
 
   /// Loads the saved progress (shared_preferences, key "tidynook-v1"). Never
@@ -487,6 +511,54 @@ class Progress extends ChangeNotifier {
     streakSaveDay = yesterday;
     _changed();
     return true;
+  }
+
+  /// Free hints used today (local day of [now]). A later day starts at 0; a
+  /// clock set back keeps the count of the later day.
+  int hintsUsedToday(DateTime now) {
+    if (hintDay.isEmpty) {
+      return 0;
+    }
+    return dayString(now).compareTo(hintDay) <= 0 ? hintsUsed : 0;
+  }
+
+  /// Hints the player can still take today without an ad (free ones left plus
+  /// granted ones). -1 means unlimited (Remove ads / Supporter Pack).
+  int hintsLeft(DateTime now) {
+    if (noAds) {
+      return -1;
+    }
+    final free = freeHintsPerDay - hintsUsedToday(now);
+    return (free < 0 ? 0 : free) + extraHints;
+  }
+
+  /// Takes one hint: a free one while today's [freeHintsPerDay] last, then a
+  /// granted one ([grantHint]). Always true with Remove ads or the Supporter
+  /// Pack. Returns false (and changes nothing) when none is left, so the UI
+  /// offers the optional rewarded ad.
+  bool useFreeHint(DateTime now) {
+    final used = hintsUsedToday(now);
+    if (noAds || used < freeHintsPerDay) {
+      final today = dayString(now);
+      if (hintDay.compareTo(today) < 0) {
+        hintDay = today;
+      }
+      hintsUsed = used + 1;
+      _changed();
+      return true;
+    }
+    if (extraHints > 0) {
+      extraHints -= 1;
+      _changed();
+      return true;
+    }
+    return false;
+  }
+
+  /// After a rewarded ad: one more hint (the next [useFreeHint] takes it).
+  void grantHint() {
+    extraHints += 1;
+    _changed();
   }
 
   void setVibration(bool value) {
