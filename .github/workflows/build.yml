@@ -160,8 +160,11 @@ jobs:
             echo "== native libraries"; unzip -l out/app-release.apk | grep -E '\.so$' || true
           } | tee "$RUNNER_TEMP/logs/apk-info.txt"
 
+      # The artifact storage quota can be full; the release below is what we use, so this step may fail.
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
+          retention-days: 1
           name: ${{ steps.key.outputs.signed == 'true' && 'tidy-nook-release' || 'tidy-nook-UNSIGNED-test-only' }}
           path: out/*
           if-no-files-found: error
