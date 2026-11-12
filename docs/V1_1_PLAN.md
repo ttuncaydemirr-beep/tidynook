@@ -18,8 +18,10 @@ The evaluation reports that led to this plan are summarised in the sections belo
     (Arrowtile froze when AdMob had no fill; that must not happen here.)
   - rewarded ads are always optional, offered with a clear "Watch ad" / "No thanks" choice;
     if no rewarded ad is ready, show a short "no ad right now" message and grant nothing.
-  - banner: only at the bottom of the house screen (adaptive anchored banner). Not on the play screen,
-    win card, daily box or settings. No reserved empty gap when no banner is loaded.
+  - **no banner anywhere** (owner's Banner Decisions doc, 2026-11-11: the game's calm is the product).
+  - rewarded ads use max ad content rating T (13+ audience); no ad request before the consent form is answered.
+  - hints: 3 free hints per day (reset at local midnight); after that the hint button offers an optional
+    rewarded ad for one more hint (owner decision 2026-11-12). Interstitials stay, capped as above (owner decision 2026-11-12).
 - No timers, no fail state, no energy, no paywalled levels. Levels stay free; we sell "no ads" and cosmetics.
 - Works offline. With no network every screen works; ads/IAP/analytics just do nothing.
 
@@ -40,10 +42,10 @@ The evaluation reports that led to this plan are summarised in the sections belo
    songbird). The puppy (pet 5) comes with the Supporter Pack.
 6. **Streak save** (rewarded): when exactly one day was missed and the streak was >= 2, the daily card offers
    "Keep your streak" for a rewarded ad. One save per missed day.
-7. **Ads**: AdMob interstitial + rewarded + house banner, with Google UMP consent (EEA/UK) and a
+7. **Ads**: AdMob interstitial + rewarded (surprise box, streak save, extra hint), no banner, with Google UMP consent (EEA/UK) and a
    "Privacy choices" row in settings when UMP says it is required.
 8. **In-app purchases** (Google Play Billing, non-consumable):
-   - `remove_ads`: no interstitials, no banner (rewarded stays available as an optional choice).
+   - `remove_ads`: no interstitials and unlimited free hints (rewarded stays available as an optional choice elsewhere).
    - `supporter_pack`: everything in remove_ads + 3rd style for every piece + the puppy.
    - "Restore purchases" in settings. Prices are set by the owner in Play Console
      (suggested ₺59.99 / $2.99 and ₺119.99 / $4.99).
@@ -277,3 +279,13 @@ and the privacy policy web page text (same content as `privacyText`, longer form
 ## Contract C (phase 2): user interface
 
 Written after phase 1 is merged; C gets its own brief then.
+
+## Owner-approved team decisions applied in 1.1 (2026-11-12)
+
+- Banner Decisions doc: Tidy Nook has no banner. Revenue = rewarded ads + purchases (+ capped interstitials, owner OK).
+- Visual Identity Decisions doc: direction A "Butter & Sage" (light theme: cream #FFF6E5 page, terracotta #B5452B
+  primary/accent, sage #2A8363 secondary); font stays Baloo Bhaijaan 2, shipped with its OFL license file (no
+  runtime font download, no Google Fonts link in the web build); fix the 5 room floor colours whose labels/furniture
+  do not read; never uppercase Turkish text with toUpperCase(); colour never carries meaning alone.
+  Dark theme: derive matching values and measure every text/background pair (WCAG AA 4.5:1 for text, 3:1 for large text/icons).
+- Developer/studio name everywhere (privacy texts, store listing): "Demir Games Studio".
