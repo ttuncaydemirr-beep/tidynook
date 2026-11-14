@@ -8,5 +8,5 @@
     Debug builds use src/debug/res/values/ads.xml (always the test id).
     Source: https://developers.google.com/admob/android/test-ads
     -->
-    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_app_id" translatable="false">ca-app-pub-3269207938446570~1262405262</string>
 </resources>

@@ -17,9 +17,9 @@ class AdsConfig {
   static const String testInterstitialId = 'ca-app-pub-3940256099942544/1033173712';
   static const String testRewardedId = 'ca-app-pub-3940256099942544/5224354917';
 
-  // TODO(owner): replace with the real unit IDs from AdMob (used only by release builds).
-  static const String releaseInterstitialId = 'ca-app-pub-3940256099942544/1033173712';
-  static const String releaseRewardedId = 'ca-app-pub-3940256099942544/5224354917';
+  // Real Tidy Nook units from AdMob (owner, 2026-11-14). Used only by release builds.
+  static const String releaseInterstitialId = 'ca-app-pub-3269207938446570/1070833575';
+  static const String releaseRewardedId = 'ca-app-pub-3269207938446570/8216881763';
 
   static String get interstitialId => kReleaseMode ? releaseInterstitialId : testInterstitialId;
   static String get rewardedId => kReleaseMode ? releaseRewardedId : testRewardedId;
