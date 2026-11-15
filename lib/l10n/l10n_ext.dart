@@ -5,7 +5,7 @@ import 'gen/app_localizations.dart';
 /// Every helper is safe for out-of-range indexes: the index is clamped to the
 /// first or last entry instead of throwing.
 extension TidyL10n on AppLocalizations {
-  /// 30 level names (levelName0..levelName29).
+  /// 45 level names (levelName0..levelName44).
   List<String> get levelNames => <String>[
         levelName0,
         levelName1,
@@ -37,9 +37,24 @@ extension TidyL10n on AppLocalizations {
         levelName27,
         levelName28,
         levelName29,
+        levelName30,
+        levelName31,
+        levelName32,
+        levelName33,
+        levelName34,
+        levelName35,
+        levelName36,
+        levelName37,
+        levelName38,
+        levelName39,
+        levelName40,
+        levelName41,
+        levelName42,
+        levelName43,
+        levelName44,
       ];
 
-  /// 30 furniture names (decorName0..decorName29).
+  /// 45 furniture names (decorName0..decorName44).
   List<String> get decorNames => <String>[
         decorName0,
         decorName1,
@@ -71,9 +86,24 @@ extension TidyL10n on AppLocalizations {
         decorName27,
         decorName28,
         decorName29,
+        decorName30,
+        decorName31,
+        decorName32,
+        decorName33,
+        decorName34,
+        decorName35,
+        decorName36,
+        decorName37,
+        decorName38,
+        decorName39,
+        decorName40,
+        decorName41,
+        decorName42,
+        decorName43,
+        decorName44,
       ];
 
-  /// 10 room names (roomName0..roomName9).
+  /// 13 room names (roomName0..roomName12).
   List<String> get roomNames => <String>[
         roomName0,
         roomName1,
@@ -85,6 +115,9 @@ extension TidyL10n on AppLocalizations {
         roomName7,
         roomName8,
         roomName9,
+        roomName10,
+        roomName11,
+        roomName12,
       ];
 
   /// 6 pet names (petName0..petName5).
@@ -120,6 +153,59 @@ extension TidyL10n on AppLocalizations {
   String petName(int i) => _pick(petNames, i);
 
   String dailyTheme(int i) => _pick(dailyThemes, i);
+
+  /// 7 winter box names (winterLevelName0..winterLevelName6).
+  List<String> get winterLevelNames => <String>[
+        winterLevelName0,
+        winterLevelName1,
+        winterLevelName2,
+        winterLevelName3,
+        winterLevelName4,
+        winterLevelName5,
+        winterLevelName6,
+      ];
+
+  /// 4 decorations a full task chest can give (chestDecorName0..3).
+  List<String> get chestDecorNames => <String>[
+        chestDecorName0,
+        chestDecorName1,
+        chestDecorName2,
+        chestDecorName3,
+      ];
+
+  String winterLevelName(int i) => _pick(winterLevelNames, i);
+
+  String chestDecorName(int i) => _pick(chestDecorNames, i);
+
+  /// Text of a daily task. [typeIndex] is `TaskType.index` (boxes, newLevel,
+  /// daily, bonus, style, hint, mystery, replay, drawer, winter); [target] is
+  /// only used for the "finish N boxes" task.
+  String taskText(int typeIndex, [int target = 2]) {
+    switch (typeIndex) {
+      case 0:
+        return taskTextBoxes(target);
+      case 1:
+        return taskTextNewLevel;
+      case 2:
+        return taskTextDaily;
+      case 3:
+        return taskTextBonus;
+      case 4:
+        return taskTextStyle;
+      case 5:
+        return taskTextHint;
+      case 6:
+        return taskTextMystery;
+      case 7:
+        return taskTextReplay;
+      case 8:
+        return taskTextDrawer;
+      case 9:
+        return taskTextWinter;
+      default:
+        return taskTextBoxes(target);
+    }
+  }
 }
 
 String _pick(List<String> list, int i) {

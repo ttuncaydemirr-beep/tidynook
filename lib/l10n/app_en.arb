@@ -395,9 +395,66 @@
   "@appTitle": {
     "description": "Application name (not translated)"
   },
+  "levelName30": "Laundry Basket",
+  "levelName31": "Ironing Kit",
+  "levelName32": "Peg Bag",
+  "levelName33": "Cleaning Caddy",
+  "levelName34": "Linen Cupboard",
+  "levelName35": "Candle Box",
+  "levelName36": "Game Night",
+  "levelName37": "Lantern Shelf",
+  "levelName38": "Bird Feeder Kit",
+  "levelName39": "Stargazing Box",
+  "levelName40": "Seedling Tray",
+  "levelName41": "Herb Box",
+  "levelName42": "Mushroom Basket",
+  "levelName43": "Flower Crate",
+  "levelName44": "Harvest Basket",
+  "decorName30": "Washing machine",
+  "decorName31": "Ironing board",
+  "decorName32": "Drying rack",
+  "decorName33": "Cleaning shelf",
+  "decorName34": "Clothesline",
+  "decorName35": "Hanging lantern",
+  "decorName36": "Bistro set",
+  "decorName37": "Potted palm",
+  "decorName38": "Bird feeder",
+  "decorName39": "Telescope",
+  "decorName40": "Seedling shelf",
+  "decorName41": "Herb planter",
+  "decorName42": "Wheelbarrow",
+  "decorName43": "Flower buckets",
+  "decorName44": "Hanging fern",
+  "roomName10": "Laundry Room",
+  "roomName11": "Balcony",
+  "roomName12": "Greenhouse",
+  "winterLevelName0": "Mitten Basket",
+  "winterLevelName1": "Ornament Box",
+  "winterLevelName2": "Cookie Tin",
+  "winterLevelName3": "Cocoa Tray",
+  "winterLevelName4": "Gift Wrap Box",
+  "winterLevelName5": "Pinecone Basket",
+  "winterLevelName6": "Snow Globe Shelf",
+  "chestDecorName0": "Garden gnome",
+  "chestDecorName1": "Birdbath",
+  "chestDecorName2": "Window flower box",
+  "chestDecorName3": "Lantern post",
   "chapter3": "Chapter 3",
   "@chapter3": {
-    "description": "Name of the third chapter (levels 31-45), shown on the level map"
+    "description": "Name of the third chapter (levels 31-45)"
+  },
+  "drawerTip": "Little drawer: fill the other spots first and it opens",
+  "@drawerTip": {
+    "description": "One-line hint for the drawer mechanic, shown the first time it appears (level 31)"
+  },
+  "drawerLeft": "{n} more to open",
+  "@drawerLeft": {
+    "description": "Small counter under the closed drawer knob",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "tasksTitle": "Daily tasks",
   "@tasksTitle": {
@@ -409,7 +466,7 @@
   },
   "tasksProgress": "{a}/{b} done today",
   "@tasksProgress": {
-    "description": "Progress of today's tasks, e.g. 2/3",
+    "description": "Short summary of today's tasks on the house card, e.g. 2/3",
     "placeholders": {
       "a": {
         "type": "int"
@@ -419,29 +476,12 @@
       }
     }
   },
-  "tasksAllDone": "All tasks done! See you tomorrow",
-  "taskDone": "Done",
-  "taskClaim": "Claim",
-  "@taskClaim": {
-    "description": "Button that collects the hint reward of a finished task"
+  "taskLabelDone": "Done",
+  "@taskLabelDone": {
+    "description": "Small badge on a finished task row"
   },
-  "taskClaimed": "Claimed",
-  "taskDoubleAd": "Watch ad to double",
-  "@taskDoubleAd": {
-    "description": "Optional rewarded ad button that doubles the hint reward of a task"
-  },
-  "taskDoubled": "Doubled!",
-  "taskReward": "{n, plural, =1{+1 hint} other{+{n} hints}}",
-  "@taskReward": {
-    "description": "Hint reward of a task",
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
-  },
-  "taskFinishBoxes": "{n, plural, =1{Finish 1 box} other{Finish {n} boxes}}",
-  "@taskFinishBoxes": {
+  "taskTextBoxes": "{n, plural, =1{Finish 1 box} other{Finish {n} boxes}}",
+  "@taskTextBoxes": {
     "description": "Task text",
     "placeholders": {
       "n": {
@@ -449,29 +489,45 @@
       }
     }
   },
-  "taskChangeStyle": "Change a style in your house",
-  "@taskChangeStyle": {
+  "taskTextNewLevel": "Finish a new level",
+  "@taskTextNewLevel": {
     "description": "Task text"
   },
-  "taskDailyBox": "Open the daily box",
-  "@taskDailyBox": {
+  "taskTextDaily": "Finish the daily box",
+  "@taskTextDaily": {
     "description": "Task text"
   },
-  "taskUseHint": "Use a hint",
-  "@taskUseHint": {
+  "taskTextBonus": "Finish a bonus box",
+  "@taskTextBonus": {
     "description": "Task text"
   },
-  "taskMystery": "Finish a mystery box",
-  "@taskMystery": {
+  "taskTextStyle": "Change a style in your house",
+  "@taskTextStyle": {
     "description": "Task text"
   },
-  "taskChestTitle": "Task chest",
-  "@taskChestTitle": {
-    "description": "Title of the 7-step chest filled by finishing all daily tasks"
+  "taskTextHint": "Use a hint",
+  "@taskTextHint": {
+    "description": "Task text"
   },
-  "taskChestProgress": "{a}/{b}",
-  "@taskChestProgress": {
-    "description": "Chest steps, e.g. 3/7",
+  "taskTextMystery": "Finish a mystery box",
+  "@taskTextMystery": {
+    "description": "Task text"
+  },
+  "taskTextReplay": "Play a finished level again",
+  "@taskTextReplay": {
+    "description": "Task text"
+  },
+  "taskTextDrawer": "Finish a box with a drawer",
+  "@taskTextDrawer": {
+    "description": "Task text"
+  },
+  "taskTextWinter": "Finish a winter box",
+  "@taskTextWinter": {
+    "description": "Task text"
+  },
+  "taskProgress": "{a}/{b}",
+  "@taskProgress": {
+    "description": "Progress inside one task, e.g. 1/2",
     "placeholders": {
       "a": {
         "type": "int"
@@ -481,16 +537,54 @@
       }
     }
   },
-  "taskChestHint": "Finish all 3 tasks in a day to fill one step.",
-  "taskChestReady": "The chest is full!",
-  "taskChestOpen": "Open chest",
-  "taskChestRewardStyle": "A new style for your home!",
-  "@taskChestRewardStyle": {
-    "description": "Chest reward when the player gets a third style they did not own"
+  "taskReward": "+1 hint",
+  "@taskReward": {
+    "description": "Hint reward shown on a task row"
   },
-  "taskChestRewardDecor": "A little decoration for your home!",
-  "@taskChestRewardDecor": {
-    "description": "Chest reward when every style is already owned"
+  "taskDone": "Task done! +1 hint",
+  "tasksAllDone": "All tasks done. See you tomorrow!",
+  "taskDoubleTitle": "Double your hint",
+  "taskDoubleText": "Watch a short ad to get one more hint for this task.",
+  "@taskDoubleText": {
+    "description": "Optional rewarded ad (placement task_double)"
+  },
+  "taskDoubled": "Hint doubled!",
+  "chestTitle": "Task chest",
+  "@chestTitle": {
+    "description": "Title of the 7-step chest filled by finishing all daily tasks"
+  },
+  "chestProgress": "{a}/{b} days",
+  "@chestProgress": {
+    "description": "Chest steps, e.g. 3/7 days",
+    "placeholders": {
+      "a": {
+        "type": "int"
+      },
+      "b": {
+        "type": "int"
+      }
+    }
+  },
+  "chestHint": "Finish all three tasks on a day to fill one step.",
+  "chestReady": "Your task chest is full!",
+  "chestOpen": "Open",
+  "chestGotDecor": "New decoration: {item}!",
+  "@chestGotDecor": {
+    "description": "Chest reward when every style is already owned",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "chestGotHints": "{n, plural, =1{1 hint for you!} other{{n} hints for you!}}",
+  "@chestGotHints": {
+    "description": "Chest reward when everything is owned",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "winterTitle": "Winter boxes",
   "@winterTitle": {
@@ -501,15 +595,12 @@
     "description": "Text on the house screen event card"
   },
   "winterUntil": "Available until 15 January",
-  "winterBoxN": "Winter box {n}",
-  "@winterBoxN": {
-    "placeholders": {
-      "n": {
-        "type": "int"
-      }
-    }
+  "winterReward": "Finish all 7 for a snowman in your garden",
+  "winterTip": "Winter box: a little gift for the season",
+  "@winterTip": {
+    "description": "Eyebrow of a winter box"
   },
-  "winterProgress": "{a}/{b} winter boxes",
+  "winterProgress": "{a}/{b} done",
   "@winterProgress": {
     "description": "Event progress, e.g. 3/7",
     "placeholders": {
@@ -521,17 +612,25 @@
       }
     }
   },
-  "winterReward": "Finish all 7 for a snowman in your garden",
-  "winterDone": "Winter boxes done! The snowman is yours.",
-  "winterSnowman": "Snowman",
-  "@winterSnowman": {
+  "winterDaysLeft": "{n, plural, =1{1 day left} other{{n} days left}}",
+  "@winterDaysLeft": {
+    "description": "Days left of the winter event",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "winterAllDone": "All winter boxes done!",
+  "winterBack": "Back next winter",
+  "@winterBack": {
+    "description": "Shown on the event card after the event or when all boxes are done"
+  },
+  "snowmanName": "Snowman",
+  "@snowmanName": {
     "description": "Name of the snowman garden decoration"
   },
-  "winterEnded": "The winter event has ended. See you next winter!",
-  "mechanicHint": "New in this box: look closely, something works a little differently.",
-  "@mechanicHint": {
-    "description": "One-line hint shown once when the new mechanic appears at level 31 (placeholder until Contract A gives the real one)"
-  },
+  "snowmanGot": "A snowman for your garden!",
   "privacy": "Privacy policy",
   "privacyText": "Effective date: 15 November 2026\nDeveloper: Demir Games Studio (individual developer, Turkey)\n\nTidy Nook has no accounts and never asks for your name, e-mail address or contact details. The game saves your progress on your own device. Ads, purchases and optional usage statistics involve Google services, explained below.\n\nAds\n\nThe game shows ads through Google AdMob: a short full-screen ad now and then when you leave a finished box (never during a level, and not in the first levels), and optional ads you choose to watch for a reward, such as a surprise box, saving a streak or one more hint. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.\n\nWhere the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase \"Remove ads\" removes the ads between levels and makes hints unlimited.\n\nPurchases\n\nPurchases are handled entirely by Google Play. We never see or store your card or payment details. The app only learns whether a purchase is active, so it can unlock it on your device. \"Restore purchases\" in Settings brings it back after a reinstall.\n\nUsage statistics and crash reports\n\nTo fix bugs and improve levels, the game may send anonymous usage events (for example, that a level was started or finished) and crash reports to Google Firebase (Analytics and Crashlytics). They can include a random app instance ID, your device model, your Android version and the technical details of a crash. They do not include your name or e-mail address.\n\nNotifications\n\nThe optional daily reminder is scheduled on your device. It does not use a server, and nothing about it is sent to us. You can turn it off in Settings > Daily reminder or in your Android settings.\n\nInternet\n\nThe game works offline. It connects to the internet only to load ads, check purchases and send the statistics described above.\n\nWhat stays on your device\n\nYour game progress is saved on your own device: completed levels, bonus boxes, the furniture styles you picked and unlocked, your daily box streak, your purchases and your language, sound, vibration and reminder settings. We do not receive it.\n\n• You can erase it all with Settings > Reset progress.\n• Uninstalling the app erases it all.\n• If Google backup is turned on for your phone, Android may back this data up to your Google account. Google manages that backup; we have no access to it.\n\nSharing\n\nWe do not sell your data. The only companies involved are Google services that the app uses: AdMob (ads), Google Play (purchases and consent) and Firebase (statistics and crash reports). Their own privacy policies apply to the data they handle.\n\nChildren\n\nTidy Nook is made for a general audience and is not directed at children under 13. We do not knowingly collect personal information from children.\n\nChanges\n\nIf this policy changes, the new version is published with a new effective date.\n\nContact\n\nQuestions: nilkaren.tuncay.demir@gmail.com",
   "@privacy": {

@@ -64,7 +64,78 @@ window check, event levels, snowman decor, and every text key A needs (name + En
 
 ## Contract B 1.2 (B fills this section in before finishing)
 
-B lists every new ARB key with its English text. Keys for A's content (level names, room names, mechanic hint)
-come from A's section; B may start from this plan and add A's keys once A's section exists (re-read it).
-Also: `store/release-notes-1.2.0.txt` in 4 languages (max 500 characters each, tagged `<en-US>`, `<tr-TR>`,
-`<de-DE>`, `<ar>`), and updated `store/listing-1.2.0.json` mentioning 45 levels, daily tasks and the winter event.
+Status: implemented on branch `v12-b` (all four ARB files have every key; the plain keys of Contract A 1.2, section 6, are
+included with A's exact names; the 1.1 UI still compiles: nothing was renamed or removed).
+
+`lib/l10n/l10n_ext.dart`: `levelNames` now has 45 entries, `decorNames` 45, `roomNames` 13 (the clamped helpers
+`levelName(i)`, `decorName(i)`, `roomName(i)` cover the new ranges). New helpers: `winterLevelName(int)`,
+`chestDecorName(int)` and `taskText(int typeIndex, [int target = 2])` (index = `TaskType.index`; `target` only matters
+for the "finish N boxes" task). `ver` is "Version 1.2.0".
+
+Keys B added beyond A's list (C may use them): `chapter3` ("Chapter 3", level map chapter name), `tasksSubtitle`,
+`tasksProgress(a, b)` (summary on the house card), `taskLabelDone` (small "Done" badge on a finished task row),
+`winterCardText`, `winterUntil`, `winterReward` (event card lines). Dropped because A's design covers them:
+claim/claimed buttons (a finished task adds its hint at once), a separate "watch ad to double" label (use `watchAd`),
+chest reward texts (use `newStyleFor`, `chestGotDecor`, `chestGotHints`).
+
+### New plain keys
+| key | English |
+| --- | --- |
+| `chapter3` | Chapter 3 |
+| `drawerTip` | Little drawer: fill the other spots first and it opens |
+| `drawerLeft(n)` | {n} more to open |
+| `tasksTitle` | Daily tasks |
+| `tasksSubtitle` | Three small things for today |
+| `tasksProgress(a, b)` | {a}/{b} done today |
+| `taskLabelDone` | Done |
+| `taskTextBoxes(n)` | {n, plural, =1{Finish 1 box} other{Finish {n} boxes}} |
+| `taskTextNewLevel` | Finish a new level |
+| `taskTextDaily` | Finish the daily box |
+| `taskTextBonus` | Finish a bonus box |
+| `taskTextStyle` | Change a style in your house |
+| `taskTextHint` | Use a hint |
+| `taskTextMystery` | Finish a mystery box |
+| `taskTextReplay` | Play a finished level again |
+| `taskTextDrawer` | Finish a box with a drawer |
+| `taskTextWinter` | Finish a winter box |
+| `taskProgress(a, b)` | {a}/{b} |
+| `taskReward` | +1 hint |
+| `taskDone` | Task done! +1 hint |
+| `tasksAllDone` | All tasks done. See you tomorrow! |
+| `taskDoubleTitle` | Double your hint |
+| `taskDoubleText` | Watch a short ad to get one more hint for this task. |
+| `taskDoubled` | Hint doubled! |
+| `chestTitle` | Task chest |
+| `chestProgress(a, b)` | {a}/{b} days |
+| `chestHint` | Finish all three tasks on a day to fill one step. |
+| `chestReady` | Your task chest is full! |
+| `chestOpen` | Open |
+| `chestGotDecor(item)` | New decoration: {item}! |
+| `chestGotHints(n)` | {n, plural, =1{1 hint for you!} other{{n} hints for you!}} |
+| `winterTitle` | Winter boxes |
+| `winterCardText` | 7 winter boxes |
+| `winterUntil` | Available until 15 January |
+| `winterReward` | Finish all 7 for a snowman in your garden |
+| `winterTip` | Winter box: a little gift for the season |
+| `winterProgress(a, b)` | {a}/{b} done |
+| `winterDaysLeft(n)` | {n, plural, =1{1 day left} other{{n} days left}} |
+| `winterAllDone` | All winter boxes done! |
+| `winterBack` | Back next winter |
+| `snowmanName` | Snowman |
+| `snowmanGot` | A snowman for your garden! |
+
+### Numbered keys (English)
+| keys | English |
+| --- | --- |
+| `levelName30..44` | Laundry Basket, Ironing Kit, Peg Bag, Cleaning Caddy, Linen Cupboard, Candle Box, Game Night, Lantern Shelf, Bird Feeder Kit, Stargazing Box, Seedling Tray, Herb Box, Mushroom Basket, Flower Crate, Harvest Basket |
+| `decorName30..44` | Washing machine, Ironing board, Drying rack, Cleaning shelf, Clothesline, Hanging lantern, Bistro set, Potted palm, Bird feeder, Telescope, Seedling shelf, Herb planter, Wheelbarrow, Flower buckets, Hanging fern |
+| `roomName10..12` | Laundry Room, Balcony, Greenhouse |
+| `winterLevelName0..6` | Mitten Basket, Ornament Box, Cookie Tin, Cocoa Tray, Gift Wrap Box, Pinecone Basket, Snow Globe Shelf |
+| `chestDecorName0..3` | Garden gnome, Birdbath, Window flower box, Lantern post |
+
+### Store texts
+- `store/release-notes-1.2.0.txt`: 4 languages (`<tr-TR>`, `<en-US>`, `<de-DE>`, `<ar>`), each under 500 characters
+  (tr 397, en 385, de 438, ar 336).
+- `store/listing-1.2.0.json`: version 1.2.0, versionCode 5; 45 levels, 13 rooms, little drawers, daily tasks with the task
+  chest, the yearly winter event. Counts (title / short / full): tr 29/63/3423, en 30/71/3349, de 30/76/3860, ar 28/58/2901.
+

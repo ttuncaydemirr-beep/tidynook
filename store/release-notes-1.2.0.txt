@@ -1,0 +1,32 @@
+<tr-TR>
+1.2 ile yenilikler:
+- 15 yeni bölüm ve 3 yeni oda: çamaşır odası, balkon ve sera
+- Küçük çekmeceler: diğer yerler dolunca kendiliğinden açılır
+- Günlük görevler: her gün 3 küçük görev ipucu kazandırır ve yeni stil veren bir sandığı doldurur
+- Kış etkinliği, 1 Aralık - 15 Ocak: 7 kış kutusu, evinde kar ve bahçen için bir kardan adam
+- Görev ipucunu isteğe bağlı bir reklamla ikiye katlayabilirsin
+</tr-TR>
+<en-US>
+New in 1.2:
+- 15 new levels and 3 new rooms: a laundry room, a balcony and a greenhouse
+- Little drawers that open once the other spots are filled
+- Daily tasks: 3 small tasks a day earn hints and fill a chest that gives a new style
+- Winter event, 1 December to 15 January: 7 winter boxes, snow on your home and a snowman for your garden
+- Optionally watch an ad to double a task hint
+</en-US>
+<de-DE>
+Neu in 1.2:
+- 15 neue Level und 3 neue Räume: Waschküche, Balkon und Gewächshaus
+- Kleine Schubladen, die sich öffnen, sobald die anderen Plätze gefüllt sind
+- Tagesaufgaben: 3 kleine Aufgaben pro Tag bringen Tipps und füllen eine Truhe mit einem neuen Stil
+- Winterevent vom 1. Dezember bis 15. Januar: 7 Winterboxen, Schnee auf deinem Haus und ein Schneemann für den Garten
+- Optional: Werbung ansehen und einen Aufgaben-Tipp verdoppeln
+</de-DE>
+<ar>
+الجديد في 1.2:
+- 15 مرحلة جديدة و3 غرف جديدة: غرفة غسيل وشرفة ودفيئة
+- أدراج صغيرة تنفتح عندما تمتلئ الأماكن الأخرى
+- مهام يومية: 3 مهام صغيرة كل يوم تمنحك تلميحات وتملأ صندوقاً يعطيك نمطاً جديداً
+- فعالية الشتاء من 1 ديسمبر إلى 15 يناير: 7 صناديق شتوية وثلج على بيتك ورجل ثلج لحديقتك
+- يمكنك اختيارياً مشاهدة إعلان لمضاعفة تلميح المهمة
+</ar>
