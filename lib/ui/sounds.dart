@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 
-/// Short sound effects from assets/sounds/<name>.wav. Never throws.
+/// Short sound effects from `assets/sounds/<name>.wav`. Never throws.
 class Sounds {
   Sounds({required bool Function() enabled})
       : _enabled = enabled,

@@ -175,6 +175,10 @@ class _TasksPanelState extends State<TasksPanel> {
     } finally {
       _busy = false;
     }
+    // close the sheet so the new piece can be seen sparkling in the house
+    if (mounted && reward.kind != ChestRewardKind.hints) {
+      await Navigator.of(context).maybePop();
+    }
     widget.onReward?.call(reward);
   }
 
@@ -321,10 +325,12 @@ class _TaskRow extends StatelessWidget {
       ),
       child: task.done
           ? svgIcon(checkSvg(c.mintInk), size: 16)
-          : Text(
-              '${task.progress}',
-              style: tx(13, w: 800, color: c.muted, height: 1.1),
-            ),
+          : (task.target > 1
+              ? Text(
+                  '${task.progress}',
+                  style: tx(13, w: 800, color: c.muted, height: 1.1),
+                )
+              : null),
     );
 
     Widget? trailing;
@@ -332,6 +338,7 @@ class _TaskRow extends StatelessWidget {
       trailing = PillButton(
         label: t.taskClaim,
         small: true,
+        minWidth: 72,
         semanticLabel: '${t.taskClaim}. ${t.taskReward}',
         onTap: onClaim,
       );

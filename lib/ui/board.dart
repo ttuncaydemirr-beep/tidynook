@@ -852,7 +852,7 @@ class _BoardViewState extends State<BoardView>
         ),
       ),
       for (final id in _zFree) _itemLayer(_items[id], now),
-      if (hand != null) hand,
+      ?hand,
       Positioned.fill(
         child: IgnorePointer(
           child: CustomPaint(

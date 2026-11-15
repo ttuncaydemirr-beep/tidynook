@@ -816,12 +816,20 @@ class _WinterCard extends StatelessWidget {
         ? t.winterAllDone
         : '${t.winterProgress(done, winterLevelCount)}'
             '${sepOf(context)}${t.winterDaysLeft(winterDaysLeft(now))}';
-    final icon = ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: SvgPicture.string(
-        snowmanPreviewSvg(locked: !p.snowman),
-        width: 40,
-        height: 40,
+    final icon = Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: c.line, width: 1.5),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8.5),
+        child: SvgPicture.string(
+          // the snowman is shown greyed out until it is earned
+          snowmanPreviewSvg(locked: !p.snowman),
+          fit: BoxFit.cover,
+        ),
       ),
     );
     final trailing = all
