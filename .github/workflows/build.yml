@@ -72,33 +72,45 @@ jobs:
         run: |
           flutter test 2>&1 | tee "$RUNNER_TEMP/logs/test.txt"; exit ${PIPESTATUS[0]}
 
+      # Signing: either the four KEYSTORE_* secrets, or the encrypted key bundle in android/signing/upload.enc
+      # unlocked with the single SIGNING_PASSPHRASE secret (easier to set up from a phone).
       - name: Restore upload key
         id: key
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          SIGNING_PASSPHRASE: ${{ secrets.SIGNING_PASSPHRASE }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+            {
+              echo "TIDY_KEYSTORE_FILE=$RUNNER_TEMP/upload-keystore.jks"
+              echo "TIDY_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "TIDY_KEY_ALIAS=$KEY_ALIAS"
+              echo "TIDY_KEY_PASSWORD=$KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$SIGNING_PASSPHRASE" ] && [ -f android/signing/upload.enc ]; then
+            mkdir -p "$RUNNER_TEMP/sig"
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:SIGNING_PASSPHRASE \
+              -in android/signing/upload.enc | tar -C "$RUNNER_TEMP/sig" -xzf -
+            while IFS='=' read -r k v; do [ -n "$v" ] && echo "::add-mask::$v"; done < "$RUNNER_TEMP/sig/env"
+            echo "TIDY_KEYSTORE_FILE=$RUNNER_TEMP/sig/upload-keystore.jks" >> "$GITHUB_ENV"
+            cat "$RUNNER_TEMP/sig/env" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+            echo "Signing with the encrypted upload key bundle."
+          else
             echo "::warning::Signing secrets are missing, so this build is unsigned and cannot be uploaded to Play."
             echo "signed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
-            echo "TIDY_KEYSTORE_FILE=$RUNNER_TEMP/upload-keystore.jks" >> "$GITHUB_ENV"
-            echo "signed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build app bundle
-        env:
-          TIDY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          TIDY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          TIDY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           flutter build appbundle --release 2>&1 | tee "$RUNNER_TEMP/logs/build-aab.txt"; exit ${PIPESTATUS[0]}
 
       - name: Build APK
-        env:
-          TIDY_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          TIDY_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          TIDY_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           # An unsigned release APK is named app-release-unsigned.apk by AGP; the Flutter tool may
           # report an error for it even though the file exists, so accept that case when the file is there.
@@ -187,6 +199,34 @@ jobs:
           gh release create "$TAG" out/app-release.aab out/app-release.apk out/web.zip $EXTRA \
             --target "$GITHUB_SHA" --prerelease --title "Build $GITHUB_REF_NAME" \
             --notes "Built from ${GITHUB_SHA::7}. ${FLUTTER_VER}. Signed: ${{ steps.key.outputs.signed }}."
+
+      # Google Play: a commit on main whose message contains [play-check] tests the service account;
+      # [play] uploads the signed bundle to the closed-testing track and sends it to review.
+      # Needs the PLAY_SERVICE_ACCOUNT_JSON secret. The log goes to the public "play-log" release.
+      - name: Google Play check / upload
+        if: github.ref_name == 'main' && (contains(github.event.head_commit.message, '[play]') || contains(github.event.head_commit.message, '[play-check]'))
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          pip install --quiet google-auth google-api-python-client
+          set +e
+          if printf '%s' "$MSG" | grep -q '\[play\]'; then
+            if [ "${{ steps.key.outputs.signed }}" != "true" ]; then
+              echo "Bundle is not signed; refusing to upload." | tee "$RUNNER_TEMP/play.txt"; RC=1
+            else
+              python3 tool/play_upload.py upload out/app-release.aab 2>&1 | tee "$RUNNER_TEMP/play.txt"; RC=${PIPESTATUS[0]}
+            fi
+          else
+            python3 tool/play_upload.py check 2>&1 | tee "$RUNNER_TEMP/play.txt"; RC=${PIPESTATUS[0]}
+          fi
+          set -e
+          echo "signed=${{ steps.key.outputs.signed }} exit=$RC" >> "$RUNNER_TEMP/play.txt"
+          gh release delete play-log --yes --cleanup-tag || true
+          gh release create play-log "$RUNNER_TEMP/play.txt" --target "$GITHUB_SHA" --prerelease \
+            --title "Play log" --notes "Play step for ${GITHUB_SHA::7}, exit $RC." || true
+          exit $RC
 
       # On failure, put the logs on a public "ci-logs" release so they can be read without signing in.
       - name: Publish logs on failure
