@@ -77,7 +77,7 @@ Set<String> _fills(String svg) => RegExp(r'fill="([^"]*)"')
 void main() {
   group('1.1 levels', () {
     test('new levels are tidy: inside the box, no overlaps, 9-12 items', () {
-      for (var i = 18; i < levels.length; i++) {
+      for (var i = 18; i < 30; i++) {
         final l = levels[i];
         expect(l.slots.length, inInclusiveRange(9, 12), reason: 'level $i');
         _expectTidyLayout(l, 'level $i');
@@ -85,7 +85,7 @@ void main() {
     });
 
     test('item counts step up gently', () {
-      for (var i = 19; i < levels.length; i++) {
+      for (var i = 19; i < 30; i++) {
         expect(levels[i].slots.length >= levels[i - 1].slots.length, isTrue,
             reason: 'level $i');
       }
@@ -102,7 +102,7 @@ void main() {
 
     test('mystery levels are 22, 25, 28 and 30 (indexes 21, 24, 27, 29)', () {
       final m = <int>[
-        for (var i = 0; i < levels.length; i++)
+        for (var i = 0; i < 30; i++)
           if (levels[i].mystery) i,
       ];
       expect(m, [21, 24, 27, 29]);
@@ -169,7 +169,7 @@ void main() {
       }
     });
 
-    test('hit rects, labels and pet spots are inside the 1.1 house', () {
+    test('hit rects, labels and pet spots are inside the house', () {
       final house = houseOrigin & houseSize;
       for (var i = 0; i < decorCount; i++) {
         final r = decorHitRect(i);
@@ -191,7 +191,8 @@ void main() {
       }
       expect(petSpots(2), const [Offset(28, 410), Offset(332, 410)]);
       expect(petRoom(supporterPet), 8);
-      expect(houseViewBox, '10 -306 340 912');
+      expect(houseViewBox, '10 -466 340 1276');
+      expect(houseViewBoxV11, '10 -306 340 912');
       expect(houseViewBoxLegacy, '10 -146 340 574');
     });
 
@@ -547,13 +548,13 @@ void main() {
         expect(p.interstitialCounter, 0);
         expect(p.lastFullScreenAdMs, 0);
         expect(p.streakSaveDay, '');
-        expect(p.toJson()['v'], 3);
+        expect(p.toJson()['v'], 4);
       }
     });
 
     test('bad schema 3 values fall back, styles are clamped', () {
       final p = Progress.fromJsonString(
-          '{"styles":{"1":7,"2":-3,"3":2,"40":1},"extraStyles":[3,"x",99,-1],'
+          '{"styles":{"1":7,"2":-3,"3":2,"99":1},"extraStyles":[3,"x",99,-1],'
           '"adsRemoved":"yes","supporter":1,"bonusDone":-4,"vibration":null,'
           '"adCounter":"2","lastAdMs":12.7,"streakSaveDay":"soon"}');
       expect(p.styles, {1: 2, 2: 0, 3: 2});

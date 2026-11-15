@@ -48,11 +48,11 @@ String geometry(Prim p) {
 
 void main() {
   group('data counts', () {
-    test('30 levels, 10 rooms, 30 furniture pieces, 5 milestones', () {
-      expect(levels.length, 30);
-      expect(rooms.length, 10);
-      expect(levelRoom.length, 30);
-      expect(decorCount, 30);
+    test('45 levels, 13 rooms, 45 furniture pieces, 5 milestones', () {
+      expect(levels.length, 45);
+      expect(rooms.length, 13);
+      expect(levelRoom.length, 45);
+      expect(decorCount, 45);
       expect(milestones, [3, 7, 14, 21, 30]);
       expect(supporterPet, 5);
       expect(styleCount, 3);
@@ -64,14 +64,15 @@ void main() {
           expect(decorSvg(i, v), isNotEmpty);
         }
       }
-      expect(kinds.length, 157);
+      expect(kinds.length, 212);
     });
 
     test('level slot counts match the HTML', () {
       final counts = levels.map((l) => l.slots.length).toList();
       expect(counts, [
         6, 5, 6, 6, 7, 6, 8, 10, 9, 7, 8, 9, 7, 8, 8, 8, 8, 9, //
-        9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12,
+        9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, //
+        10, 11, 12, 12, 12, 12, 12, 13, 12, 13, 13, 13, 13, 14, 14,
       ]);
     });
 

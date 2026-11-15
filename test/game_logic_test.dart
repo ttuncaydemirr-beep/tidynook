@@ -244,7 +244,7 @@ void main() {
 
   group('progress: json', () {
     test('saves carry the schema version and files without it still load', () {
-      expect(Progress().toJson()['v'], 3);
+      expect(Progress().toJson()['v'], 4);
       final p = Progress.fromJsonString('{"level":3,"done":[0]}');
       expect(p.level, 3);
       expect(p.done, {0});
@@ -290,17 +290,19 @@ void main() {
     test('round trip keeps the web shape', () {
       final p = Progress.fromJsonString(webSave);
       final out = jsonDecode(jsonEncode(p.toJson())) as Map<String, dynamic>;
-      // the web keys are unchanged; schema 3 adds its own keys with defaults
+      // the web keys are unchanged; schemas 3 and 4 add their own keys with defaults
       final web = jsonDecode(webSave) as Map<String, dynamic>;
       for (final k in web.keys) {
         expect(out[k], web[k], reason: k);
       }
-      expect(out['v'], 3);
+      expect(out['v'], 4);
       expect(out.keys.toSet(), {
         'v', 'lang', 'level', 'done', 'sound', 'styles', 'daily', //
         'extraStyles', 'adsRemoved', 'supporter', 'bonusDone', 'vibration',
         'reminderOn', 'reminderAsked', 'reviewAsked', 'adCounter', 'lastAdMs',
-        'streakSaveDay', 'hintDay', 'hintsUsed', 'extraHints',
+        'streakSaveDay', 'hintDay', 'hintsUsed', 'extraHints', //
+        'tasks', 'chestSteps', 'chestDay', 'chestsOpened', 'chestDecors',
+        'winter', 'snowman', 'mechanicTipSeen',
       });
       expect((out['styles'] as Map).keys.toSet(), {'3', '0'});
       final again = Progress.fromJson(out);
