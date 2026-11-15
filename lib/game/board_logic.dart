@@ -1,6 +1,10 @@
 // Board rules: the first scatter of the items on the rug, snapping, hints and
 // the drop rules. Ported from build(), drop() and the hint button of the
 // shipped HTML game (web-preview/index.html).
+//
+// 1.2 adds the inner drawer mechanic: a slot inside a closed drawer waits for
+// other slots ([SlotState.waitFor]); [findSnap] and [pickHint] skip it until
+// they are all filled, so the drawer "opens" by itself without any extra call.
 
 import 'dart:math' as math;
 import 'dart:ui' show Offset, Rect;
@@ -39,14 +43,84 @@ class SlotState {
   final int id;
   final Slot slot;
   bool filled;
-  SlotState({required this.id, required this.slot, this.filled = false});
+
+  /// Ids of the slots that must be filled before this one can take an item
+  /// (the keys of its inner drawer, see drawerKeys); empty = open from the start.
+  final List<int> waitFor;
+  SlotState({
+    required this.id,
+    required this.slot,
+    this.filled = false,
+    this.waitFor = const <int>[],
+  });
 }
 
-/// Fresh slot states for [level] (ids 0..n-1 in slot order).
+/// Fresh slot states for [level] (ids 0..n-1 in slot order). Slots inside an
+/// inner drawer wait for that drawer's keys.
 List<SlotState> makeSlots(Level level) {
+  final wait = List<List<int>>.filled(level.slots.length, const <int>[]);
+  for (var d = 0; d < level.drawers.length; d++) {
+    final keys = drawerKeys(level, d);
+    for (final s in level.drawers[d].slots) {
+      if (s >= 0 && s < wait.length) {
+        wait[s] = keys;
+      }
+    }
+  }
   return <SlotState>[
     for (var i = 0; i < level.slots.length; i++)
-      SlotState(id: i, slot: level.slots[i]),
+      SlotState(id: i, slot: level.slots[i], waitFor: wait[i]),
+  ];
+}
+
+SlotState? _byId(List<SlotState> slots, int id) {
+  if (id >= 0 && id < slots.length && slots[id].id == id) {
+    return slots[id];
+  }
+  for (final s in slots) {
+    if (s.id == id) {
+      return s;
+    }
+  }
+  return null;
+}
+
+/// True when slot [s] can take an item: every slot it waits for is filled.
+bool slotOpen(List<SlotState> slots, SlotState s) {
+  for (final id in s.waitFor) {
+    final k = _byId(slots, id);
+    if (k != null && !k.filled) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// True when drawer [d] of [level] is open (all its keys are filled).
+bool drawerOpen(Level level, int d, List<SlotState> slots) {
+  return drawerRemaining(level, d, slots) == 0;
+}
+
+/// Number of key slots of drawer [d] that are still empty (0 = open). The UI
+/// may show it on the closed drawer front.
+int drawerRemaining(Level level, int d, List<SlotState> slots) {
+  var n = 0;
+  for (final id in drawerKeys(level, d)) {
+    final k = _byId(slots, id);
+    if (k != null && !k.filled) {
+      n++;
+    }
+  }
+  return n;
+}
+
+/// The drawers of [level] that the filling of slot [slotId] just opened
+/// (call right after setting that slot's filled = true): play the opening
+/// animation and the sound for them.
+List<int> drawersOpenedBy(Level level, List<SlotState> slots, int slotId) {
+  return <int>[
+    for (var d = 0; d < level.drawers.length; d++)
+      if (drawerKeys(level, d).contains(slotId) && drawerOpen(level, d, slots)) d,
   ];
 }
 
@@ -134,7 +208,7 @@ SlotState? findSnap(List<SlotState> slots, String kind, double x, double y) {
   SlotState? best;
   var bestDistance = 54.0;
   for (final s in slots) {
-    if (s.filled || s.slot.kind != kind) {
+    if (s.filled || s.slot.kind != kind || !slotOpen(slots, s)) {
       continue;
     }
     final dx = s.slot.x - x;
@@ -161,17 +235,25 @@ Offset clampToRug(double x, double y) {
 }
 
 /// Free item + its nearest matching free slot for the hint button, or null.
+/// 1.2: only items that have an open matching slot are picked (a slot in a
+/// closed drawer is never hinted).
 ({ItemState item, SlotState slot})? pickHint(
     List<ItemState> items, List<SlotState> slots, math.Random r) {
-  final free = items.where((i) => !i.placed).toList();
+  final open = <SlotState>[
+    for (final s in slots)
+      if (!s.filled && slotOpen(slots, s)) s,
+  ];
+  final free = items
+      .where((i) => !i.placed && open.any((s) => s.slot.kind == i.kind))
+      .toList();
   if (free.isEmpty) {
     return null;
   }
   final item = free[r.nextInt(free.length)];
   SlotState? best;
   var bestDistance = double.infinity;
-  for (final s in slots) {
-    if (s.filled || s.slot.kind != item.kind) {
+  for (final s in open) {
+    if (s.slot.kind != item.kind) {
       continue;
     }
     final dx = s.slot.x - item.x;

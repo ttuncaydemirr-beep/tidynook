@@ -9,6 +9,12 @@
 // "reviewAsked", "adCounter", "lastAdMs" and "streakSaveDay". Saves without
 // them (schema 2, or the web shape without "v") load with the defaults.
 //
+// Schema 4 (1.2) adds "tasks" ({"day", "list"}), "chestSteps", "chestDay",
+// "chestsOpened", "chestDecors", "winter" ({"season", "done"}), "snowman" and
+// "mechanicTipSeen". A schema 3 save loads without loss: every schema 3 key
+// keeps its value and the new keys start at their defaults (migration in
+// fromJson; nothing is renamed or dropped).
+//
 // The core logic (fromJson / toJson / every method) needs no plugin; only
 // load() and save() touch shared_preferences.
 
@@ -104,7 +110,7 @@ class Progress extends ChangeNotifier {
 
   /// Schema version written as "v" in the saved JSON (files without it are
   /// still read).
-  static const int schemaVersion = 3;
+  static const int schemaVersion = 4;
 
   /// null = follow the device (tr if the device language is not one of the four).
   String? lang;
@@ -152,7 +158,47 @@ class Progress extends ChangeNotifier {
   int hintsUsed;
 
   /// Hints granted by rewarded ads and not used yet (kept across days).
+  /// Daily tasks and the task chest add to it too.
   int extraHints;
+
+  // --- schema 4 (1.2) -------------------------------------------------------
+
+  /// Day ("YYYY-MM-DD") of [tasks]; "" before the first tasks were made.
+  String taskDay;
+
+  /// The tasks of [taskDay] (see [tasksFor]).
+  List<DailyTask> tasks;
+
+  /// Filled steps of the task chest (0..[taskChestSteps]).
+  int chestSteps;
+
+  /// The day whose three finished tasks filled the last chest step.
+  String chestDay;
+
+  /// Task chests opened so far.
+  int chestsOpened;
+
+  /// Chest decor pieces owned (0..chestDecorCount-1).
+  Set<int> chestDecors;
+
+  /// Winter season ([winterSeasonOf]) that [winterDone] belongs to, 0 = none.
+  int winterSeason;
+
+  /// Winter boxes (0..[winterLevelCount]-1) finished in [winterSeason].
+  Set<int> winterDone;
+
+  /// The winter snowman was earned (kept forever, also after a reset).
+  bool snowman;
+
+  /// The drawer tip of the 1.2 mechanic was shown once.
+  bool mechanicTipSeen;
+
+  /// The clock used by methods that take no date (completeLevel,
+  /// completeBonus, setStyle) to credit today's tasks. Tests replace it.
+  DateTime Function() clock = DateTime.now;
+
+  final List<int> _freshTasks = <int>[];
+  bool _freshChestStep = false;
 
   bool _autoSave = false;
 
@@ -177,10 +223,23 @@ class Progress extends ChangeNotifier {
     this.hintDay = '',
     this.hintsUsed = 0,
     this.extraHints = 0,
+    this.taskDay = '',
+    List<DailyTask>? tasks,
+    this.chestSteps = 0,
+    this.chestDay = '',
+    this.chestsOpened = 0,
+    Set<int>? chestDecors,
+    this.winterSeason = 0,
+    Set<int>? winterDone,
+    this.snowman = false,
+    this.mechanicTipSeen = false,
   })  : done = done ?? <int>{},
         styles = styles ?? <int, int>{},
         daily = daily ?? DailyState(),
-        extraStyles = extraStyles ?? <int>{};
+        extraStyles = extraStyles ?? <int>{},
+        tasks = tasks ?? <DailyTask>[],
+        chestDecors = chestDecors ?? <int>{},
+        winterDone = winterDone ?? <int>{};
 
   /// Builds a Progress from a decoded save (the web shape). Unknown or wrongly
   /// typed fields fall back to their defaults.
@@ -240,6 +299,50 @@ class Progress extends ChangeNotifier {
     p.hintDay = hd is String && _dayFormat.hasMatch(hd) ? hd : '';
     p.hintsUsed = p.hintDay.isEmpty ? 0 : _nonNegative(json['hintsUsed']);
     p.extraHints = _nonNegative(json['extraHints']);
+    // schema 4 fields (migration from 3: all absent, so all keep defaults)
+    final rawTasks = json['tasks'];
+    if (rawTasks is Map) {
+      final td = rawTasks['day'];
+      final list = rawTasks['list'];
+      if (td is String && _dayFormat.hasMatch(td) && list is List) {
+        final parsed = <DailyTask?>[
+          for (final t in list) DailyTask.fromJson(t),
+        ].whereType<DailyTask>().toList();
+        if (parsed.length <= tasksPerDay) {
+          p.taskDay = td;
+          p.tasks = parsed;
+        }
+      }
+    }
+    final cs = _nonNegative(json['chestSteps']);
+    p.chestSteps = cs > taskChestSteps ? taskChestSteps : cs;
+    final cd = json['chestDay'];
+    p.chestDay = cd is String && _dayFormat.hasMatch(cd) ? cd : '';
+    p.chestsOpened = _nonNegative(json['chestsOpened']);
+    final rawDecor = json['chestDecors'];
+    if (rawDecor is List) {
+      for (final d in rawDecor) {
+        final i = _asInt(d);
+        if (i != null && i >= 0 && i < chestDecorCount) {
+          p.chestDecors.add(i);
+        }
+      }
+    }
+    final w = json['winter'];
+    if (w is Map) {
+      p.winterSeason = _nonNegative(w['season']);
+      final wd = w['done'];
+      if (p.winterSeason > 0 && wd is List) {
+        for (final d in wd) {
+          final i = _asInt(d);
+          if (i != null && i >= 0 && i < winterLevelCount) {
+            p.winterDone.add(i);
+          }
+        }
+      }
+    }
+    p.snowman = _asBool(json['snowman']) ?? false;
+    p.mechanicTipSeen = _asBool(json['mechanicTipSeen']) ?? false;
     return p;
   }
 
@@ -290,6 +393,20 @@ class Progress extends ChangeNotifier {
         'hintDay': hintDay,
         'hintsUsed': hintsUsed,
         'extraHints': extraHints,
+        'tasks': <String, dynamic>{
+          'day': taskDay,
+          'list': <Map<String, dynamic>>[for (final t in tasks) t.toJson()],
+        },
+        'chestSteps': chestSteps,
+        'chestDay': chestDay,
+        'chestsOpened': chestsOpened,
+        'chestDecors': (chestDecors.toList()..sort()),
+        'winter': <String, dynamic>{
+          'season': winterSeason,
+          'done': (winterDone.toList()..sort()),
+        },
+        'snowman': snowman,
+        'mechanicTipSeen': mechanicTipSeen,
       };
 
   /// Loads the saved progress (shared_preferences, key "tidynook-v1"). Never
@@ -407,7 +524,11 @@ class Progress extends ChangeNotifier {
     if (!styleAvailable(level, variant)) {
       return;
     }
+    final changed = styleOf(level) != variant;
     styles[level] = variant;
+    if (changed) {
+      _taskEvent(TaskType.style, clock());
+    }
     _changed();
   }
 
@@ -467,7 +588,14 @@ class Progress extends ChangeNotifier {
   /// 3rd style of a done piece ([nextExtraStyleCandidate] with the new count as
   /// seed); returns that level index, or -1 when nothing was unlocked.
   int completeBonus() {
+    final mystery = bonusIsMystery(bonusDone);
     bonusDone += 1;
+    final now = clock();
+    _taskEvent(TaskType.boxes, now);
+    _taskEvent(TaskType.bonus, now);
+    if (mystery) {
+      _taskEvent(TaskType.mystery, now);
+    }
     var got = -1;
     if (bonusDone % bonusStyleEvery == 0) {
       final c = nextExtraStyleCandidate(bonusDone);
@@ -544,11 +672,13 @@ class Progress extends ChangeNotifier {
         hintDay = today;
       }
       hintsUsed = used + 1;
+      _taskEvent(TaskType.hint, now);
       _changed();
       return true;
     }
     if (extraHints > 0) {
       extraHints -= 1;
+      _taskEvent(TaskType.hint, now);
       _changed();
       return true;
     }
@@ -610,6 +740,15 @@ class Progress extends ChangeNotifier {
     if (fresh) {
       done.add(level);
     }
+    final now = clock();
+    _taskEvent(TaskType.boxes, now);
+    _taskEvent(fresh ? TaskType.newLevel : TaskType.replay, now);
+    if (levels[level].mystery) {
+      _taskEvent(TaskType.mystery, now);
+    }
+    if (levels[level].hasDrawers) {
+      _taskEvent(TaskType.drawer, now);
+    }
     _changed();
     return fresh ? level : -1;
   }
@@ -635,6 +774,8 @@ class Progress extends ChangeNotifier {
     daily.total += 1;
     final all = <String>[...daily.days, credited];
     daily.days = all.length > 30 ? all.sublist(all.length - 30) : all;
+    _taskEvent(TaskType.boxes, now);
+    _taskEvent(TaskType.daily, now);
     _changed();
     return milestones.indexOf(daily.total);
   }
@@ -655,6 +796,10 @@ class Progress extends ChangeNotifier {
   /// As the settings reset in the HTML: levels, styles and daily rewards start
   /// over (also bonus boxes, unlocked 3rd styles and the streak save); language,
   /// sound, the other settings, purchases and the ad pacing stay.
+  ///
+  /// 1.2: the daily tasks, the task chest (steps and decor) and this season's
+  /// winter boxes start over too; the snowman (a seasonal keepsake that cannot
+  /// be earned again until next winter) and the mechanic tip flag stay.
   void reset() {
     done = <int>{};
     styles = <int, int>{};
@@ -663,7 +808,238 @@ class Progress extends ChangeNotifier {
     extraStyles = <int>{};
     bonusDone = 0;
     streakSaveDay = '';
+    taskDay = '';
+    tasks = <DailyTask>[];
+    chestSteps = 0;
+    chestDay = '';
+    chestsOpened = 0;
+    chestDecors = <int>{};
+    winterSeason = 0;
+    winterDone = <int>{};
+    _freshTasks.clear();
+    _freshChestStep = false;
     _changed();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1.2: daily tasks and the task chest
+  // ---------------------------------------------------------------------------
+
+  /// What the player can do now, for making the day's tasks.
+  TaskContext taskContext(DateTime now) {
+    final u = unlocked;
+    var mystery = false;
+    var drawer = false;
+    for (var i = 0; i <= u && i < levels.length; i++) {
+      mystery = mystery || levels[i].mystery;
+      drawer = drawer || levels[i].hasDrawers;
+    }
+    return TaskContext(
+      hasNewLevel: nextOpen >= 0,
+      dailyOpen: !dailyDoneToday(now),
+      bonusUnlocked: bonusUnlocked,
+      hasDone: done.isNotEmpty,
+      mysteryReachable: mystery,
+      drawerReachable: drawer,
+      winterOpen: winterAvailable(now),
+    );
+  }
+
+  /// Makes today's tasks when the stored ones are from an earlier day. Kept
+  /// as they are when they are from a later day (clock set back). Saves but
+  /// does not notify, so it is safe to call while building.
+  void _ensureTasks(DateTime now) {
+    final today = dayString(now);
+    if (taskDay == today || taskDay.compareTo(today) > 0) {
+      return;
+    }
+    taskDay = today;
+    tasks = generateDailyTasks(today, taskContext(now));
+    _freshTasks.clear();
+    if (_autoSave) {
+      unawaited(save());
+    }
+  }
+
+  /// Today's [tasksPerDay] tasks (made on first use each day from the date
+  /// and the player's progress at that moment, then fixed for the day).
+  /// Read-only view; safe to call in build().
+  List<DailyTask> tasksFor(DateTime now) {
+    _ensureTasks(now);
+    return List<DailyTask>.unmodifiable(tasks);
+  }
+
+  /// True when all of today's tasks are finished.
+  bool tasksAllDone(DateTime now) {
+    final t = tasksFor(now);
+    return t.isNotEmpty && t.every((x) => x.done);
+  }
+
+  /// Counts one [type] action for today's tasks. A task that gets finished
+  /// gives [taskHintReward] hint; the last of the day's tasks also fills one
+  /// chest step. Does not notify (callers do).
+  void _taskEvent(TaskType type, DateTime now) {
+    _ensureTasks(now);
+    if (taskDay != dayString(now)) {
+      return; // clock set back: the stored day is not today
+    }
+    for (var i = 0; i < tasks.length; i++) {
+      final t = tasks[i];
+      if (t.type != type || t.done) {
+        continue;
+      }
+      t.progress += 1;
+      if (t.done) {
+        extraHints += taskHintReward;
+        _freshTasks.add(i);
+      }
+    }
+    if (tasks.isNotEmpty &&
+        tasks.every((x) => x.done) &&
+        chestDay != taskDay) {
+      chestDay = taskDay;
+      if (chestSteps < taskChestSteps) {
+        chestSteps += 1;
+        _freshChestStep = true;
+      }
+    }
+  }
+
+  /// Indexes (into [tasksFor]) of the tasks finished since the last call, for
+  /// the UI to celebrate ("+1 hint", offer the `task_double` ad). Not saved.
+  List<int> takeCompletedTasks() {
+    final out = List<int>.of(_freshTasks);
+    _freshTasks.clear();
+    return out;
+  }
+
+  /// True once after a chest step was filled (since the last call). Not saved.
+  bool takeChestStepEarned() {
+    final v = _freshChestStep;
+    _freshChestStep = false;
+    return v;
+  }
+
+  /// The optional rewarded doubling can be offered for task [i] of today.
+  bool canDoubleTask(int i, DateTime now) {
+    final t = tasksFor(now);
+    return i >= 0 && i < t.length && t[i].done && !t[i].doubled;
+  }
+
+  /// After a rewarded ad (placement `task_double`): task [i]'s hint once more.
+  /// Returns false (and changes nothing) when it is not possible.
+  bool doubleTask(int i, DateTime now) {
+    if (!canDoubleTask(i, now)) {
+      return false;
+    }
+    tasks[i].doubled = true;
+    extraHints += taskHintReward;
+    _changed();
+    return true;
+  }
+
+  /// The task chest is full and can be opened.
+  bool get taskChestReady => chestSteps >= taskChestSteps;
+
+  /// Opens a full task chest: the 3rd style of a done piece that does not have
+  /// it yet, else the next chest decor piece, else [chestBonusHints] hints.
+  /// The chest starts over at 0 steps. null (nothing changes) when not full.
+  ChestReward? openTaskChest() {
+    if (!taskChestReady) {
+      return null;
+    }
+    ChestReward reward;
+    final c = nextExtraStyleCandidate(chestsOpened * 7 + 3);
+    if (c != null) {
+      extraStyles.add(c);
+      reward = ChestReward(ChestRewardKind.style, c);
+    } else {
+      var d = -1;
+      for (var k = 0; k < chestDecorCount; k++) {
+        if (!chestDecors.contains(k)) {
+          d = k;
+          break;
+        }
+      }
+      if (d >= 0) {
+        chestDecors.add(d);
+        reward = ChestReward(ChestRewardKind.decor, d);
+      } else {
+        extraHints += chestBonusHints;
+        reward = const ChestReward(ChestRewardKind.hints, chestBonusHints);
+      }
+    }
+    chestSteps = 0;
+    chestsOpened += 1;
+    _changed();
+    return reward;
+  }
+
+  /// Marks the drawer tip as shown. True only the first time (log the
+  /// mechanic_tutorial_seen event then).
+  bool markMechanicTipSeen() {
+    if (mechanicTipSeen) {
+      return false;
+    }
+    mechanicTipSeen = true;
+    _changed();
+    return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1.2: the winter event
+  // ---------------------------------------------------------------------------
+
+  /// The winter card can be shown and its boxes played: the event runs and
+  /// at least one level is done.
+  bool winterAvailable(DateTime now) => winterActive(now) && done.isNotEmpty;
+
+  /// Winter boxes finished in the season of [now] (an earlier season's boxes
+  /// do not count; they can be played again next winter).
+  Set<int> winterDoneIn(DateTime now) {
+    return winterSeason == winterSeasonOf(now)
+        ? Set<int>.unmodifiable(winterDone)
+        : const <int>{};
+  }
+
+  int winterDoneCount(DateTime now) => winterDoneIn(now).length;
+
+  bool winterBoxDone(int i, DateTime now) => winterDoneIn(now).contains(i);
+
+  /// First winter box not finished this season, -1 when all are done.
+  int winterNext(DateTime now) {
+    final d = winterDoneIn(now);
+    for (var i = 0; i < winterLevelCount; i++) {
+      if (!d.contains(i)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /// Marks winter box [i] finished for the season of [now] (a box opened on
+  /// 15 January and finished after midnight still counts for that season).
+  /// [fresh]: newly finished this season; [snowman]: the snowman was earned
+  /// by this box. Counts for the daily tasks like any box.
+  ({bool fresh, bool snowman}) completeWinter(int i, DateTime now) {
+    if (i < 0 || i >= winterLevelCount) {
+      return (fresh: false, snowman: false);
+    }
+    final season = winterSeasonOf(now);
+    if (winterSeason != season) {
+      winterSeason = season;
+      winterDone = <int>{};
+    }
+    final fresh = winterDone.add(i);
+    var got = false;
+    if (winterDone.length >= winterLevelCount && !snowman) {
+      snowman = true;
+      got = true;
+    }
+    _taskEvent(TaskType.boxes, now);
+    _taskEvent(TaskType.winter, now);
+    _changed();
+    return (fresh: fresh, snowman: got);
   }
 }
 
