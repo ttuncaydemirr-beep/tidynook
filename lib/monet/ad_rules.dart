@@ -143,6 +143,9 @@ const String kPlacementHint = 'hint';
 const String kPlacementSurpriseBox = 'surprise_box';
 const String kPlacementStreakSave = 'streak_save';
 
+/// 1.2: optional ad after a daily task is claimed: one more hint for that task.
+const String kPlacementTaskDouble = 'task_double';
+
 // ------------------------------------------------------------------ hints (main rewarded spot)
 // The hint button is the main rewarded placement (owner's Banner Decisions doc): a few free hints every
 // local day; after that the player MAY choose to watch a rewarded ad for one more hint (always optional,

@@ -102,7 +102,8 @@ Future<bool> askChoice(
 
 /// The optional rewarded flow: "Watch ad" / "No thanks". When the player
 /// chooses to watch and no ad is ready, shows [AppLocalizations.adNotReady]
-/// and grants nothing. Completes true only when the reward was earned.
+/// and grants nothing (through [onMessage] when given, else as a toast).
+/// Completes true only when the reward was earned.
 Future<bool> offerRewarded(
   BuildContext context,
   AppServices services, {
@@ -110,6 +111,7 @@ Future<bool> offerRewarded(
   String? title,
   required String text,
   String? iconSvg,
+  void Function(String message)? onMessage,
 }) async {
   final t = AppLocalizations.of(context);
   final yes = await askChoice(
@@ -131,7 +133,9 @@ Future<bool> offerRewarded(
       services.telemetry.logRewarded(placement, 'unavailable');
     } catch (_) {}
     services.ads.preload();
-    if (context.mounted) {
+    if (onMessage != null) {
+      onMessage(t.adNotReady); // e.g. inside a bottom sheet, above its scrim
+    } else if (context.mounted) {
       showToast(context, t.adNotReady);
     }
     return false;

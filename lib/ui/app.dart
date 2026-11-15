@@ -6,6 +6,7 @@ import 'package:tidy_nook/game/progress.dart';
 import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'package:tidy_nook/monet/billing.dart';
 
+import 'clock.dart';
 import 'controller.dart';
 import 'house_screen.dart';
 import 'play_screen.dart';
@@ -224,7 +225,7 @@ class _AppRootState extends State<AppRoot> with WidgetsBindingObserver {
             enabled: p.reminderOn,
             title: t.notifTitle,
             body: t.notifBody,
-            dailyDoneToday: p.dailyDoneToday(DateTime.now()),
+            dailyDoneToday: p.dailyDoneToday(appNow()),
             channelName: t.reminder,
           )
           .catchError((Object _) {}));

@@ -8,9 +8,11 @@ import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'package:tidy_nook/l10n/l10n_ext.dart';
 import 'package:tidy_nook/monet/ad_rules.dart' show kPlacementStreakSave;
 
+import 'clock.dart';
 import 'controller.dart';
 import 'effects.dart';
 import 'rewarded.dart';
+import 'tasks_sheet.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -73,6 +75,15 @@ class _HouseScreenState extends State<HouseScreen>
         _focus = Rect.fromCenter(center: ps.first, width: 60, height: 60);
       }
     }
+    if (ev.snowman) {
+      spots.add(snowmanSpot);
+      _focus ??= Rect.fromCenter(center: snowmanSpot, width: 70, height: 90);
+    }
+    if (ev.chestDecor >= 0) {
+      final cs = chestDecorSpot(ev.chestDecor);
+      spots.add(cs);
+      _focus ??= Rect.fromCenter(center: cs, width: 60, height: 60);
+    }
     if (spots.isNotEmpty && !reduce) {
       _startBurst(spots);
       widget.controller.sounds.play('deco');
@@ -81,13 +92,12 @@ class _HouseScreenState extends State<HouseScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToFocus());
     }
     if (ev.toastRoom >= 0) {
-      _toast = t.roomDone(t.roomName(ev.toastRoom));
+      _setToast(t.roomDone(t.roomName(ev.toastRoom)));
       widget.controller.sounds.play('room');
-      _toastTimer = Timer(const Duration(milliseconds: 2800), () {
-        if (mounted) {
-          setState(() => _toast = null);
-        }
-      });
+    } else if (ev.snowman) {
+      _setToast(t.snowmanGot);
+    } else if (ev.tasksDone > 0) {
+      _setToast(t.taskFinished);
     }
     if (ev.askReminder) {
       _askTimer = Timer(const Duration(milliseconds: 900), () {
@@ -103,6 +113,50 @@ class _HouseScreenState extends State<HouseScreen>
     _scroll.dispose();
     _burst.dispose();
     super.dispose();
+  }
+
+  /// The calm mint message at the top of the house (2.8 s).
+  void _setToast(String text) {
+    _toast = text;
+    _toastTimer?.cancel();
+    _toastTimer = Timer(const Duration(milliseconds: 2800), () {
+      if (mounted) {
+        setState(() => _toast = null);
+      }
+    });
+  }
+
+  /// Sparkles at [spot] (house space) and scrolls there, e.g. after the task
+  /// chest gave a piece.
+  void _celebrate(Offset spot, Rect focus) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    setState(() {
+      _focus = focus;
+      if (!reduce) {
+        _startBurst(<Offset>[spot]);
+      }
+    });
+    widget.controller.sounds.play('deco');
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToFocus());
+  }
+
+  void _openTasks() {
+    final ctl = widget.controller;
+    ctl.sounds.play('pick');
+    unawaited(showTasksSheet(context, ctl, onReward: (r) {
+      if (!mounted) {
+        return;
+      }
+      switch (r.kind) {
+        case ChestRewardKind.style:
+          _celebrate(decorHitRect(r.value).center, decorHitRect(r.value));
+        case ChestRewardKind.decor:
+          final cs = chestDecorSpot(r.value);
+          _celebrate(cs, Rect.fromCenter(center: cs, width: 60, height: 60));
+        case ChestRewardKind.hints:
+          break;
+      }
+    }));
   }
 
   void _scrollToFocus() {
@@ -178,6 +232,11 @@ class _HouseScreenState extends State<HouseScreen>
     } else {
       ctl.sounds.play('toggle');
     }
+    // "change a style" task
+    if (ctl.takeTaskToasts() > 0) {
+      final t = AppLocalizations.of(context);
+      setState(() => _setToast(t.taskFinished));
+    }
   }
 
   Widget _roomLabel(int ri, AppLocalizations t, Set<int> done) {
@@ -236,6 +295,9 @@ class _HouseScreenState extends State<HouseScreen>
       houseLine: c.houseLineCss,
       puppy: p.supporter,
       extended: true,
+      snow: snowOnHouse(appNow()),
+      snowman: p.snowman,
+      chestDecors: p.chestDecors,
     );
 
     final taps = <Widget>[];
@@ -318,6 +380,12 @@ class _HouseScreenState extends State<HouseScreen>
           if (d > 0) ...<Widget>[
             _DailyCard(controller: ctl),
             _StreakSave(controller: ctl),
+            const SizedBox(height: 6),
+            _TasksCard(controller: ctl, onOpen: _openTasks),
+            if (p.winterAvailable(appNow())) ...<Widget>[
+              const SizedBox(height: 6),
+              _WinterCard(controller: ctl),
+            ],
             const SizedBox(height: 6),
             _BonusCard(controller: ctl),
             const SizedBox(height: 8),
@@ -487,7 +555,7 @@ class _DailyCard extends StatelessWidget {
     final c = TidyColors.of(context);
     final t = AppLocalizations.of(context);
     final p = controller.progress;
-    final now = DateTime.now();
+    final now = appNow();
     final done = p.dailyDoneToday(now);
     final st = p.liveStreak(now);
     final sub = done
@@ -537,7 +605,7 @@ class _StreakSaveState extends State<_StreakSave> {
   Future<void> _offer() async {
     final ctl = widget.controller;
     final p = ctl.progress;
-    final n = p.streakAtRisk(DateTime.now());
+    final n = p.streakAtRisk(appNow());
     if (_busy || n <= 0) {
       return;
     }
@@ -561,7 +629,7 @@ class _StreakSaveState extends State<_StreakSave> {
     if (!ok) {
       return;
     }
-    if (p.saveStreak(DateTime.now()) && mounted) {
+    if (p.saveStreak(appNow()) && mounted) {
       showToast(context, t.streakSaved);
     }
   }
@@ -571,7 +639,7 @@ class _StreakSaveState extends State<_StreakSave> {
     final c = TidyColors.of(context);
     final t = AppLocalizations.of(context);
     final p = widget.controller.progress;
-    final now = DateTime.now();
+    final now = appNow();
     final n = p.dailyDoneToday(now) ? 0 : p.streakAtRisk(now);
     if (n <= 0) {
       return const SizedBox.shrink();
@@ -651,5 +719,141 @@ class _BonusCard extends StatelessWidget {
   void _play() {
     controller.sounds.play('pick');
     controller.startBonus();
+  }
+}
+
+/// Daily tasks: today's progress; opens the tasks sheet (claim, chest).
+class _TasksCard extends StatelessWidget {
+  const _TasksCard({required this.controller, required this.onOpen});
+
+  final GameController controller;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = TidyColors.of(context);
+    final t = AppLocalizations.of(context);
+    final p = controller.progress;
+    final now = appNow();
+    final tasks = p.tasksFor(now);
+    final done = tasks.where((x) => x.done).length;
+    final allDone = tasks.isNotEmpty && done == tasks.length;
+    var claimable = false;
+    for (var i = 0; i < tasks.length; i++) {
+      claimable = claimable || (!p.noAds && p.canClaimTask(i, now));
+    }
+    final chestReady = p.taskChestReady;
+    final steps = p.chestSteps.clamp(0, taskChestSteps).toInt();
+    final sub = chestReady
+        ? t.chestReady
+        : '${allDone ? t.tasksAllDone : t.tasksProgress(done, tasks.length)}'
+            '${sepOf(context)}${t.chestProgress(steps, taskChestSteps)}';
+
+    Widget trailing;
+    String action;
+    if (chestReady || claimable) {
+      action = chestReady ? t.chestOpen : t.taskClaim;
+      trailing = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: c.accent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(action, style: tx(14, w: 700, color: c.accentInk)),
+      );
+    } else if (allDone) {
+      action = t.taskLabelDone;
+      trailing = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: c.mint,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: svgIcon(checkSvg(c.mintInk), size: 16),
+      );
+    } else {
+      action = t.open;
+      trailing = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: c.toggleOff, width: 1.5),
+        ),
+        child: Text(
+          t.taskProgress(done, tasks.length),
+          style: tx(14, w: 700, color: c.fg),
+        ),
+      );
+    }
+
+    return _CardFrame(
+      semanticsLabel: '${t.tasksTitle}. $sub. $action',
+      onTap: onOpen,
+      icon: SvgPicture.string(chestSvg, width: 40, height: 40),
+      title: t.tasksTitle,
+      sub: sub,
+      trailing: trailing,
+    );
+  }
+}
+
+/// The winter event card: only while the event runs (1 Dec - 15 Jan).
+class _WinterCard extends StatelessWidget {
+  const _WinterCard({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = TidyColors.of(context);
+    final t = AppLocalizations.of(context);
+    final p = controller.progress;
+    final now = appNow();
+    final done = p.winterDoneCount(now);
+    final next = p.winterNext(now);
+    final all = next < 0;
+    final sub = all
+        ? t.winterAllDone
+        : '${t.winterProgress(done, winterLevelCount)}'
+            '${sepOf(context)}${t.winterDaysLeft(winterDaysLeft(now))}';
+    final icon = ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SvgPicture.string(
+        snowmanPreviewSvg(locked: !p.snowman),
+        width: 40,
+        height: 40,
+      ),
+    );
+    final trailing = all
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: c.mint,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: svgIcon(checkSvg(c.mintInk), size: 16),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: c.accent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child:
+                Text(t.bonusPlay, style: tx(14, w: 700, color: c.accentInk)),
+          );
+    return _CardFrame(
+      semanticsLabel:
+          '${t.winterTitle}. $sub. ${all ? t.snowmanName : t.bonusPlay}',
+      // after all 7 the boxes can still be replayed (they count for tasks)
+      onTap: () {
+        controller.sounds.play('pick');
+        controller.startWinter(all ? 0 : next);
+      },
+      icon: icon,
+      title: t.winterTitle,
+      sub: sub,
+      trailing: trailing,
+    );
   }
 }

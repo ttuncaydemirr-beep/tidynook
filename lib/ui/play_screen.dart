@@ -8,6 +8,7 @@ import 'package:tidy_nook/l10n/l10n_ext.dart';
 import 'package:tidy_nook/monet/ad_rules.dart' show kPlacementHint;
 
 import 'board.dart';
+import 'clock.dart';
 import 'controller.dart';
 import 'rewarded.dart';
 import 'theme.dart';
@@ -38,7 +39,7 @@ class _PlayScreenState extends State<PlayScreen> {
       return;
     }
     final p = _ctl.progress;
-    if (p.useFreeHint(DateTime.now())) {
+    if (p.useFreeHint(appNow())) {
       _board.hint();
       return;
     }
@@ -61,7 +62,7 @@ class _PlayScreenState extends State<PlayScreen> {
       return;
     }
     p.grantHint();
-    if (p.useFreeHint(DateTime.now())) {
+    if (p.useFreeHint(appNow())) {
       _board.hint();
     }
   }
@@ -86,15 +87,21 @@ class _PlayScreenState extends State<PlayScreen> {
 
   String _eyebrow(BuildContext context, AppLocalizations t) {
     final level = _ctl.current;
+    if (_ctl.isWinter) {
+      return t.winterTip;
+    }
     if (_ctl.isBonus) {
       return level != null && level.mystery ? t.mysteryTip : t.bonusTitle;
     }
     if (!_ctl.isDaily && level != null && level.mystery) {
       return t.mysteryTip;
     }
+    if (!_ctl.isDaily && level != null && level.hasDrawers) {
+      return t.drawerTip;
+    }
     if (_ctl.isDaily) {
       final locale = Localizations.localeOf(context).toString();
-      final now = DateTime.now();
+      final now = appNow();
       String date;
       try {
         date = westernDigits(DateFormat.MMMMd(locale).format(now));
@@ -115,16 +122,24 @@ class _PlayScreenState extends State<PlayScreen> {
     final p = ctl.progress;
     final daily = ctl.isDaily;
     final bonus = ctl.isBonus;
+    final winter = ctl.isWinter;
     final i = ctl.levelIndex;
     final level = ctl.current!;
     final unlocked = p.unlocked;
 
     final title = daily
         ? t.dailyTheme(ctl.dailyTheme)
-        : (bonus ? t.bonusBoxN(ctl.bonusIndex + 1) : t.levelName(i));
-    final firstLevel = !daily && !bonus && i == 0 && !p.done.contains(0);
+        : (winter
+            ? t.winterLevelName(ctl.winterIndex)
+            : (bonus ? t.bonusBoxN(ctl.bonusIndex + 1) : t.levelName(i)));
+    // a sentence-like eyebrow (tips) wraps to 3 small lines and is never upper-cased
+    final tipEyebrow = winter ||
+        level.mystery ||
+        (!daily && !bonus && level.hasDrawers);
+    final firstLevel =
+        !daily && !bonus && !winter && i == 0 && !p.done.contains(0);
     final note = firstLevel ? t.tut : t.note;
-    final left = p.hintsLeft(DateTime.now());
+    final left = p.hintsLeft(appNow());
     final hintSemantics =
         '${t.hint}. ${left < 0 ? t.hintsUnlimited : t.hintsLeft(left)}';
 
@@ -147,8 +162,8 @@ class _PlayScreenState extends State<PlayScreen> {
               child: TitleBlock(
                 eyebrow: _eyebrow(context, t),
                 title: title,
-                eyebrowLines: level.mystery ? 3 : 2,
-                upper: !level.mystery,
+                eyebrowLines: tipEyebrow ? 3 : 2,
+                upper: !tipEyebrow,
               ),
             ),
             const SizedBox(width: 10),
@@ -208,7 +223,7 @@ class _PlayScreenState extends State<PlayScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        if (!bonus)
+        if (!bonus && !winter)
           _DotRow(
             count: levels.length,
             current: daily ? -1 : i,

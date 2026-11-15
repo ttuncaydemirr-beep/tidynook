@@ -7,6 +7,7 @@ import 'package:tidy_nook/game/daily.dart';
 import 'package:tidy_nook/game/progress.dart';
 import 'package:tidy_nook/monet/ad_rules.dart';
 
+import 'clock.dart';
 import 'services.dart';
 import 'sounds.dart';
 
@@ -19,10 +20,22 @@ class HouseEvents {
     this.pet = -1,
     this.toastRoom = -1,
     this.askReminder = false,
+    this.snowman = false,
+    this.chestDecor = -1,
+    this.tasksDone = 0,
   });
   final int decor;
   final int pet;
   final int toastRoom;
+
+  /// The 7th winter box was just won: the snowman arrives in the garden.
+  final bool snowman;
+
+  /// A task chest just gave this chest decor piece (-1 none).
+  final int chestDecor;
+
+  /// Daily tasks finished and not announced yet (toast "Task done!").
+  final int tasksDone;
 
   /// The first daily box was just won: ask once about the reminder.
   final bool askReminder;
@@ -51,6 +64,26 @@ class GameController extends ChangeNotifier {
   /// A bonus box is being played ([bonusIndex] = its 0-based number).
   bool isBonus = false;
   int bonusIndex = 0;
+
+  /// A winter event box is being played ([winterIndex] = 0..6).
+  bool isWinter = false;
+  int winterIndex = 0;
+  DateTime _winterOpened = DateTime(2000);
+
+  /// The winter box just won earned the snowman.
+  bool freshSnowman = false;
+
+  /// The winter box just won was finished for the first time this season.
+  bool winterFresh = false;
+
+  /// Daily tasks finished by the box just won (win card chip).
+  int winTasksDone = 0;
+
+  /// Chest decor piece the task chest just gave (house sparkles), else -1.
+  int freshChestDecor = -1;
+
+  /// Daily tasks finished since the last announcement.
+  int _taskToasts = 0;
 
   int levelIndex = 0;
   Level? current;
@@ -84,7 +117,36 @@ class GameController extends ChangeNotifier {
 
   final math.Random random = math.Random();
 
-  void _onProgress() => notifyListeners();
+  void _onProgress() {
+    _collectTasks();
+    notifyListeners();
+  }
+
+  /// Picks up tasks finished by the last Progress call (any box, a style
+  /// change, a hint) and logs them; the UI announces them later.
+  void _collectTasks() {
+    final fresh = progress.takeCompletedTasks();
+    if (fresh.isNotEmpty) {
+      _taskToasts += fresh.length;
+      final list = progress.tasksFor(appNow());
+      for (final i in fresh) {
+        if (i < 0 || i >= list.length) {
+          continue;
+        }
+        try {
+          services.telemetry.logTaskComplete(list[i].type.name, slot: i);
+        } catch (_) {}
+      }
+    }
+    progress.takeChestStepEarned();
+  }
+
+  /// Number of finished tasks not announced yet (and forgets them).
+  int takeTaskToasts() {
+    final n = _taskToasts;
+    _taskToasts = 0;
+    return n;
+  }
 
   void refresh() => notifyListeners();
 
@@ -103,6 +165,9 @@ class GameController extends ChangeNotifier {
     _startedAt = DateTime.now();
     _justWon = false;
     freshBonusStyle = -1;
+    freshSnowman = false;
+    winterFresh = false;
+    winTasksDone = 0;
   }
 
   int _seconds() {
@@ -113,6 +178,7 @@ class GameController extends ChangeNotifier {
   void _buildLevel(int i) {
     isDaily = false;
     isBonus = false;
+    isWinter = false;
     levelIndex = i;
     progress.level = i;
     current = levels[i];
@@ -122,11 +188,18 @@ class GameController extends ChangeNotifier {
     try {
       services.telemetry.logLevelStart(i, mystery: levels[i].mystery);
     } catch (_) {}
+    // the drawer tip is the eyebrow of every drawer level; log it once
+    if (levels[i].hasDrawers && progress.markMechanicTipSeen()) {
+      try {
+        services.telemetry.logMechanicTutorialSeen('drawer', level: i);
+      } catch (_) {}
+    }
   }
 
   void _openHouse() {
     isDaily = false;
     isBonus = false;
+    isWinter = false;
     screen = AppScreen.house;
     houseSerial++;
     if (_justWon) {
@@ -155,12 +228,13 @@ class GameController extends ChangeNotifier {
   }
 
   void startDaily() {
-    final now = DateTime.now();
+    final now = appNow();
     if (progress.dailyDoneToday(now)) {
       return;
     }
     isDaily = true;
     isBonus = false;
+    isWinter = false;
     final day = dayString(now);
     _dailyDay = day;
     final level = dailyLevel(day);
@@ -180,6 +254,7 @@ class GameController extends ChangeNotifier {
     }
     isDaily = false;
     isBonus = true;
+    isWinter = false;
     bonusIndex = progress.bonusDone;
     current = bonusLevel(bonusIndex);
     playSerial++;
@@ -187,6 +262,39 @@ class GameController extends ChangeNotifier {
     _began();
     services.ads.preload();
     notifyListeners();
+  }
+
+  /// Plays winter box [i] (default: the first one not done this season).
+  /// Only while the event runs.
+  void startWinter([int? i]) {
+    final now = appNow();
+    if (!progress.winterAvailable(now)) {
+      return;
+    }
+    var k = i ?? progress.winterNext(now);
+    if (k < 0) {
+      k = 0; // all done: replay the first one (counts for tasks)
+    }
+    isDaily = false;
+    isBonus = false;
+    isWinter = true;
+    winterIndex = k.clamp(0, winterLevelCount - 1).toInt();
+    _winterOpened = now;
+    current = winterLevel(winterIndex);
+    playSerial++;
+    screen = AppScreen.play;
+    _began();
+    services.ads.preload();
+    notifyListeners();
+  }
+
+  /// The winter box after the one just won that is not done yet, else -1.
+  int nextWinterBox() {
+    final now = appNow();
+    if (!progress.winterAvailable(now)) {
+      return -1;
+    }
+    return progress.winterNext(now);
   }
 
   /// Home button / back: leave the level without announcing a new piece.
@@ -219,10 +327,13 @@ class GameController extends ChangeNotifier {
     final serial = playSerial;
     final daily = isDaily;
     final bonus = isBonus;
+    final winter = isWinter;
     try {
       if (!daily) {
+        // bonus and winter boxes count like a box after the 4th level
         await services.ads.maybeInterstitial(
-          completedLevelIndex: bonus ? kBonusBoxLevelIndex : levelIndex,
+          completedLevelIndex:
+              (bonus || winter) ? kBonusBoxLevelIndex : levelIndex,
           isDaily: false,
         );
       }
@@ -234,7 +345,14 @@ class GameController extends ChangeNotifier {
     if (serial != playSerial || screen != AppScreen.play) {
       return; // the player already went somewhere else
     }
-    if (toBonus && !daily) {
+    if (winter) {
+      final nx = nextWinterBox();
+      if (next && nx >= 0) {
+        startWinter(nx);
+      } else {
+        goHouse();
+      }
+    } else if (toBonus && !daily) {
       startBonus();
     } else if (next && bonus) {
       startBonus();
@@ -249,9 +367,20 @@ class GameController extends ChangeNotifier {
   void recordWin() {
     final secs = _seconds();
     _justWon = true;
-    if (isDaily) {
+    final now = appNow();
+    if (isWinter) {
+      // a box opened on the last event day and finished after midnight still counts
+      final at = winterActive(now) ? now : _winterOpened;
+      final r = progress.completeWinter(winterIndex, at);
+      freshSnowman = r.snowman;
+      winterFresh = r.fresh;
+      try {
+        services.telemetry.logEventBoxComplete(winterIndex,
+            seconds: secs, fresh: r.fresh, snowman: r.snowman);
+      } catch (_) {}
+    } else if (isDaily) {
       final first = progress.daily.total == 0;
-      freshPet = progress.completeDaily(DateTime.now(), day: _dailyDay);
+      freshPet = progress.completeDaily(now, day: _dailyDay);
       if (first && progress.daily.total > 0 && !progress.reminderAsked) {
         _askReminder = true;
       }
@@ -284,6 +413,7 @@ class GameController extends ChangeNotifier {
         );
       } catch (_) {}
     }
+    winTasksDone = takeTaskToasts();
   }
 
   /// Consumes the pending celebrations for the house screen.
@@ -300,9 +430,14 @@ class GameController extends ChangeNotifier {
       pet: freshPet,
       toastRoom: toast,
       askReminder: _askReminder && !progress.reminderAsked,
+      snowman: freshSnowman,
+      chestDecor: freshChestDecor,
+      tasksDone: takeTaskToasts(),
     );
     freshDecor = -1;
     freshPet = -1;
+    freshSnowman = false;
+    freshChestDecor = -1;
     _askReminder = false;
     return ev;
   }
@@ -340,6 +475,9 @@ class GameController extends ChangeNotifier {
     freshDecor = -1;
     freshPet = -1;
     freshBonusStyle = -1;
+    freshSnowman = false;
+    freshChestDecor = -1;
+    _taskToasts = 0;
     buildLevel(0);
   }
 
