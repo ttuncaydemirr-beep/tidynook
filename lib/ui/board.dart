@@ -130,6 +130,11 @@ class _BoardViewState extends State<BoardView>
   int _handSlot = -1;
   double _handStart = 0;
 
+  // inner drawers (1.2): opening start time, -1 closed, -2 open and gone
+  late List<double> _drawerT;
+  final Map<int, Widget> _drawerFronts = <int, Widget>{};
+  String? _drawerKey;
+
   bool _won = false;
   bool _recorded = false;
   bool _reduce = false;
@@ -153,6 +158,10 @@ class _BoardViewState extends State<BoardView>
     for (final it in _items) {
       _zFree.add(it.id);
     }
+    _drawerT = <double>[
+      for (var d = 0; d < widget.level.drawers.length; d++)
+        drawerOpen(widget.level, d, _slots) ? -2.0 : -1.0,
+    ];
     widget.controller._hint = _hint;
     widget.controller._canHint = _canHint;
     widget.controller._hintActive = () => _hintItem >= 0;
@@ -265,6 +274,19 @@ class _BoardViewState extends State<BoardView>
 
     final handBusy = _handItem >= 0;
 
+    var drawerBusy = false;
+    for (var d = 0; d < _drawerT.length; d++) {
+      final t0 = _drawerT[d];
+      if (t0 < 0) {
+        continue;
+      }
+      if (now - t0 >= _drawerMs) {
+        _drawerT[d] = -2;
+      } else {
+        drawerBusy = true;
+      }
+    }
+
     if (mounted) {
       setState(() {});
     }
@@ -272,7 +294,8 @@ class _BoardViewState extends State<BoardView>
         _sparks.isEmpty &&
         !lidBusy &&
         !hintBusy &&
-        !handBusy) {
+        !handBusy &&
+        !drawerBusy) {
       _ticker.stop();
     }
   }
@@ -534,6 +557,7 @@ class _BoardViewState extends State<BoardView>
       try {
         widget.onSnap?.call();
       } catch (_) {}
+      _openDrawers(best.id);
       _sparkle(best.slot.x, best.slot.y);
       if (_items.every((i) => i.placed)) {
         _recordWin();
@@ -550,6 +574,97 @@ class _BoardViewState extends State<BoardView>
       _tween(it, 120, s: 1);
     }
     setState(() {});
+  }
+
+  // --------------------------------------------------------------- drawers
+
+  static const double _drawerMs = 300;
+
+  /// Slides away the front of every drawer that filling [slotId] opened.
+  void _openDrawers(int slotId) {
+    final opened = drawersOpenedBy(widget.level, _slots, slotId);
+    var any = false;
+    for (final d in opened) {
+      if (d < 0 || d >= _drawerT.length || _drawerT[d] != -1) {
+        continue;
+      }
+      _drawerT[d] = _reduce ? -2 : _now;
+      any = true;
+    }
+    if (any) {
+      widget.sounds.play('lid_open');
+      _ensureTicker();
+    }
+  }
+
+  Widget _drawerFront(int d) {
+    return _drawerFronts.putIfAbsent(
+      d,
+      () => SvgPicture.string(
+        drawerFrontSvg(widget.level, d),
+        width: _bw,
+        height: _bh,
+      ),
+    );
+  }
+
+  /// Closed (or just opening) drawer fronts, with "n more to open" under the
+  /// knob while closed. Above the placed items, below the lid.
+  List<Widget> _drawerLayers(double now, AppLocalizations t) {
+    final out = <Widget>[];
+    for (var d = 0; d < _drawerT.length; d++) {
+      final t0 = _drawerT[d];
+      if (t0 == -2) {
+        continue;
+      }
+      final k = t0 < 0 ? 0.0 : ((now - t0) / _drawerMs).clamp(0.0, 1.0);
+      final e = Curves.easeOut.transform(k);
+      out.add(Positioned(
+        left: 0,
+        top: 0,
+        child: IgnorePointer(
+          child: Transform.translate(
+            offset: Offset(0, 20 * e),
+            child: Opacity(opacity: 1 - e, child: _drawerFront(d)),
+          ),
+        ),
+      ));
+      if (t0 == -1) {
+        final n = drawerRemaining(widget.level, d, _slots);
+        final area = widget.level.drawers[d].area;
+        final knob = drawerKnobCenter(widget.level, d);
+        if (n > 0) {
+          out.add(Positioned(
+            left: area.left + 4,
+            width: area.width - 8,
+            top: knob.dy - _top + 12,
+            height: 22,
+            child: IgnorePointer(
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                    decoration: BoxDecoration(
+                      // white text >= 4.5:1 on every drawer colour
+                      color: const Color.fromRGBO(0, 0, 0, .62),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      t.drawerLeft(n),
+                      maxLines: 1,
+                      style: tx(12, w: 700, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ));
+        }
+      }
+    }
+    return out;
   }
 
   // ------------------------------------------------------------------- win
@@ -678,6 +793,11 @@ class _BoardViewState extends State<BoardView>
         ),
       );
     }
+    final drawerKey = '${identityHashCode(widget.level)}';
+    if (_drawerKey != drawerKey) {
+      _drawerKey = drawerKey;
+      _drawerFronts.clear();
+    }
     final lidKey = '${identityHashCode(widget.level)}';
     if (_lidKey != lidKey) {
       _lidKey = lidKey;
@@ -705,6 +825,7 @@ class _BoardViewState extends State<BoardView>
           ),
         ),
       for (final id in _placed) _itemLayer(_items[id], now),
+      ..._drawerLayers(now, t),
       Positioned(
         left: 0,
         top: 0,
@@ -731,7 +852,7 @@ class _BoardViewState extends State<BoardView>
         ),
       ),
       for (final id in _zFree) _itemLayer(_items[id], now),
-      if (hand != null) hand,
+      ?hand,
       Positioned.fill(
         child: IgnorePointer(
           child: CustomPaint(

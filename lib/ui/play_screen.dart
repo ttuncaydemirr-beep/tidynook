@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:tidy_nook/l10n/l10n_ext.dart';
 import 'package:tidy_nook/monet/ad_rules.dart' show kPlacementHint;
 
 import 'board.dart';
+import 'clock.dart';
 import 'controller.dart';
 import 'rewarded.dart';
 import 'theme.dart';
@@ -29,7 +31,38 @@ class _PlayScreenState extends State<PlayScreen> {
   bool _card = false;
   bool _hintBusy = false;
 
+  /// "Task done!" chip shown on the play screen (e.g. the "use a hint" task).
+  bool _taskChip = false;
+  Timer? _chipTimer;
+
   GameController get _ctl => widget.controller;
+
+  @override
+  void dispose() {
+    _chipTimer?.cancel();
+    super.dispose();
+  }
+
+  /// A task finished during play: show the calm chip once the lid has
+  /// opened (queued, never during the lid or win animation). A win in the
+  /// meantime shows it on the win card instead.
+  void _announceTasks() {
+    if (_ctl.takeTaskToasts() <= 0) {
+      return;
+    }
+    _chipTimer?.cancel();
+    _chipTimer = Timer(const Duration(milliseconds: 650), () {
+      if (!mounted || _won) {
+        return;
+      }
+      setState(() => _taskChip = true);
+      _chipTimer = Timer(const Duration(milliseconds: 2400), () {
+        if (mounted) {
+          setState(() => _taskChip = false);
+        }
+      });
+    });
+  }
 
   /// Hint button: a free hint while today's last (or unlimited with Remove
   /// ads), else the optional rewarded offer. The board is never blocked.
@@ -38,8 +71,9 @@ class _PlayScreenState extends State<PlayScreen> {
       return;
     }
     final p = _ctl.progress;
-    if (p.useFreeHint(DateTime.now())) {
+    if (p.useFreeHint(appNow())) {
       _board.hint();
+      _announceTasks();
       return;
     }
     final t = AppLocalizations.of(context);
@@ -61,8 +95,9 @@ class _PlayScreenState extends State<PlayScreen> {
       return;
     }
     p.grantHint();
-    if (p.useFreeHint(DateTime.now())) {
+    if (p.useFreeHint(appNow())) {
       _board.hint();
+      _announceTasks();
     }
   }
 
@@ -86,15 +121,21 @@ class _PlayScreenState extends State<PlayScreen> {
 
   String _eyebrow(BuildContext context, AppLocalizations t) {
     final level = _ctl.current;
+    if (_ctl.isWinter) {
+      return t.winterTip;
+    }
     if (_ctl.isBonus) {
       return level != null && level.mystery ? t.mysteryTip : t.bonusTitle;
     }
     if (!_ctl.isDaily && level != null && level.mystery) {
       return t.mysteryTip;
     }
+    if (!_ctl.isDaily && level != null && level.hasDrawers) {
+      return t.drawerTip;
+    }
     if (_ctl.isDaily) {
       final locale = Localizations.localeOf(context).toString();
-      final now = DateTime.now();
+      final now = appNow();
       String date;
       try {
         date = westernDigits(DateFormat.MMMMd(locale).format(now));
@@ -115,16 +156,24 @@ class _PlayScreenState extends State<PlayScreen> {
     final p = ctl.progress;
     final daily = ctl.isDaily;
     final bonus = ctl.isBonus;
+    final winter = ctl.isWinter;
     final i = ctl.levelIndex;
     final level = ctl.current!;
     final unlocked = p.unlocked;
 
     final title = daily
         ? t.dailyTheme(ctl.dailyTheme)
-        : (bonus ? t.bonusBoxN(ctl.bonusIndex + 1) : t.levelName(i));
-    final firstLevel = !daily && !bonus && i == 0 && !p.done.contains(0);
+        : (winter
+            ? t.winterLevelName(ctl.winterIndex)
+            : (bonus ? t.bonusBoxN(ctl.bonusIndex + 1) : t.levelName(i)));
+    // a sentence-like eyebrow (tips) wraps to 3 small lines and is never upper-cased
+    final tipEyebrow = winter ||
+        level.mystery ||
+        (!daily && !bonus && level.hasDrawers);
+    final firstLevel =
+        !daily && !bonus && !winter && i == 0 && !p.done.contains(0);
     final note = firstLevel ? t.tut : t.note;
-    final left = p.hintsLeft(DateTime.now());
+    final left = p.hintsLeft(appNow());
     final hintSemantics =
         '${t.hint}. ${left < 0 ? t.hintsUnlimited : t.hintsLeft(left)}';
 
@@ -147,8 +196,8 @@ class _PlayScreenState extends State<PlayScreen> {
               child: TitleBlock(
                 eyebrow: _eyebrow(context, t),
                 title: title,
-                eyebrowLines: level.mystery ? 3 : 2,
-                upper: !level.mystery,
+                eyebrowLines: tipEyebrow ? 3 : 2,
+                upper: !tipEyebrow,
               ),
             ),
             const SizedBox(width: 10),
@@ -177,6 +226,8 @@ class _PlayScreenState extends State<PlayScreen> {
                       onSnap: ctl.services.haptics.tick,
                       idleHint: firstLevel,
                       onWin: () {
+                        _chipTimer?.cancel();
+                        _taskChip = false;
                         ctl.recordWin();
                         ctl.services.haptics.success();
                         setState(() => _won = true);
@@ -184,6 +235,49 @@ class _PlayScreenState extends State<PlayScreen> {
                       onCelebrate: () => setState(() => _card = true),
                     ),
                   ),
+                  if (_taskChip && !_card)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: IgnorePointer(
+                        child: Center(
+                          child: Semantics(
+                            liveRegion: true,
+                            child: PopIn(
+                              milliseconds: 300,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: c.mint,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    ExcludeSemantics(
+                                      child: svgIcon(checkSvg(c.mintInk),
+                                          size: 14),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        t.taskFinished,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: tx(13,
+                                            w: 700, color: c.mintInk),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   if (_card)
                     Positioned.fill(
                       child: Align(
@@ -208,7 +302,7 @@ class _PlayScreenState extends State<PlayScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        if (!bonus)
+        if (!bonus && !winter)
           _DotRow(
             count: levels.length,
             current: daily ? -1 : i,

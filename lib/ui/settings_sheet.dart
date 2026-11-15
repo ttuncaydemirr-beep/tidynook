@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'package:tidy_nook/monet/billing.dart';
 
+import 'clock.dart';
 import 'controller.dart';
 import 'privacy_page.dart';
 import 'theme.dart';
@@ -126,7 +127,7 @@ class _SettingsBodyState extends State<_SettingsBody> {
         final ok = await ctl.services.reminder.requestAndEnable(
           title: t.notifTitle,
           body: t.notifBody,
-          dailyDoneToday: p.dailyDoneToday(DateTime.now()),
+          dailyDoneToday: p.dailyDoneToday(appNow()),
           channelName: t.reminder,
         );
         p.setReminderOn(ok);

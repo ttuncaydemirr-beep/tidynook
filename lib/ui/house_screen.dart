@@ -8,9 +8,11 @@ import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'package:tidy_nook/l10n/l10n_ext.dart';
 import 'package:tidy_nook/monet/ad_rules.dart' show kPlacementStreakSave;
 
+import 'clock.dart';
 import 'controller.dart';
 import 'effects.dart';
 import 'rewarded.dart';
+import 'tasks_sheet.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -73,6 +75,15 @@ class _HouseScreenState extends State<HouseScreen>
         _focus = Rect.fromCenter(center: ps.first, width: 60, height: 60);
       }
     }
+    if (ev.snowman) {
+      spots.add(snowmanSpot);
+      _focus ??= Rect.fromCenter(center: snowmanSpot, width: 70, height: 90);
+    }
+    if (ev.chestDecor >= 0) {
+      final cs = chestDecorSpot(ev.chestDecor);
+      spots.add(cs);
+      _focus ??= Rect.fromCenter(center: cs, width: 60, height: 60);
+    }
     if (spots.isNotEmpty && !reduce) {
       _startBurst(spots);
       widget.controller.sounds.play('deco');
@@ -81,13 +92,12 @@ class _HouseScreenState extends State<HouseScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToFocus());
     }
     if (ev.toastRoom >= 0) {
-      _toast = t.roomDone(t.roomName(ev.toastRoom));
+      _setToast(t.roomDone(t.roomName(ev.toastRoom)));
       widget.controller.sounds.play('room');
-      _toastTimer = Timer(const Duration(milliseconds: 2800), () {
-        if (mounted) {
-          setState(() => _toast = null);
-        }
-      });
+    } else if (ev.snowman) {
+      _setToast(t.snowmanGot);
+    } else if (ev.tasksDone > 0) {
+      _setToast(t.taskFinished);
     }
     if (ev.askReminder) {
       _askTimer = Timer(const Duration(milliseconds: 900), () {
@@ -103,6 +113,50 @@ class _HouseScreenState extends State<HouseScreen>
     _scroll.dispose();
     _burst.dispose();
     super.dispose();
+  }
+
+  /// The calm mint message at the top of the house (2.8 s).
+  void _setToast(String text) {
+    _toast = text;
+    _toastTimer?.cancel();
+    _toastTimer = Timer(const Duration(milliseconds: 2800), () {
+      if (mounted) {
+        setState(() => _toast = null);
+      }
+    });
+  }
+
+  /// Sparkles at [spot] (house space) and scrolls there, e.g. after the task
+  /// chest gave a piece.
+  void _celebrate(Offset spot, Rect focus) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    setState(() {
+      _focus = focus;
+      if (!reduce) {
+        _startBurst(<Offset>[spot]);
+      }
+    });
+    widget.controller.sounds.play('deco');
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToFocus());
+  }
+
+  void _openTasks() {
+    final ctl = widget.controller;
+    ctl.sounds.play('pick');
+    unawaited(showTasksSheet(context, ctl, onReward: (r) {
+      if (!mounted) {
+        return;
+      }
+      switch (r.kind) {
+        case ChestRewardKind.style:
+          _celebrate(decorHitRect(r.value).center, decorHitRect(r.value));
+        case ChestRewardKind.decor:
+          final cs = chestDecorSpot(r.value);
+          _celebrate(cs, Rect.fromCenter(center: cs, width: 60, height: 60));
+        case ChestRewardKind.hints:
+          break;
+      }
+    }));
   }
 
   void _scrollToFocus() {
@@ -178,6 +232,11 @@ class _HouseScreenState extends State<HouseScreen>
     } else {
       ctl.sounds.play('toggle');
     }
+    // "change a style" task
+    if (ctl.takeTaskToasts() > 0) {
+      final t = AppLocalizations.of(context);
+      setState(() => _setToast(t.taskFinished));
+    }
   }
 
   Widget _roomLabel(int ri, AppLocalizations t, Set<int> done) {
@@ -236,6 +295,9 @@ class _HouseScreenState extends State<HouseScreen>
       houseLine: c.houseLineCss,
       puppy: p.supporter,
       extended: true,
+      snow: snowOnHouse(appNow()),
+      snowman: p.snowman,
+      chestDecors: p.chestDecors,
     );
 
     final taps = <Widget>[];
@@ -316,10 +378,13 @@ class _HouseScreenState extends State<HouseScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           if (d > 0) ...<Widget>[
-            _DailyCard(controller: ctl),
+            _CardGrid(cards: <Widget>[
+              _DailyCard(controller: ctl),
+              _TasksCard(controller: ctl, onOpen: _openTasks),
+              if (p.winterAvailable(appNow())) _WinterCard(controller: ctl),
+              _BonusCard(controller: ctl),
+            ]),
             _StreakSave(controller: ctl),
-            const SizedBox(height: 6),
-            _BonusCard(controller: ctl),
             const SizedBox(height: 8),
           ],
           houseStage,
@@ -405,7 +470,8 @@ class _HouseScreenState extends State<HouseScreen>
   }
 }
 
-/// Card frame shared by the daily box and the bonus boxes.
+/// Compact card shared by the daily box, tasks, winter and bonus boxes (two
+/// per row, so most of the house stays visible at 360 x 640).
 class _CardFrame extends StatelessWidget {
   const _CardFrame({
     required this.semanticsLabel,
@@ -413,7 +479,8 @@ class _CardFrame extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.sub,
-    required this.trailing,
+    this.action,
+    this.mark,
   });
 
   final String semanticsLabel;
@@ -421,7 +488,12 @@ class _CardFrame extends StatelessWidget {
   final Widget icon;
   final String title;
   final String sub;
-  final Widget trailing;
+
+  /// Short call to action (Open, Play, Claim) shown as a small accent pill.
+  final String? action;
+
+  /// Small icon before [sub] (a check when done, a lock when locked).
+  final Widget? mark;
 
   @override
   Widget build(BuildContext context) {
@@ -436,19 +508,24 @@ class _CardFrame extends StatelessWidget {
         color: c.surface,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: c.line, width: 1.5),
         ),
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 58),
+            constraints: const BoxConstraints(minHeight: 56),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsetsDirectional.fromSTEB(8, 7, 8, 7),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  icon,
-                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: FittedBox(child: icon),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,23 +533,84 @@ class _CardFrame extends StatelessWidget {
                       children: <Widget>[
                         Text(
                           title,
-                          style: tx(16, w: 700, color: c.fg, height: 1.2),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: tx(14, w: 700, color: c.fg, height: 1.15),
                         ),
-                        Text(
-                          sub,
-                          style: tx(13, color: c.muted, height: 1.3),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 2,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: <Widget>[
+                            if (action != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: c.accent,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  action!,
+                                  style: tx(12.5,
+                                      w: 700, color: c.accentInk, height: 1.3),
+                                ),
+                              ),
+                            ?mark,
+                            Text(
+                              sub,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: tx(12, color: c.muted, height: 1.25),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  trailing,
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The house cards, two per row (a last odd card takes the whole row).
+class _CardGrid extends StatelessWidget {
+  const _CardGrid({required this.cards});
+
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < cards.length; i += 2) {
+      if (rows.isNotEmpty) {
+        rows.add(const SizedBox(height: 6));
+      }
+      if (i + 1 < cards.length) {
+        rows.add(IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(child: cards[i]),
+              const SizedBox(width: 6),
+              Expanded(child: cards[i + 1]),
+            ],
+          ),
+        ));
+      } else {
+        rows.add(cards[i]);
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: rows,
     );
   }
 }
@@ -487,31 +625,21 @@ class _DailyCard extends StatelessWidget {
     final c = TidyColors.of(context);
     final t = AppLocalizations.of(context);
     final p = controller.progress;
-    final now = DateTime.now();
+    final now = appNow();
     final done = p.dailyDoneToday(now);
     final st = p.liveStreak(now);
     final sub = done
-        ? '${t.dailyDone}${st > 1 ? '${sepOf(context)}${t.streak(st)}' : ''}'
+        ? (st > 1 ? t.streak(st) : t.dailyDone)
         : (st > 0 ? t.streak(st) : t.dailyReady);
 
-    final pill = Container(
-      padding: EdgeInsets.symmetric(horizontal: done ? 10 : 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: done ? c.mint : c.accent,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: done
-          ? svgIcon(checkSvg(c.mintInk), size: 16)
-          : Text(t.open, style: tx(14, w: 700, color: c.accentInk)),
-    );
-
     return _CardFrame(
-      semanticsLabel: '${t.daily}. $sub',
+      semanticsLabel: '${t.daily}. ${done ? t.dailyDone : t.open}. $sub',
       onTap: done ? null : _open,
       icon: SvgPicture.string(dailyBoxSvg, width: 40, height: 40),
       title: t.daily,
       sub: sub,
-      trailing: pill,
+      action: done ? null : t.open,
+      mark: done ? _check(c) : null,
     );
   }
 
@@ -537,7 +665,7 @@ class _StreakSaveState extends State<_StreakSave> {
   Future<void> _offer() async {
     final ctl = widget.controller;
     final p = ctl.progress;
-    final n = p.streakAtRisk(DateTime.now());
+    final n = p.streakAtRisk(appNow());
     if (_busy || n <= 0) {
       return;
     }
@@ -561,7 +689,7 @@ class _StreakSaveState extends State<_StreakSave> {
     if (!ok) {
       return;
     }
-    if (p.saveStreak(DateTime.now()) && mounted) {
+    if (p.saveStreak(appNow()) && mounted) {
       showToast(context, t.streakSaved);
     }
   }
@@ -571,7 +699,7 @@ class _StreakSaveState extends State<_StreakSave> {
     final c = TidyColors.of(context);
     final t = AppLocalizations.of(context);
     final p = widget.controller.progress;
-    final now = DateTime.now();
+    final now = appNow();
     final n = p.dailyDoneToday(now) ? 0 : p.streakAtRisk(now);
     if (n <= 0) {
       return const SizedBox.shrink();
@@ -613,17 +741,7 @@ class _BonusCard extends StatelessWidget {
         icon: icon,
         title: t.bonusTitle,
         sub: t.bonusLocked,
-        trailing: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: c.bg,
-            shape: BoxShape.circle,
-            border: Border.all(color: c.toggleOff, width: 1.5),
-          ),
-          child: svgIcon(lockSvg(c.muted), size: 16),
-        ),
+        mark: svgIcon(lockSvg(c.muted), size: 13),
       );
     }
     final hasCandidate = p.nextExtraStyleCandidate(0) != null;
@@ -637,14 +755,7 @@ class _BonusCard extends StatelessWidget {
       icon: icon,
       title: title,
       sub: sub,
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: c.accent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(t.bonusPlay, style: tx(14, w: 700, color: c.accentInk)),
-      ),
+      action: t.bonusPlay,
     );
   }
 
@@ -653,3 +764,110 @@ class _BonusCard extends StatelessWidget {
     controller.startBonus();
   }
 }
+
+/// Daily tasks: today's progress; opens the tasks sheet (claim, chest).
+class _TasksCard extends StatelessWidget {
+  const _TasksCard({required this.controller, required this.onOpen});
+
+  final GameController controller;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = TidyColors.of(context);
+    final t = AppLocalizations.of(context);
+    final p = controller.progress;
+    final now = appNow();
+    final tasks = p.tasksFor(now);
+    final done = tasks.where((x) => x.done).length;
+    final allDone = tasks.isNotEmpty && done == tasks.length;
+    var claimable = false;
+    for (var i = 0; i < tasks.length; i++) {
+      claimable = claimable || (!p.noAds && p.canClaimTask(i, now));
+    }
+    final chestReady = p.taskChestReady;
+    final steps = p.chestSteps.clamp(0, taskChestSteps).toInt();
+    final sub = chestReady
+        ? t.chestReady
+        : '${t.taskProgress(done, tasks.length)}'
+            '${sepOf(context)}${t.chestProgress(steps, taskChestSteps)}';
+
+    String? action;
+    if (chestReady) {
+      action = t.chestOpen;
+    } else if (claimable) {
+      action = t.taskClaim;
+    }
+
+    return _CardFrame(
+      semanticsLabel: '${t.tasksTitle}. $sub${action != null ? '. $action' : ''}',
+      onTap: onOpen,
+      icon: SvgPicture.string(chestSvg, width: 40, height: 40),
+      title: t.tasksTitle,
+      sub: sub,
+      action: action,
+      mark: allDone && action == null ? _check(c) : null,
+    );
+  }
+}
+
+/// The winter event card: only while the event runs (1 Dec - 15 Jan).
+class _WinterCard extends StatelessWidget {
+  const _WinterCard({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = TidyColors.of(context);
+    final t = AppLocalizations.of(context);
+    final p = controller.progress;
+    final now = appNow();
+    final done = p.winterDoneCount(now);
+    final next = p.winterNext(now);
+    final all = next < 0;
+    final sub = all
+        ? t.winterAllDone
+        : '${t.winterProgress(done, winterLevelCount)}'
+            '${sepOf(context)}${t.winterDaysLeft(winterDaysLeft(now))}';
+    final icon = Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: c.line, width: 1.5),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8.5),
+        child: SvgPicture.string(
+          // the snowman is shown greyed out until it is earned
+          snowmanPreviewSvg(locked: !p.snowman),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+    return _CardFrame(
+      semanticsLabel:
+          '${t.winterTitle}. $sub. ${all ? t.snowmanName : t.bonusPlay}',
+      // after all 7 the boxes can still be replayed (they count for tasks)
+      onTap: () {
+        controller.sounds.play('pick');
+        controller.startWinter(all ? 0 : next);
+      },
+      icon: icon,
+      title: t.winterTitle,
+      sub: sub,
+      action: all ? null : t.bonusPlay,
+      mark: all ? _check(c) : null,
+    );
+  }
+}
+
+/// Small sage check before a card's line (done; never colour alone).
+Widget _check(TidyColors c) => Container(
+      width: 16,
+      height: 16,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: c.mint, shape: BoxShape.circle),
+      child: svgIcon(checkSvg(c.mintInk), size: 11),
+    );

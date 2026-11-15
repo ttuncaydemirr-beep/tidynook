@@ -167,6 +167,31 @@ class Telemetry {
         'duration_s': seconds.clamp(0, 3600).toInt(),
       });
 
+  // 1.2 events ---------------------------------------------------------------
+
+  /// A daily task was finished. [type] is the TaskType name (a fixed word such
+  /// as boxes, hint, winter); [slot] its position 0..2 in today's list.
+  void logTaskComplete(String type, {int slot = 0}) =>
+      _event('task_complete', <String, Object>{'type': type, 'slot': slot + 1});
+
+  /// The task chest was opened; [reward]: style | decor | hints; [n] chests opened so far.
+  void logTaskChestOpen(String reward, {int n = 1}) =>
+      _event('task_chest_open', <String, Object>{'reward': reward, 'n': n.clamp(0, 100000).toInt()});
+
+  /// Winter event box [n] (0-based) was completed; [fresh] first time this season; [snowman] earned now.
+  void logEventBoxComplete(int n, {int seconds = 0, bool fresh = true, bool snowman = false}) =>
+      _event('event_box_complete', <String, Object>{
+        'event': 'winter',
+        'n': n + 1,
+        'duration_s': seconds.clamp(0, 3600).toInt(),
+        'first': fresh ? 1 : 0,
+        'snowman': snowman ? 1 : 0,
+      });
+
+  /// The tip of a new mechanic was shown for the first time ([mechanic]: drawer).
+  void logMechanicTutorialSeen(String mechanic, {int level = 0}) =>
+      _event('mechanic_tutorial_seen', <String, Object>{'mechanic': mechanic, 'level': level + 1});
+
   /// A purchase SUCCEEDED (not for pending / cancelled / failed).
   void logPurchase(String productId, {String? currency, double? value}) {
     final fa = _fa;

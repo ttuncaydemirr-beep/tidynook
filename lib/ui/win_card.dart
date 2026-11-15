@@ -11,6 +11,7 @@ import 'package:tidy_nook/l10n/gen/app_localizations.dart';
 import 'package:tidy_nook/l10n/l10n_ext.dart';
 import 'package:tidy_nook/monet/ad_rules.dart' show kPlacementSurpriseBox;
 
+import 'clock.dart';
 import 'controller.dart';
 import 'rewarded.dart';
 import 'theme.dart';
@@ -125,7 +126,9 @@ class _WinCardState extends State<WinCard> {
     final p = controller.progress;
     final daily = controller.isDaily;
     final bonus = controller.isBonus;
+    final winter = controller.isWinter;
     final i = controller.levelIndex;
+    var nextWinter = -1;
 
     String title;
     String sub;
@@ -135,7 +138,32 @@ class _WinCardState extends State<WinCard> {
     Widget? belowPicker;
     var offerSurprise = false;
 
-    if (daily) {
+    if (winter) {
+      final n = controller.winterIndex;
+      final now = appNow();
+      final doneCount = p.winterDoneCount(now);
+      nextWinter = controller.nextWinterBox();
+      title = t.winTitle(n % 3);
+      sub = t.winterLevelName(n);
+      if (controller.freshSnowman) {
+        rewardName = t.snowmanGot;
+        rewardNote = t.snowmanName;
+      } else {
+        rewardName = t.winterProgress(doneCount, winterLevelCount);
+        rewardNote = doneCount >= winterLevelCount
+            ? t.winterAllDone
+            : t.winterReward;
+      }
+      sidePicker = Semantics(
+        label: t.snowmanName,
+        child: _PreviewTile(
+          svg: snowmanPreviewSvg(locked: !p.snowman),
+          selected: controller.freshSnowman,
+          background: c.bg,
+          locked: !p.snowman,
+        ),
+      );
+    } else if (daily) {
       final d = p.daily;
       final got = milestones.where((m) => d.total >= m).length;
       final fresh = controller.freshPet;
@@ -304,6 +332,10 @@ class _WinCardState extends State<WinCard> {
                     ),
             ),
             if (daily) _WeekRow(progress: controller.progress),
+            if (controller.winTasksDone > 0)
+              _TaskChip(
+                text: p.tasksAllDone(appNow()) ? t.tasksAllDone : t.taskFinished,
+              ),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,
@@ -314,7 +346,15 @@ class _WinCardState extends State<WinCard> {
                   kind: PillKind.secondary,
                   onTap: () => unawaited(_leave(next: false)),
                 ),
-                if (bonus)
+                if (winter)
+                  ...<Widget>[
+                    if (nextWinter >= 0)
+                      PillButton(
+                        label: t.winterLevelName(nextWinter),
+                        onTap: () => unawaited(_leave(next: true)),
+                      ),
+                  ]
+                else if (bonus)
                   PillButton(
                     label: t.bonusBoxN(p.bonusDone + 1),
                     onTap: () => unawaited(_leave(next: true)),
@@ -335,6 +375,44 @@ class _WinCardState extends State<WinCard> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small sage line on the win card: a daily task was finished by this box.
+class _TaskChip extends StatelessWidget {
+  const _TaskChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = TidyColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: c.mint,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ExcludeSemantics(child: svgIcon(checkSvg(c.mintInk), size: 14)),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: tx(13, w: 700, color: c.mintInk),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -415,7 +493,7 @@ class _WeekRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = TidyColors.of(context);
     final locale = Localizations.localeOf(context).toString();
-    final now = DateTime.now();
+    final now = appNow();
     final days = progress.daily.days;
     final cells = <Widget>[];
     for (var k = 6; k >= 0; k--) {
