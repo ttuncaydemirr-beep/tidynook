@@ -396,9 +396,9 @@ List<Level> _buildLevels() {
     Level(
       outer: '#8FCFC0',
       inner: '#2F6E66',
-      dividers: [r(42, 200, 276, 6, 3, '#255953')],
-      slots: [Slot('duster', 66.9, 133), Slot('spray', 103.7, 135), Slot('detergent', 150.6, 136), Slot('lint', 191.4, 134), Slot('spray', 227.3, 135), Slot('scrub', 283.1, 136.5), Slot('glove', 74.6, 268), Slot('peg-sun', 103.2, 267), Slot('sponge', 140.8, 267), Slot('peg-rose', 178.4, 267), Slot('cloth-rose', 228, 267), Slot('cloth-sky', 280, 267)],
-      drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(196, 214, 116, 106), slots: <int>[10, 11], front: '#8FCFC0')],
+      dividers: [r(42, 156, 276, 5, 2.5, '#255953'), r(42, 242, 276, 5, 2.5, '#255953')],
+      slots: [Slot('spray', 69.7, 113), Slot('detergent', 123.3, 114), Slot('spray', 168, 113), Slot('scrub', 230.7, 114.5), Slot('lint', 287.3, 112), Slot('glove', 85.4, 202.5), Slot('sponge', 142.8, 201.5), Slot('cloth-rose', 209.2, 201.5), Slot('cloth-sky', 275.6, 201.5), Slot('peg-sun', 90, 287.5), Slot('peg-rose', 144, 287.5), Slot('cloth-sun', 240, 287.5), Slot('peg-mint', 286, 287.5)],
+      drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(196, 250, 116, 75), slots: <int>[11, 12], front: '#8FCFC0')],
     ), // 33 Cleaning Caddy
     Level(
       outer: '#C7B7DB',
@@ -417,13 +417,13 @@ List<Level> _buildLevels() {
       outer: '#7FA7D6',
       inner: '#2E4A78',
       dividers: [r(42, 200, 276, 6, 3, '#243C63')],
-      slots: [Slot('dice', 63.8, 136), Slot('card', 102.5, 136), Slot('dice', 141.2, 136), Slot('card', 180, 136), Slot('dice', 218.8, 136), Slot('card', 257.5, 136), Slot('dice', 296.2, 136), Slot('pawn-rose', 78, 265), Slot('pawn-sky', 129, 265), Slot('pawn-sun', 180, 265), Slot('pawn-rose', 231, 265), Slot('pawn-sky', 282, 265)],
+      slots: [Slot('dice', 69, 136), Slot('card', 113, 136), Slot('dice', 157, 136), Slot('card', 201, 136), Slot('dice', 245, 136), Slot('card', 289, 136), Slot('pawn-rose', 70.7, 265), Slot('pawn-sky', 114.4, 265), Slot('dice', 158.1, 267), Slot('pawn-sun', 201.9, 265), Slot('pawn-rose', 245.6, 265), Slot('pawn-sky', 289.3, 265)],
     ), // 36 Game Night
     Level(
       outer: '#A898C9',
       inner: '#3E3260',
       dividers: [r(42, 200, 276, 6, 3, '#31284D')],
-      slots: [Slot('lantern', 78.9, 144.5), Slot('candle-sky', 124.7, 143), Slot('candle-sun', 161.6, 143), Slot('candle-rose', 198.4, 143), Slot('lantern', 244.3, 144.5), Slot('candle-sky', 290.1, 143), Slot('matchbox', 70.6, 267), Slot('candle-sun', 108.2, 274), Slot('matchbox', 145.8, 267), Slot('candle-rose', 183.4, 274), Slot('candle-sky', 228.5, 274), Slot('candle-sun', 258, 274), Slot('candle-rose', 287.5, 274)],
+      slots: [Slot('lantern', 71.2, 144.5), Slot('candle-sky', 109.5, 143), Slot('candle-sun', 138.8, 143), Slot('matchbox', 180, 136), Slot('candle-rose', 221.2, 143), Slot('lantern', 259.5, 144.5), Slot('candle-sky', 297.8, 143), Slot('matchbox', 83, 267), Slot('candle-sun', 133, 274), Slot('candle-rose', 171, 274), Slot('candle-sky', 228.5, 274), Slot('candle-sun', 258, 274), Slot('candle-rose', 287.5, 274)],
       drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(204, 214, 108, 106), slots: <int>[10, 11, 12], front: '#A898C9')],
     ), // 37 Lantern Shelf
     Level(
@@ -442,8 +442,8 @@ List<Level> _buildLevels() {
       outer: '#B9D98E',
       inner: '#4F6E35',
       dividers: [r(42, 200, 276, 6, 3, '#405A2B')],
-      slots: [Slot('sprout', 65.5, 132), Slot('sprout', 104, 132), Slot('sprout', 142.5, 132), Slot('label', 180, 133), Slot('sprout', 217.5, 132), Slot('sprout', 256, 132), Slot('sprout', 294.5, 132), Slot('packet', 73.5, 267), Slot('trowel', 117, 267), Slot('packet', 160.5, 267), Slot('sprout', 219.5, 263), Slot('sprout', 254, 263), Slot('sprout', 288.5, 263)],
-      drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(196, 214, 116, 106), slots: <int>[10, 11, 12], front: '#B9D98E')],
+      slots: [Slot('sprout', 65.5, 132), Slot('sprout', 104, 132), Slot('sprout', 142.5, 132), Slot('label', 180, 133), Slot('sprout', 217.5, 132), Slot('sprout', 256, 132), Slot('sprout', 294.5, 132), Slot('packet', 68.5, 267), Slot('trowel', 107, 267), Slot('packet', 145.5, 267), Slot('sprout', 204.5, 263), Slot('sprout', 244, 263), Slot('sprout', 283.5, 263)],
+      drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(176, 214, 136, 106), slots: <int>[10, 11, 12], front: '#B9D98E')],
     ), // 40 Seedling Tray
     Level(
       outer: '#8FC9A8',
@@ -461,9 +461,9 @@ List<Level> _buildLevels() {
     Level(
       outer: '#F0B6C8',
       inner: '#8A4A63',
-      dividers: [r(42, 200, 276, 6, 3, '#723C52')],
-      slots: [Slot('tulip-rose', 59.7, 128.5), Slot('tulip-lav', 92.3, 128.5), Slot('tulip-sun', 125, 128.5), Slot('daisy', 161.7, 132), Slot('tulip-rose', 194.3, 128.5), Slot('tulip-lav', 227, 128.5), Slot('tulip-sun', 259.7, 128.5), Slot('daisy', 296.3, 132), Slot('wcan', 70, 269), Slot('daisy', 131, 263), Slot('tulip-rose', 167, 259.5), Slot('tulip-lav', 217.5, 259.5), Slot('daisy', 254, 263), Slot('tulip-sun', 286.5, 259.5)],
-      drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(196, 214, 116, 106), slots: <int>[11, 12, 13], front: '#F0B6C8')],
+      dividers: [r(42, 156, 276, 5, 2.5, '#723C52'), r(42, 242, 276, 5, 2.5, '#723C52')],
+      slots: [Slot('tulip-rose', 69.6, 106.5), Slot('tulip-lav', 112.1, 106.5), Slot('tulip-sun', 154.7, 106.5), Slot('daisy', 201.3, 110), Slot('tulip-rose', 243.9, 106.5), Slot('tulip-lav', 286.4, 106.5), Slot('daisy', 89.8, 197.5), Slot('tulip-sun', 148.6, 194), Slot('tulip-rose', 207.4, 194), Slot('daisy', 270.2, 197.5), Slot('tulip-lav', 84.3, 280), Slot('daisy', 145.7, 283.5), Slot('tulip-sun', 229.7, 280), Slot('tulip-rose', 274.3, 280)],
+      drawers: <InnerDrawer>[InnerDrawer(area: Rect.fromLTWH(196, 250, 116, 75), slots: <int>[12, 13], front: '#F0B6C8')],
     ), // 43 Flower Crate
     Level(
       outer: '#E9C46A',
@@ -811,7 +811,7 @@ String lidSvg(Level level, {String? tapText}) {
 /// viewBox of the whole house drawn by houseSvg(extended: true). 1.2: the new
 /// top floor (Laundry Room, Balcony) under the raised roof, the attic floor,
 /// the three storeys of 1.0, the garden strip in front and the greenhouse
-/// below it (with the snowman and the chest decor on its lawn).
+/// below it (with the chest decor on its lawn; the snowman stands in the Patio).
 const String houseViewBox = '10 -466 340 1276';
 
 /// Top-left corner and size of [houseViewBox] in house space.
@@ -955,7 +955,7 @@ String _floorDetail(int ri) {
 /// 1.2 (only with [extended]): the house has 13 rooms (new top floor and the
 /// greenhouse). [snow] draws snow on the roofs, the lawns and the balcony
 /// railing plus falling flakes (pass [snowOnHouse] of the current date).
-/// [snowman] draws the winter event snowman on the greenhouse lawn (kept
+/// [snowman] draws the winter event snowman in the Patio of the garden (kept
 /// forever once earned). [chestDecors] are the task chest decor pieces owned
 /// (indexes 0..[chestDecorCount]-1).
 String houseSvg({
@@ -1068,28 +1068,32 @@ String houseSvg({
 // 1.2: winter snow, the snowman and the task chest decor (house space)
 // ---------------------------------------------------------------------------
 
-/// The winter event snowman on the greenhouse lawn (house space).
+/// The winter event snowman, standing in the front of the Patio (room 8, the
+/// garden strip) between the hammock and the garden table (house space).
 const String _snowmanSvg =
-    '<path d="M47 758 L34 748 M69 758 L82 750" stroke="#8C6240" stroke-width="2.5" stroke-linecap="round" fill="none"/>'
-    '<circle cx="58" cy="784" r="16" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="1.5"/>'
-    '<circle cx="58" cy="760" r="12" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="1.5"/>'
-    '<circle cx="58" cy="742" r="9" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="1.5"/>'
-    '<rect x="48" y="749" width="20" height="5" rx="2.5" fill="#E57A5B"/>'
-    '<rect x="60" y="752" width="5" height="10" rx="2" fill="#E57A5B"/>'
-    '<rect x="48" y="731" width="20" height="4" rx="2" fill="#3A3046"/>'
-    '<rect x="52" y="719" width="12" height="13" rx="2" fill="#3A3046"/>'
-    '<rect x="52" y="726" width="12" height="3" fill="#E57A5B"/>'
-    '<circle cx="55" cy="740" r="1.4" fill="#3A3046"/>'
-    '<circle cx="61" cy="740" r="1.4" fill="#3A3046"/>'
-    '<polygon points="58,743 67,745.5 58,747" fill="#F2A35E"/>'
-    '<circle cx="58" cy="766" r="1.8" fill="#3A3046"/>'
-    '<circle cx="58" cy="774" r="1.8" fill="#3A3046"/>';
+    '<circle cx="119.5" cy="584" r="9" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="1.2"/>'
+    '<circle cx="119.5" cy="570" r="6.5" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="1.2"/>'
+    '<circle cx="119.5" cy="559" r="5" fill="#FFFFFF" stroke="#C9CDD6" stroke-width="1.2"/>'
+    '<rect x="114" y="563" width="11" height="3" rx="1.5" fill="#E57A5B"/>'
+    '<rect x="121.5" y="565" width="3" height="6" rx="1.2" fill="#E57A5B"/>'
+    '<rect x="113.5" y="553" width="12" height="2.5" rx="1.2" fill="#3A3046"/>'
+    '<rect x="115.5" y="546" width="8" height="8" rx="1.2" fill="#3A3046"/>'
+    '<rect x="115.5" y="550.5" width="8" height="1.8" fill="#E57A5B"/>'
+    '<circle cx="117.8" cy="558.4" r=".9" fill="#3A3046"/>'
+    '<circle cx="121.2" cy="558.4" r=".9" fill="#3A3046"/>'
+    '<polygon points="119.5,559.6 124.5,561 119.5,562.2" fill="#F2A35E"/>'
+    '<circle cx="119.5" cy="569" r="1.1" fill="#3A3046"/>'
+    '<circle cx="119.5" cy="573.5" r="1.1" fill="#3A3046"/>';
 
-/// Bounds of the snowman in house space (left, top, right, bottom).
-const List<double> _snowmanBox = <double>[34, 719, 82, 800];
+/// Bounds of the snowman in house space. It stands in the Patio's free floor
+/// between the hammock (x <= 111 down to y 574) and the garden table
+/// (x >= 126 down to y 575); only its base reaches below those pieces.
+const Rect snowmanRect = Rect.fromLTRB(110.5, 546, 128.5, 593);
+
+const List<double> _snowmanBox = <double>[110.5, 546, 128.5, 593];
 
 /// Centre of the snowman in house space (for sparkles and scrolling).
-const Offset snowmanSpot = Offset(58, 760);
+const Offset snowmanSpot = Offset(119.5, 570);
 
 /// Small house decor pieces a full task chest gives when every 3rd style is
 /// already owned: 0 garden gnome, 1 birdbath, 2 window flower box, 3 lantern
@@ -1154,7 +1158,7 @@ String chestDecorPreviewSvg(int i) {
 /// Preview of the winter event snowman (event card and win card).
 String snowmanPreviewSvg({bool locked = false}) {
   var body = '<rect x="-300" y="300" width="900" height="1000" fill="#DCEFF7"/>'
-      '<rect x="-300" y="799" width="900" height="400" fill="#F4F8FB"/>'
+      '<rect x="-300" y="574" width="900" height="400" fill="#F4F8FB"/>'
       '<g>$_snowmanSvg</g>';
   if (locked) {
     body = '<g opacity="0.35">${_greyscale(body)}</g>';

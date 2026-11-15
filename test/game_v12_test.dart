@@ -106,6 +106,61 @@ void main() {
       expect(last > first, isTrue);
     });
 
+    test('ghost slots leave room around each other (>= 8 units)', () {
+      void check(Level l, String name) {
+        final boxes = <Rect>[for (final s in l.slots) _slotBox(s)];
+        for (var i = 0; i < boxes.length; i++) {
+          for (var j = i + 1; j < boxes.length; j++) {
+            final gap = boxes[i].inflate(4).overlaps(boxes[j].inflate(4));
+            expect(gap, isFalse,
+                reason: '$name ${l.slots[i].kind} / ${l.slots[j].kind} too close');
+          }
+        }
+      }
+
+      for (var i = 30; i < 45; i++) {
+        check(levels[i], 'level $i');
+      }
+      for (var i = 0; i < winterLevels.length; i++) {
+        check(winterLevels[i], 'winter $i');
+      }
+    });
+
+    test('loose items barely overlap on the rug at the start', () {
+      double worst(List<ItemState> items) {
+        var w = 0.0;
+        final r = <Rect>[
+          for (final it in items)
+            rotatedExtent(itemBox(it.kind), it.rotation).shift(Offset(it.x, it.y)),
+        ];
+        for (var i = 0; i < r.length; i++) {
+          for (var j = i + 1; j < r.length; j++) {
+            final x = r[i].intersect(r[j]);
+            if (x.width <= 0 || x.height <= 0) {
+              continue;
+            }
+            final small = math.min(r[i].width * r[i].height, r[j].width * r[j].height);
+            w = math.max(w, x.width * x.height / small);
+          }
+        }
+        return w;
+      }
+
+      final boxes = <(String, Level)>[
+        for (var i = 30; i < 45; i++) ('level $i', levels[i]),
+        for (var i = 0; i < winterLevels.length; i++) ('winter $i', winterLevels[i]),
+      ];
+      for (final (name, l) in boxes) {
+        for (var seed = 0; seed < 100; seed++) {
+          final items = scatter(l, math.Random(seed));
+          expect(worst(items), lessThanOrEqualTo(0.15), reason: '$name seed $seed');
+          for (final it in items) {
+            expect(it.home, Offset(it.x, it.y));
+          }
+        }
+      }
+    });
+
     test('no reused layouts and new box colours', () {
       final seen = <String>{};
       for (final l in levels) {
@@ -321,6 +376,22 @@ void main() {
     test('spots and previews are inside the house and safe', () {
       final house = houseOrigin & houseSize;
       expect(house.contains(snowmanSpot), isTrue);
+      // the snowman stands in the Patio of the garden strip, clear of its pieces
+      final patio = Rect.fromLTWH(rooms[8].x, rooms[8].y, 150, 160);
+      expect(patio.contains(snowmanRect.topLeft) && patio.contains(snowmanRect.bottomRight), isTrue);
+      expect(snowmanRect.contains(snowmanSpot), isTrue);
+      final parts = <Rect>[
+        Rect.fromCircle(center: const Offset(119.5, 584), radius: 9),
+        Rect.fromCircle(center: const Offset(119.5, 570), radius: 6.5),
+        Rect.fromCircle(center: const Offset(119.5, 559), radius: 5),
+        const Rect.fromLTRB(113.5, 546, 125.5, 555.5),
+      ];
+      for (final i in <int>[...levelsOfRoom(8), ...levelsOfRoom(9)]) {
+        final piece = decorHitRect(i).deflate(5);
+        for (final p in parts) {
+          expect(p.overlaps(piece), isFalse, reason: 'snowman / piece $i');
+        }
+      }
       for (var d = 0; d < chestDecorCount; d++) {
         expect(house.contains(chestDecorSpot(d)), isTrue);
         expectFlutterSvgSafe(chestDecorPreviewSvg(d));

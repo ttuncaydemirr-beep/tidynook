@@ -165,6 +165,11 @@ Rect rotatedExtent(Rect box, double degrees) {
 
 /// Initial scatter of a level's items on the rug: same grid / jitter / rotation
 /// rules as build() in the HTML. Item i belongs to slot i's kind.
+///
+/// 1.2: in crowded boxes (more than 8 items) tall-for-their-cell items lie down
+/// and the others tilt only half as much, and for every box a final pass
+/// pushes overlapping items apart (inside the rug, never past the outer grid
+/// columns), so the loose items barely touch at the start.
 List<ItemState> scatter(Level level, math.Random random) {
   final n = level.slots.length;
   const cols = 4;
@@ -181,10 +186,13 @@ List<ItemState> scatter(Level level, math.Random random) {
     var y = 364 + ch * (row + 0.5) + _rnd(random, -5, 5);
     final kind = level.slots[i].kind;
     // tall pieces lie down, the others tilt a little
-    final tall = itemGeometryBox(kind).height > 80;
+    final geo = itemGeometryBox(kind);
+    final crowded = n > 8;
+    final tall = geo.height > 80 ||
+        (crowded && geo.height > ch * 0.8 && geo.height > geo.width * 1.3);
     final rotation = tall
         ? (random.nextBool() ? -1 : 1) * _rnd(random, 62, 84)
-        : _rnd(random, -28, 28);
+        : _rnd(random, -28, 28) * (crowded ? 0.5 : 1);
     // keep the whole rotated item box inside the rug
     final ext = rotatedExtent(itemBox(kind), rotation);
     x = _fit(x, 14 + _rugMargin - ext.left, 346 - _rugMargin - ext.right);
@@ -199,7 +207,61 @@ List<ItemState> scatter(Level level, math.Random random) {
       home: Offset(x, y),
     ));
   }
+  _spreadOut(items, 14 + cw / 2 - 6, 346 - cw / 2 + 6);
   return items;
+}
+
+/// Pushes overlapping items apart (along the axis of the smaller overlap),
+/// keeping every rotated item box on the rug and every centre between [minX]
+/// and [maxX]. Deterministic; sets each item's home to its final place.
+void _spreadOut(List<ItemState> items, double minX, double maxX) {
+  final ext = <Rect>[
+    for (final it in items) rotatedExtent(itemBox(it.kind), it.rotation),
+  ];
+  void clamp(int i) {
+    final it = items[i];
+    final e = ext[i];
+    it.x = _fit(it.x, math.max(14 + _rugMargin - e.left, minX),
+        math.min(346 - _rugMargin - e.right, maxX));
+    it.y = _fit(it.y, 364 + _rugMargin - e.top, 626 - _rugMargin - e.bottom);
+  }
+
+  for (var pass = 0; pass < 150; pass++) {
+    var moved = false;
+    for (var i = 0; i < items.length; i++) {
+      for (var j = i + 1; j < items.length; j++) {
+        final a = items[i];
+        final b = items[j];
+        final ea = ext[i];
+        final eb = ext[j];
+        final ox = math.min(a.x + ea.right, b.x + eb.right) -
+            math.max(a.x + ea.left, b.x + eb.left);
+        final oy = math.min(a.y + ea.bottom, b.y + eb.bottom) -
+            math.max(a.y + ea.top, b.y + eb.top);
+        if (ox <= 0 || oy <= 0) {
+          continue;
+        }
+        moved = true;
+        if (ox < oy) {
+          final d = (ox / 2 + .5) * (a.x < b.x ? 1 : -1);
+          a.x -= d;
+          b.x += d;
+        } else {
+          final d = (oy / 2 + .5) * (a.y < b.y ? 1 : -1);
+          a.y -= d;
+          b.y += d;
+        }
+        clamp(i);
+        clamp(j);
+      }
+    }
+    if (!moved) {
+      break;
+    }
+  }
+  for (final it in items) {
+    it.home = Offset(it.x, it.y);
+  }
 }
 
 /// Nearest free slot of the same kind within 54 board units of (x, y), or null.

@@ -81,7 +81,7 @@ const int decorCount = 45;             // furniture 30..44, 3 styles each (decor
 const int styleCount = 3;              // unchanged
 ```
 
-Levels (index: name / furniture it brings home / room). Items per box: 10, 11, 12, 12, 12, 12, 12, 13, 12, 13, 13, 13,
+Levels (index: name / furniture it brings home / room). Items per box: 10, 11, 12, 13, 12, 12, 12, 13, 12, 13, 13, 13,
 13, 14, 14. Drawer levels: 30 (intro), 33, 37, 40, 43. Mystery levels: 35, 41 (no box has both).
 
 | # | level (`levelNameN`) | furniture (`decorNameN`) | room |
@@ -118,6 +118,7 @@ String houseSvg({..., bool extended = false,
     bool snowman = false,                   // pass progress.snowman
     Set<int> chestDecors = const <int>{}}); // pass progress.chestDecors
 const Offset snowmanSpot;                   // house space, for sparkles / scrolling after the 7th winter box
+const Rect snowmanRect;                     // the snowman stands in the Patio (garden strip), between hammock and table
 Offset chestDecorSpot(int i);               // house space, after a chest gave decor i
 const int chestDecorCount = 4;              // 0 garden gnome, 1 birdbath, 2 window flower box, 3 lantern post
 String chestDecorPreviewSvg(int i);         // for the chest reward card

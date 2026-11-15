@@ -85,7 +85,7 @@ List<Level> _buildWinter() {
       outer: '#E5A3A3',
       inner: '#6E3B3B',
       dividers: [r(42, 200, 276, 6, 3, '#5A2F2F')],
-      slots: [Slot('cocoa', 65.7, 135.5), Slot('candycane', 103.4, 133), Slot('cocoa', 155.1, 135.5), Slot('candycane', 192.9, 133), Slot('cocoa', 244.6, 135.5), Slot('candycane', 282.3, 133), Slot('cookie-star', 75.9, 269.3), Slot('gingerbread', 130.9, 266.5), Slot('bell', 180, 270), Slot('gingerbread', 229.1, 266.5), Slot('cookie-star', 284.1, 269.3)],
+      slots: [Slot('cocoa', 72.3, 135.5), Slot('candycane', 116.7, 133), Slot('cocoa', 175, 135.5), Slot('candycane', 219.3, 133), Slot('cocoa', 277.7, 135.5), Slot('cookie-star', 75.9, 269.3), Slot('gingerbread', 130.9, 266.5), Slot('bell', 180, 270), Slot('gingerbread', 229.1, 266.5), Slot('cookie-star', 284.1, 269.3)],
     ), // 3 Cocoa Tray
     Level(
       outer: '#7FB8A8',
