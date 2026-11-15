@@ -7,7 +7,7 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches: [ main, 'v11-*' ]
+    branches: [ main, 'v11-*', 'v12-*' ]
 
 permissions:
   contents: write
