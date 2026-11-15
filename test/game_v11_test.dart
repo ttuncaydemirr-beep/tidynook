@@ -554,7 +554,7 @@ void main() {
 
     test('bad schema 3 values fall back, styles are clamped', () {
       final p = Progress.fromJsonString(
-          '{"styles":{"1":7,"2":-3,"3":2,"40":1},"extraStyles":[3,"x",99,-1],'
+          '{"styles":{"1":7,"2":-3,"3":2,"99":1},"extraStyles":[3,"x",99,-1],'
           '"adsRemoved":"yes","supporter":1,"bonusDone":-4,"vibration":null,'
           '"adCounter":"2","lastAdMs":12.7,"streakSaveDay":"soon"}');
       expect(p.styles, {1: 2, 2: 0, 3: 2});

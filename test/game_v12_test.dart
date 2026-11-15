@@ -466,9 +466,13 @@ void main() {
         final before = p.extraHints;
         act(p);
         expect(p.tasks.single.done, isTrue, reason: type.name);
-        expect(p.extraHints, before + taskHintReward, reason: type.name);
+        expect(p.extraHints, before, reason: '${type.name}: the hint waits for the claim');
         expect(p.takeCompletedTasks(), [0], reason: type.name);
         expect(p.takeCompletedTasks(), isEmpty);
+        expect(p.canClaimTask(0, day), isTrue);
+        expect(p.claimTask(0, day), isTrue);
+        expect(p.extraHints, before + taskHintReward, reason: type.name);
+        expect(p.claimTask(0, day), isFalse);
       }
 
       check(TaskType.newLevel, (p) => p.completeLevel(5));
@@ -526,16 +530,35 @@ void main() {
       // more actions the same day change nothing
       p.completeLevel(3);
       expect(p.chestSteps, 1);
-      // task_double: once per task, only for finished tasks
-      final hints = p.extraHints;
+      // task_double: once per task, only for finished tasks; twice the hint
+      var hints = p.extraHints;
       expect(p.canDoubleTask(1, day), isTrue);
       expect(p.doubleTask(1, day), isTrue);
-      expect(p.extraHints, hints + taskHintReward);
+      expect(p.extraHints, hints + 2 * taskHintReward, reason: 'not claimed yet');
       expect(p.doubleTask(1, day), isFalse);
+      expect(p.claimTask(1, day), isFalse);
+      hints = p.extraHints;
+      expect(p.claimTask(0, day), isTrue);
+      expect(p.doubleTask(0, day), isTrue);
+      expect(p.extraHints, hints + 2 * taskHintReward, reason: 'claim + double');
       expect(p.canDoubleTask(7, day), isFalse);
+      expect(p.claimTask(-1, day), isFalse);
       final q = _withTasks(day, <TaskType>[TaskType.bonus]);
       expect(q.canDoubleTask(0, day), isFalse);
       expect(q.doubleTask(0, day), isFalse);
+      expect(q.claimTask(0, day), isFalse);
+    });
+
+    test('unclaimed hints of finished tasks are given the next day', () {
+      final day = DateTime(2026, 11, 20);
+      final p = _withTasks(day, <TaskType>[TaskType.boxes, TaskType.hint, TaskType.style]);
+      p.useFreeHint(day); // hint task done, not claimed
+      p.setStyle(1, 1); // style task done
+      p.claimTask(2, day);
+      final hints = p.extraHints;
+      p.tasksFor(DateTime(2026, 11, 21));
+      expect(p.extraHints, hints + taskHintReward, reason: 'only the unclaimed one');
+      expect(p.taskDay, '2026-11-21');
     });
 
     test('a full chest gives a 3rd style, then decor, then hints', () {
@@ -638,7 +661,8 @@ void main() {
       expect(q.toJson(), p.toJson());
       expect(q.taskDay, '2026-12-03');
       expect(q.tasks.map((t) => t.type).toList(), [TaskType.boxes, TaskType.winter, TaskType.style]);
-      expect(q.tasks[0].done && q.tasks[0].doubled, isTrue);
+      expect(q.tasks[0].done && q.tasks[0].doubled && q.tasks[0].claimed, isTrue);
+      expect(q.tasks[1].claimed, isFalse);
       expect(q.tasks[1].done, isTrue);
       expect(q.tasks[2].progress, 0);
       expect(q.winterSeason, 2026);

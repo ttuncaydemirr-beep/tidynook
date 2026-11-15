@@ -2,8 +2,10 @@
 // the same seeded() hash as the daily box, so everyone gets the same tasks on
 // the same day as far as their progress allows (a task the player cannot do
 // yet, such as a bonus box before bonus boxes unlock, is skipped and the next
-// one in the day's order is taken). Every finished task gives one hint; three
-// finished tasks on a day fill one step of the 7-step task chest. Progress
+// one in the day's order is taken). Every finished task gives one hint when it
+// is claimed (or doubled with the optional `task_double` rewarded ad; tasks
+// left unclaimed are claimed automatically the next day); three finished tasks
+// on a day fill one step of the 7-step task chest. Progress
 // keeps the state (see Progress.tasksFor and friends); this file is pure data
 // and generation. Exported by content.dart.
 
@@ -12,8 +14,8 @@ import 'daily.dart';
 /// Tasks per day.
 const int tasksPerDay = 3;
 
-/// Hints a finished task gives (an optional rewarded ad, placement
-/// `task_double`, gives the same amount once more).
+/// Hints a finished task gives when claimed (the optional rewarded ad,
+/// placement `task_double`, doubles it).
 const int taskHintReward = 1;
 
 /// Steps of the task chest: one per day on which all three tasks were done.
@@ -24,7 +26,7 @@ const int taskChestSteps = 7;
 const int chestBonusHints = 3;
 
 /// The kinds of daily task. The index is stable (used for the text keys
-/// taskText<Name>; see docs/V1_2_PLAN.md, "Contract A 1.2"); saves use [name].
+/// `taskText<Name>`; see docs/V1_2_PLAN.md, "Contract A 1.2"); saves use [name].
 enum TaskType {
   /// Finish [DailyTask.target] boxes of any kind (levels, replays, the daily
   /// box, bonus boxes, winter boxes).
@@ -127,6 +129,10 @@ class DailyTask {
   /// How far the player got (0..[target]).
   int progress;
 
+  /// The task's hint was given (claimed, doubled, or claimed automatically
+  /// on the next day).
+  bool claimed;
+
   /// The optional rewarded doubling of this task's hint was used.
   bool doubled;
 
@@ -134,6 +140,7 @@ class DailyTask {
     required this.type,
     this.target = 1,
     this.progress = 0,
+    this.claimed = false,
     this.doubled = false,
   });
 
@@ -143,6 +150,7 @@ class DailyTask {
         't': type.name,
         'n': target,
         'p': progress,
+        'c': claimed,
         'x': doubled,
       };
 
@@ -168,11 +176,13 @@ class DailyTask {
     if (progress > target) {
       progress = target;
     }
+    final doubled = json['x'] == true && progress >= target;
     return DailyTask(
       type: type,
       target: target,
       progress: progress,
-      doubled: json['x'] == true,
+      claimed: (json['c'] == true && progress >= target) || doubled,
+      doubled: doubled,
     );
   }
 }

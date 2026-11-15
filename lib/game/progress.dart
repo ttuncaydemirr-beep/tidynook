@@ -158,7 +158,7 @@ class Progress extends ChangeNotifier {
   int hintsUsed;
 
   /// Hints granted by rewarded ads and not used yet (kept across days).
-  /// Daily tasks and the task chest add to it too.
+  /// Claimed daily tasks and the task chest add to it too.
   int extraHints;
 
   // --- schema 4 (1.2) -------------------------------------------------------
@@ -853,6 +853,13 @@ class Progress extends ChangeNotifier {
     if (taskDay == today || taskDay.compareTo(today) > 0) {
       return;
     }
+    // hints of yesterday's finished tasks that were never claimed are not lost
+    for (final t in tasks) {
+      if (t.done && !t.claimed) {
+        t.claimed = true;
+        extraHints += taskHintReward;
+      }
+    }
     taskDay = today;
     tasks = generateDailyTasks(today, taskContext(now));
     _freshTasks.clear();
@@ -875,9 +882,10 @@ class Progress extends ChangeNotifier {
     return t.isNotEmpty && t.every((x) => x.done);
   }
 
-  /// Counts one [type] action for today's tasks. A task that gets finished
-  /// gives [taskHintReward] hint; the last of the day's tasks also fills one
-  /// chest step. Does not notify (callers do).
+  /// Counts one [type] action for today's tasks. A task that gets finished is
+  /// reported by [takeCompletedTasks] (its hint waits for [claimTask] or
+  /// [doubleTask]); the last of the day's tasks also fills one chest step.
+  /// Does not notify (callers do).
   void _taskEvent(TaskType type, DateTime now) {
     _ensureTasks(now);
     if (taskDay != dayString(now)) {
@@ -890,7 +898,6 @@ class Progress extends ChangeNotifier {
       }
       t.progress += 1;
       if (t.done) {
-        extraHints += taskHintReward;
         _freshTasks.add(i);
       }
     }
@@ -906,7 +913,8 @@ class Progress extends ChangeNotifier {
   }
 
   /// Indexes (into [tasksFor]) of the tasks finished since the last call, for
-  /// the UI to celebrate ("+1 hint", offer the `task_double` ad). Not saved.
+  /// the UI to celebrate (log task_complete, offer "claim" / the `task_double`
+  /// ad). Not saved.
   List<int> takeCompletedTasks() {
     final out = List<int>.of(_freshTasks);
     _freshTasks.clear();
@@ -920,20 +928,42 @@ class Progress extends ChangeNotifier {
     return v;
   }
 
-  /// The optional rewarded doubling can be offered for task [i] of today.
+  /// Task [i] of today is finished and its hint not given yet.
+  bool canClaimTask(int i, DateTime now) {
+    final t = tasksFor(now);
+    return i >= 0 && i < t.length && t[i].done && !t[i].claimed;
+  }
+
+  /// Gives task [i]'s hint ([taskHintReward]). Returns false (and changes
+  /// nothing) when the task is not finished or was claimed already.
+  bool claimTask(int i, DateTime now) {
+    if (!canClaimTask(i, now)) {
+      return false;
+    }
+    tasks[i].claimed = true;
+    extraHints += taskHintReward;
+    _changed();
+    return true;
+  }
+
+  /// The optional rewarded doubling can be offered for task [i] of today
+  /// (finished and not doubled yet; claimed or not).
   bool canDoubleTask(int i, DateTime now) {
     final t = tasksFor(now);
     return i >= 0 && i < t.length && t[i].done && !t[i].doubled;
   }
 
-  /// After a rewarded ad (placement `task_double`): task [i]'s hint once more.
+  /// After a rewarded ad (placement `task_double`): task [i] gives twice its
+  /// hint in total (2 if it was not claimed yet, 1 more if it was).
   /// Returns false (and changes nothing) when it is not possible.
   bool doubleTask(int i, DateTime now) {
     if (!canDoubleTask(i, now)) {
       return false;
     }
-    tasks[i].doubled = true;
-    extraHints += taskHintReward;
+    final t = tasks[i];
+    extraHints += t.claimed ? taskHintReward : 2 * taskHintReward;
+    t.claimed = true;
+    t.doubled = true;
     _changed();
     return true;
   }

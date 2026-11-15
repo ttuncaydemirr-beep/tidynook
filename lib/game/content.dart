@@ -1208,7 +1208,7 @@ String _drawerTrays(Level level) {
   return b.toString();
 }
 
-/// The closed front of drawer [d] of [level] as an <svg> with viewBox
+/// The closed front of drawer [d] of [level] as an `<svg>` with viewBox
 /// "0 40 360 594" (transparent outside [InnerDrawer.area]), so the UI can lay
 /// it over the board exactly like the lid. Draw it above the slot ghosts and
 /// the placed items, below the free items; slide or fade it away when the
