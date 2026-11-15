@@ -330,10 +330,19 @@ class GameController extends ChangeNotifier {
     final winter = isWinter;
     try {
       if (!daily) {
-        // bonus and winter boxes count like a box after the 4th level
+        // Bonus and winter boxes count like a bonus box. Winter boxes open
+        // after the first level, so the "not before the 4th level" rule is
+        // kept by passing a low index until 4 levels are done.
+        final int index;
+        if (winter) {
+          index = progress.done.length > kFirstAdLevelIndex
+              ? kBonusBoxLevelIndex
+              : 0;
+        } else {
+          index = bonus ? kBonusBoxLevelIndex : levelIndex;
+        }
         await services.ads.maybeInterstitial(
-          completedLevelIndex:
-              (bonus || winter) ? kBonusBoxLevelIndex : levelIndex,
+          completedLevelIndex: index,
           isDaily: false,
         );
       }
