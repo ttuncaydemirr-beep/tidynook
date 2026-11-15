@@ -557,7 +557,7 @@ class _CardFrame extends StatelessWidget {
                                       w: 700, color: c.accentInk, height: 1.3),
                                 ),
                               ),
-                            if (mark != null) mark!,
+                            ?mark,
                             Text(
                               sub,
                               maxLines: 3,
