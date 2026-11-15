@@ -378,16 +378,13 @@ class _HouseScreenState extends State<HouseScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           if (d > 0) ...<Widget>[
-            _DailyCard(controller: ctl),
+            _CardGrid(cards: <Widget>[
+              _DailyCard(controller: ctl),
+              _TasksCard(controller: ctl, onOpen: _openTasks),
+              if (p.winterAvailable(appNow())) _WinterCard(controller: ctl),
+              _BonusCard(controller: ctl),
+            ]),
             _StreakSave(controller: ctl),
-            const SizedBox(height: 6),
-            _TasksCard(controller: ctl, onOpen: _openTasks),
-            if (p.winterAvailable(appNow())) ...<Widget>[
-              const SizedBox(height: 6),
-              _WinterCard(controller: ctl),
-            ],
-            const SizedBox(height: 6),
-            _BonusCard(controller: ctl),
             const SizedBox(height: 8),
           ],
           houseStage,
@@ -473,7 +470,8 @@ class _HouseScreenState extends State<HouseScreen>
   }
 }
 
-/// Card frame shared by the daily box and the bonus boxes.
+/// Compact card shared by the daily box, tasks, winter and bonus boxes (two
+/// per row, so most of the house stays visible at 360 x 640).
 class _CardFrame extends StatelessWidget {
   const _CardFrame({
     required this.semanticsLabel,
@@ -481,7 +479,8 @@ class _CardFrame extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.sub,
-    required this.trailing,
+    this.action,
+    this.mark,
   });
 
   final String semanticsLabel;
@@ -489,7 +488,12 @@ class _CardFrame extends StatelessWidget {
   final Widget icon;
   final String title;
   final String sub;
-  final Widget trailing;
+
+  /// Short call to action (Open, Play, Claim) shown as a small accent pill.
+  final String? action;
+
+  /// Small icon before [sub] (a check when done, a lock when locked).
+  final Widget? mark;
 
   @override
   Widget build(BuildContext context) {
@@ -504,19 +508,24 @@ class _CardFrame extends StatelessWidget {
         color: c.surface,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: c.line, width: 1.5),
         ),
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 58),
+            constraints: const BoxConstraints(minHeight: 56),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsetsDirectional.fromSTEB(8, 7, 8, 7),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  icon,
-                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: FittedBox(child: icon),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,23 +533,84 @@ class _CardFrame extends StatelessWidget {
                       children: <Widget>[
                         Text(
                           title,
-                          style: tx(16, w: 700, color: c.fg, height: 1.2),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: tx(14, w: 700, color: c.fg, height: 1.15),
                         ),
-                        Text(
-                          sub,
-                          style: tx(13, color: c.muted, height: 1.3),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 5,
+                          runSpacing: 2,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: <Widget>[
+                            if (action != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: c.accent,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  action!,
+                                  style: tx(12.5,
+                                      w: 700, color: c.accentInk, height: 1.3),
+                                ),
+                              ),
+                            if (mark != null) mark!,
+                            Text(
+                              sub,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: tx(12, color: c.muted, height: 1.25),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  trailing,
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The house cards, two per row (a last odd card takes the whole row).
+class _CardGrid extends StatelessWidget {
+  const _CardGrid({required this.cards});
+
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < cards.length; i += 2) {
+      if (rows.isNotEmpty) {
+        rows.add(const SizedBox(height: 6));
+      }
+      if (i + 1 < cards.length) {
+        rows.add(IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(child: cards[i]),
+              const SizedBox(width: 6),
+              Expanded(child: cards[i + 1]),
+            ],
+          ),
+        ));
+      } else {
+        rows.add(cards[i]);
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: rows,
     );
   }
 }
@@ -559,27 +629,17 @@ class _DailyCard extends StatelessWidget {
     final done = p.dailyDoneToday(now);
     final st = p.liveStreak(now);
     final sub = done
-        ? '${t.dailyDone}${st > 1 ? '${sepOf(context)}${t.streak(st)}' : ''}'
+        ? (st > 1 ? t.streak(st) : t.dailyDone)
         : (st > 0 ? t.streak(st) : t.dailyReady);
 
-    final pill = Container(
-      padding: EdgeInsets.symmetric(horizontal: done ? 10 : 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: done ? c.mint : c.accent,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: done
-          ? svgIcon(checkSvg(c.mintInk), size: 16)
-          : Text(t.open, style: tx(14, w: 700, color: c.accentInk)),
-    );
-
     return _CardFrame(
-      semanticsLabel: '${t.daily}. $sub',
+      semanticsLabel: '${t.daily}. ${done ? t.dailyDone : t.open}. $sub',
       onTap: done ? null : _open,
       icon: SvgPicture.string(dailyBoxSvg, width: 40, height: 40),
       title: t.daily,
       sub: sub,
-      trailing: pill,
+      action: done ? null : t.open,
+      mark: done ? _check(c) : null,
     );
   }
 
@@ -681,17 +741,7 @@ class _BonusCard extends StatelessWidget {
         icon: icon,
         title: t.bonusTitle,
         sub: t.bonusLocked,
-        trailing: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: c.bg,
-            shape: BoxShape.circle,
-            border: Border.all(color: c.toggleOff, width: 1.5),
-          ),
-          child: svgIcon(lockSvg(c.muted), size: 16),
-        ),
+        mark: svgIcon(lockSvg(c.muted), size: 13),
       );
     }
     final hasCandidate = p.nextExtraStyleCandidate(0) != null;
@@ -705,14 +755,7 @@ class _BonusCard extends StatelessWidget {
       icon: icon,
       title: title,
       sub: sub,
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: c.accent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(t.bonusPlay, style: tx(14, w: 700, color: c.accentInk)),
-      ),
+      action: t.bonusPlay,
     );
   }
 
@@ -746,53 +789,24 @@ class _TasksCard extends StatelessWidget {
     final steps = p.chestSteps.clamp(0, taskChestSteps).toInt();
     final sub = chestReady
         ? t.chestReady
-        : '${allDone ? t.tasksAllDone : t.tasksProgress(done, tasks.length)}'
+        : '${t.taskProgress(done, tasks.length)}'
             '${sepOf(context)}${t.chestProgress(steps, taskChestSteps)}';
 
-    Widget trailing;
-    String action;
-    if (chestReady || claimable) {
-      action = chestReady ? t.chestOpen : t.taskClaim;
-      trailing = Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: c.accent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(action, style: tx(14, w: 700, color: c.accentInk)),
-      );
-    } else if (allDone) {
-      action = t.taskLabelDone;
-      trailing = Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: c.mint,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: svgIcon(checkSvg(c.mintInk), size: 16),
-      );
-    } else {
-      action = t.open;
-      trailing = Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: c.toggleOff, width: 1.5),
-        ),
-        child: Text(
-          t.taskProgress(done, tasks.length),
-          style: tx(14, w: 700, color: c.fg),
-        ),
-      );
+    String? action;
+    if (chestReady) {
+      action = t.chestOpen;
+    } else if (claimable) {
+      action = t.taskClaim;
     }
 
     return _CardFrame(
-      semanticsLabel: '${t.tasksTitle}. $sub. $action',
+      semanticsLabel: '${t.tasksTitle}. $sub${action != null ? '. $action' : ''}',
       onTap: onOpen,
       icon: SvgPicture.string(chestSvg, width: 40, height: 40),
       title: t.tasksTitle,
       sub: sub,
-      trailing: trailing,
+      action: action,
+      mark: allDone && action == null ? _check(c) : null,
     );
   }
 }
@@ -832,24 +846,6 @@ class _WinterCard extends StatelessWidget {
         ),
       ),
     );
-    final trailing = all
-        ? Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: c.mint,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: svgIcon(checkSvg(c.mintInk), size: 16),
-          )
-        : Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: c.accent,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child:
-                Text(t.bonusPlay, style: tx(14, w: 700, color: c.accentInk)),
-          );
     return _CardFrame(
       semanticsLabel:
           '${t.winterTitle}. $sub. ${all ? t.snowmanName : t.bonusPlay}',
@@ -861,7 +857,17 @@ class _WinterCard extends StatelessWidget {
       icon: icon,
       title: t.winterTitle,
       sub: sub,
-      trailing: trailing,
+      action: all ? null : t.bonusPlay,
+      mark: all ? _check(c) : null,
     );
   }
 }
+
+/// Small sage check before a card's line (done; never colour alone).
+Widget _check(TidyColors c) => Container(
+      width: 16,
+      height: 16,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: c.mint, shape: BoxShape.circle),
+      child: svgIcon(checkSvg(c.mintInk), size: 11),
+    );

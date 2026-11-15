@@ -286,6 +286,33 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('a task finished during play shows a chip on the play screen',
+      (WidgetTester tester) async {
+    final at = DateTime(2026, 6, 10, 12);
+    final progress = Progress(
+      lang: 'en',
+      taskDay: dayString(at),
+      tasks: <DailyTask>[
+        DailyTask(type: TaskType.hint),
+        DailyTask(type: TaskType.boxes, target: 2),
+        DailyTask(type: TaskType.newLevel),
+      ],
+    );
+    _fixDate(progress, at);
+    await _pumpApp(tester, progress); // level 1 opens first
+
+    await tester.tap(find.text('Hint'));
+    await tester.pump();
+    expect(find.text('Task done!'), findsNothing); // queued behind the lid
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('Task done!'), findsOneWidget);
+    expect(progress.tasks[0].done, isTrue);
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Task done!'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('supporters see tasks without claim or ad buttons',
       (WidgetTester tester) async {
     final at = DateTime(2026, 6, 10, 12);
@@ -403,7 +430,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Little drawer: fill the other spots first and it opens'),
+    expect(find.text('Drawer: fill the outside first, then it opens'),
         findsOneWidget);
     expect(progress.mechanicTipSeen, isTrue);
     final keys = drawerKeys(levels[30], 0).length;

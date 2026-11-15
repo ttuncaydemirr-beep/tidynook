@@ -443,7 +443,7 @@
   "@chapter3": {
     "description": "Name of the third chapter (levels 31-45)"
   },
-  "drawerTip": "Little drawer: fill the other spots first and it opens",
+  "drawerTip": "Drawer: fill the outside first, then it opens",
   "@drawerTip": {
     "description": "One-line hint for the drawer mechanic, shown the first time it appears (level 31)"
   },
