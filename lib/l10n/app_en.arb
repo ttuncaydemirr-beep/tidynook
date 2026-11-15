@@ -107,7 +107,7 @@
       }
     }
   },
-  "ver": "Version 1.1.0",
+  "ver": "Version 1.2.0",
   "@ver": {
     "description": "App version label shown in settings"
   },
@@ -394,6 +394,143 @@
   },
   "@appTitle": {
     "description": "Application name (not translated)"
+  },
+  "chapter3": "Chapter 3",
+  "@chapter3": {
+    "description": "Name of the third chapter (levels 31-45), shown on the level map"
+  },
+  "tasksTitle": "Daily tasks",
+  "@tasksTitle": {
+    "description": "Title of the daily tasks card and screen"
+  },
+  "tasksSubtitle": "Three small things for today",
+  "@tasksSubtitle": {
+    "description": "Subtitle under the daily tasks title"
+  },
+  "tasksProgress": "{a}/{b} done today",
+  "@tasksProgress": {
+    "description": "Progress of today's tasks, e.g. 2/3",
+    "placeholders": {
+      "a": {
+        "type": "int"
+      },
+      "b": {
+        "type": "int"
+      }
+    }
+  },
+  "tasksAllDone": "All tasks done! See you tomorrow",
+  "taskDone": "Done",
+  "taskClaim": "Claim",
+  "@taskClaim": {
+    "description": "Button that collects the hint reward of a finished task"
+  },
+  "taskClaimed": "Claimed",
+  "taskDoubleAd": "Watch ad to double",
+  "@taskDoubleAd": {
+    "description": "Optional rewarded ad button that doubles the hint reward of a task"
+  },
+  "taskDoubled": "Doubled!",
+  "taskReward": "{n, plural, =1{+1 hint} other{+{n} hints}}",
+  "@taskReward": {
+    "description": "Hint reward of a task",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "taskFinishBoxes": "{n, plural, =1{Finish 1 box} other{Finish {n} boxes}}",
+  "@taskFinishBoxes": {
+    "description": "Task text",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "taskChangeStyle": "Change a style in your house",
+  "@taskChangeStyle": {
+    "description": "Task text"
+  },
+  "taskDailyBox": "Open the daily box",
+  "@taskDailyBox": {
+    "description": "Task text"
+  },
+  "taskUseHint": "Use a hint",
+  "@taskUseHint": {
+    "description": "Task text"
+  },
+  "taskMystery": "Finish a mystery box",
+  "@taskMystery": {
+    "description": "Task text"
+  },
+  "taskChestTitle": "Task chest",
+  "@taskChestTitle": {
+    "description": "Title of the 7-step chest filled by finishing all daily tasks"
+  },
+  "taskChestProgress": "{a}/{b}",
+  "@taskChestProgress": {
+    "description": "Chest steps, e.g. 3/7",
+    "placeholders": {
+      "a": {
+        "type": "int"
+      },
+      "b": {
+        "type": "int"
+      }
+    }
+  },
+  "taskChestHint": "Finish all 3 tasks in a day to fill one step.",
+  "taskChestReady": "The chest is full!",
+  "taskChestOpen": "Open chest",
+  "taskChestRewardStyle": "A new style for your home!",
+  "@taskChestRewardStyle": {
+    "description": "Chest reward when the player gets a third style they did not own"
+  },
+  "taskChestRewardDecor": "A little decoration for your home!",
+  "@taskChestRewardDecor": {
+    "description": "Chest reward when every style is already owned"
+  },
+  "winterTitle": "Winter boxes",
+  "@winterTitle": {
+    "description": "Title of the winter event"
+  },
+  "winterCardText": "7 winter boxes",
+  "@winterCardText": {
+    "description": "Text on the house screen event card"
+  },
+  "winterUntil": "Available until 15 January",
+  "winterBoxN": "Winter box {n}",
+  "@winterBoxN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "winterProgress": "{a}/{b} winter boxes",
+  "@winterProgress": {
+    "description": "Event progress, e.g. 3/7",
+    "placeholders": {
+      "a": {
+        "type": "int"
+      },
+      "b": {
+        "type": "int"
+      }
+    }
+  },
+  "winterReward": "Finish all 7 for a snowman in your garden",
+  "winterDone": "Winter boxes done! The snowman is yours.",
+  "winterSnowman": "Snowman",
+  "@winterSnowman": {
+    "description": "Name of the snowman garden decoration"
+  },
+  "winterEnded": "The winter event has ended. See you next winter!",
+  "mechanicHint": "New in this box: look closely, something works a little differently.",
+  "@mechanicHint": {
+    "description": "One-line hint shown once when the new mechanic appears at level 31 (placeholder until Contract A gives the real one)"
   },
   "privacy": "Privacy policy",
   "privacyText": "Effective date: 15 November 2026\nDeveloper: Demir Games Studio (individual developer, Turkey)\n\nTidy Nook has no accounts and never asks for your name, e-mail address or contact details. The game saves your progress on your own device. Ads, purchases and optional usage statistics involve Google services, explained below.\n\nAds\n\nThe game shows ads through Google AdMob: a short full-screen ad now and then when you leave a finished box (never during a level, and not in the first levels), and optional ads you choose to watch for a reward, such as a surprise box, saving a streak or one more hint. To show and measure ads, AdMob may use your device's advertising ID, approximate location (worked out from your IP address), device and app information, and how you interact with ads. We do not receive this data and cannot identify you from it.\n\nWhere the law requires it (for example in the EEA and the UK), we ask for your consent with Google's consent form (UMP) when the app starts. You can change your choice any time in Settings > Privacy choices (this row only appears where it is required). You can also reset or delete your advertising ID in your Android settings. The one-time purchase \"Remove ads\" removes the ads between levels and makes hints unlimited.\n\nPurchases\n\nPurchases are handled entirely by Google Play. We never see or store your card or payment details. The app only learns whether a purchase is active, so it can unlock it on your device. \"Restore purchases\" in Settings brings it back after a reinstall.\n\nUsage statistics and crash reports\n\nTo fix bugs and improve levels, the game may send anonymous usage events (for example, that a level was started or finished) and crash reports to Google Firebase (Analytics and Crashlytics). They can include a random app instance ID, your device model, your Android version and the technical details of a crash. They do not include your name or e-mail address.\n\nNotifications\n\nThe optional daily reminder is scheduled on your device. It does not use a server, and nothing about it is sent to us. You can turn it off in Settings > Daily reminder or in your Android settings.\n\nInternet\n\nThe game works offline. It connects to the internet only to load ads, check purchases and send the statistics described above.\n\nWhat stays on your device\n\nYour game progress is saved on your own device: completed levels, bonus boxes, the furniture styles you picked and unlocked, your daily box streak, your purchases and your language, sound, vibration and reminder settings. We do not receive it.\n\n• You can erase it all with Settings > Reset progress.\n• Uninstalling the app erases it all.\n• If Google backup is turned on for your phone, Android may back this data up to your Google account. Google manages that backup; we have no access to it.\n\nSharing\n\nWe do not sell your data. The only companies involved are Google services that the app uses: AdMob (ads), Google Play (purchases and consent) and Firebase (statistics and crash reports). Their own privacy policies apply to the data they handle.\n\nChildren\n\nTidy Nook is made for a general audience and is not directed at children under 13. We do not knowingly collect personal information from children.\n\nChanges\n\nIf this policy changes, the new version is published with a new effective date.\n\nContact\n\nQuestions: nilkaren.tuncay.demir@gmail.com",
