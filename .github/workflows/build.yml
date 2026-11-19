@@ -61,7 +61,9 @@ jobs:
       - name: Get packages
         run: |
           mkdir -p "$RUNNER_TEMP/logs"
-          flutter pub get 2>&1 | tee "$RUNNER_TEMP/logs/pub-get.txt"; exit ${PIPESTATUS[0]}
+          # With a committed pubspec.lock, every build uses exactly the plugin versions in it.
+          if [ -f pubspec.lock ]; then FLAGS=--enforce-lockfile; else FLAGS=; fi
+          flutter pub get $FLAGS 2>&1 | tee "$RUNNER_TEMP/logs/pub-get.txt"; exit ${PIPESTATUS[0]}
 
       # Only errors fail; infos and warnings are printed in full.
       - name: Analyze
@@ -140,6 +142,7 @@ jobs:
           echo "Using $APK"
           cp "$APK" out/app-release.apk
           (cd build/web && zip -qr "$GITHUB_WORKSPACE/out/web.zip" .)
+          cp pubspec.lock out/pubspec.lock
           ls -l out
 
       # Android 15+ devices with 16 KB pages need native libraries aligned to 16 KB.
@@ -196,7 +199,7 @@ jobs:
           if [ "$GITHUB_REF_NAME" != "main" ]; then
             for f in "$RUNNER_TEMP"/logs/*.txt; do [ -f "$f" ] && EXTRA="$EXTRA $f"; done
           fi
-          gh release create "$TAG" out/app-release.aab out/app-release.apk out/web.zip $EXTRA \
+          gh release create "$TAG" out/app-release.aab out/app-release.apk out/web.zip out/pubspec.lock $EXTRA \
             --target "$GITHUB_SHA" --prerelease --title "Build $GITHUB_REF_NAME" \
             --notes "Built from ${GITHUB_SHA::7}. ${FLUTTER_VER}. Signed: ${{ steps.key.outputs.signed }}."
 
