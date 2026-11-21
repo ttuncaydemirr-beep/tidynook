@@ -244,7 +244,7 @@ void main() {
 
   group('progress: json', () {
     test('saves carry the schema version and files without it still load', () {
-      expect(Progress().toJson()['v'], 4);
+      expect(Progress().toJson()['v'], Progress.schemaVersion);
       final p = Progress.fromJsonString('{"level":3,"done":[0]}');
       expect(p.level, 3);
       expect(p.done, {0});
@@ -295,14 +295,15 @@ void main() {
       for (final k in web.keys) {
         expect(out[k], web[k], reason: k);
       }
-      expect(out['v'], 4);
+      expect(out['v'], Progress.schemaVersion);
       expect(out.keys.toSet(), {
         'v', 'lang', 'level', 'done', 'sound', 'styles', 'daily', //
         'extraStyles', 'adsRemoved', 'supporter', 'bonusDone', 'vibration',
         'reminderOn', 'reminderAsked', 'reviewAsked', 'adCounter', 'lastAdMs',
         'streakSaveDay', 'hintDay', 'hintsUsed', 'extraHints', //
         'tasks', 'chestSteps', 'chestDay', 'chestsOpened', 'chestDecors',
-        'winter', 'snowman', 'mechanicTipSeen',
+        'winter', 'snowman', 'mechanicTipSeen', //
+        'winterPack', 'winterGift', 'winterGiftShown', 'winterOfferDay',
       });
       expect((out['styles'] as Map).keys.toSet(), {'3', '0'});
       final again = Progress.fromJson(out);

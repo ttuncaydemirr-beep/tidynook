@@ -46,6 +46,134 @@ Phase 3: QA on the web build. Release: manager merges and pushes `[play]`. Build
 
 ## Contract A 1.3 (A fills this in before finishing)
 
+Status: implemented on branch `v13-a` (compiles and passes tests with today's UI; nothing renamed or removed; no new
+dependency). Everything is exported by `package:tidy_nook/game/content.dart` (it now also exports `winter_pack.dart`);
+state in `progress.dart`. The game code uses no text keys itself: C reads the keys below through B's ARB/`l10n_ext`
+helpers, exactly like 1.2 (numbered keys get a clamped helper in `l10n_ext`).
+
+### 1. What the pack contains (A's choice)
+
+| # | winter decoration (`winterDecorName0..4`) | where (house space) |
+| --- | --- | --- |
+| 0 | Pine garland | along the top of the Bedroom wall (above the curtained window) |
+| 1 | Holly wreath | Kitchen wall, left of the pendant lamp |
+| 2 | Warm roof lights | string lights under both roof slopes (around the chimney) |
+| 3 | Wooden sled | greenhouse lawn, left of the greenhouse |
+| 4 | Paper star lantern | Reading Nook, above the bookcase |
+
+Winter style (style index 3) for 6 pieces: 1 floor lamp, 2 rug, 5 bed, 7 kitchen table, 8 armchair, 19 rocking chair
+(cranberry / pine / snow palette with a small knit or holly touch). Free winter gift: a **little fir tree** with a star
+on the greenhouse lawn (`winterGiftName`). None of these overlaps any furniture, pet, chest decor, the snowman, the
+chimney, the roof window or each other (tested in `test/game_v13_test.dart`, like the snowman test). Pack and gift show
+all year (also without snow). The pack does not remove ads and gives no hints.
+
+### 2. Public API
+
+```dart
+// winter_pack.dart (via content.dart)
+const String winterPackId = 'winter_pack';      // Play product id (non-consumable)
+const int winterStyle = 3;                     // the 4th style
+const int maxStyleCount = 4;
+const int styleCount = 3;                      // UNCHANGED: every piece has 3; loops over it still show 3
+const List<int> winterStylePieces = [1, 2, 5, 7, 8, 19];
+bool hasWinterStyle(int level);
+const int winterDecorCount = 5;
+enum WinterPackItemKind { decor, style }
+class WinterPackItem { final WinterPackItemKind kind; final int index; bool get isDecor; }
+const List<WinterPackItem> winterPackItems;    // 5 decor (index 0..4) then 6 style pieces (index = level)
+String winterDecorSvg(int i);                  // house-space fragment
+String winterDecorPreviewSvg(int i);           // tile preview (offer card / shop list / purchase toast)
+List<Rect> winterDecorParts(int i); Rect winterDecorBounds(int i); Offset winterDecorSpot(int i); // sparkles/scroll
+String winterGiftSvg(); String winterGiftPreviewSvg({bool locked = false});
+const Rect winterGiftRect; const Offset winterGiftSpot;
+// content.dart
+String winterPackPreviewSvg();                 // one picture of the pack, viewBox "0 0 300 200" (5 decor + winter armchair)
+String decorSvg(int i, int v);                 // v = 3 draws the winter style for winterStylePieces, else style A
+String decorPreviewSvg(int levelIndex, int variant);   // variant 0..3
+String houseSvg({..., bool winterPack = false, bool winterGift = false});   // only drawn with extended: true
+Rect decorBounds(int levelIndex); Rect petBounds(int pet); Rect chestDecorBounds(int i);  // house space (tests, layout)
+
+// progress.dart
+static const int schemaVersion = 5;
+bool winterPack; bool winterGift; bool winterGiftShown; String winterOfferDay;   // saved (see 5.)
+void setEntitlements({required bool adsRemoved, required bool supporter, bool? winterPack});
+                                               // winterPack null (= today's callers) keeps the stored value,
+                                               // so an old call can never revoke the pack; pass true/false from billing
+bool get winterPackOwned;
+bool styleAvailable(int level, int variant);   // variant 3: winterPack && hasWinterStyle(level)
+int styleOf(int level);                        // 0..3 (stored 3 without the pack shows as 0, comes back with it)
+int styleCountOf(int level);                   // 4 for a winter piece with the pack, else 3
+List<int> styleChoices(int level);             // [0,1,2] or [0,1,2,3]
+int nextStyleOf(int level);                    // cycles over the available styles of styleChoices
+bool canOfferWinterPack(DateTime now);         // !owned && winterActive(now) && not offered on a card today
+bool markWinterPackOffered(DateTime now);      // stores today; false if already offered today
+bool get winterGiftToReveal;                   // gift earned and reveal not shown yet (saved: survives a restart)
+bool markWinterGiftShown();                    // true the first time
+bool takeWinterGiftGranted();                  // true once right after completeWinter granted the gift (not saved)
+({bool fresh, bool snowman}) completeWinter(int i, DateTime now);  // unchanged signature; the first finished winter
+                                               // box (any index) now also sets winterGift = true
+```
+
+### 3. What C must wire
+
+- **House**: `houseSvg(..., winterPack: p.winterPackOwned, winterGift: p.winterGift)`.
+- **Style pickers** (both use `styleCount` today, which stays 3, so nothing breaks before C changes them):
+  - win card / any picker: loop over `p.styleChoices(level)` instead of `0..styleCount-1`; label the tile of
+    `winterStyle` with `styleWinter` (others keep `styleN(v + 1)`); the house semantics label likewise
+    (`p.styleOf(i) == winterStyle ? t.styleWinter : t.styleN(...)`).
+  - house tap-to-change: `ctl.nextStyle(i)` loops `% styleCount`; replace its body with `progress.nextStyleOf(level)`.
+  - non-owners never see a 4th tile (no locked winter tile; the pack is offered only at the placements below).
+- **Billing**: product `winterPackId` next to `remove_ads` / `supporter_pack`; pass `winterPack: owned.contains(winterPackId)`
+  to `setEntitlements` (the `EntitlementSink` typedef can gain `bool? winterPack`; `Progress.setEntitlements` tear-off
+  stays assignable). Initial owned set from `progress.winterPack`. After a purchase: toast `winterPackThanks`, sparkles at
+  `winterDecorSpot(d)` for d in 0..4.
+- **Offer placements** (never a blocking pop-up):
+  - winter event card: small pill `winterPackPill` when `!p.winterPackOwned` (the pill is not the "card"); tapping
+    it opens the offer card (preview `winterPackPreviewSvg()` or tiles from `winterPackItems`, `winterPackName`,
+    `winterPackBlurb`, `winterPackFeature1..3`, `winterPackNote`, buy button `buyFor(price)`).
+  - the offer card may open by itself or the 7th-box line may show only when `p.canOfferWinterPack(now)`; call
+    `p.markWinterPackOffered(now)` when it is shown and log `winter_pack_offer_shown` (placement). This gives the
+    "at most once per day as a card" rule.
+  - win card of the 7th winter box (`r.snowman` or `winterDoneCount == 7` fresh): secondary line `winterPackSnowmanLine`
+    if `canOfferWinterPack(now)`.
+  - shop in settings: always a row (`winterPackName`, `winterPackShopText`), `owned` for owners, else `buyFor(price)`.
+  - owners: `owned` and no offer anywhere.
+- **Winter gift**: after `completeWinter`, `if (p.takeWinterGiftGranted()) log winter_gift_granted`; whenever the house
+  shows and `p.winterGiftToReveal`, show the reveal (`winterGiftTitle`, `winterGiftText`, `winterGiftPreviewSvg()`,
+  sparkles/scroll to `winterGiftSpot`), then `p.markWinterGiftShown()`. A short toast alternative: `winterGiftGot`.
+
+### 4. Text keys (English source; B translates, C uses)
+
+Numbered: `winterDecorName0..4` = Pine garland, Holly wreath, Warm roof lights, Wooden sled, Paper star lantern.
+Suggested `l10n_ext` helper: `winterDecorName(int i)` (clamped, like `chestDecorName`). Existing keys reused:
+`owned` (Owned), `buyFor(price)`, `styleN(n)`, `decorName(i)` (names of the 6 winter-style pieces).
+
+| key | English |
+| --- | --- |
+| `winterGiftName` | Little fir tree |
+| `winterGiftTitle` | A winter gift for you! |
+| `winterGiftText` | Thanks for playing the winter boxes. A little fir tree now stands by your greenhouse, yours to keep. |
+| `winterGiftGot` | A little fir tree for your garden! |
+| `styleWinter` | Winter style |
+| `winterPackName` | Winter Cozy Pack |
+| `winterPackBlurb` | Make your house cozy for winter. Yours to keep, all year. |
+| `winterPackFeature1` | 5 winter decorations for your house |
+| `winterPackFeature2` | A winter style for 6 pieces of furniture |
+| `winterPackFeature3` | One-time purchase, kept forever |
+| `winterPackNote` | Ads and hints stay as they are. |
+| `winterPackShopText` | 5 winter decorations and a winter style for 6 pieces. |
+| `winterPackPill` | Cozy Pack |
+| `winterPackSnowmanLine` | Make it even cozier with the Winter Cozy Pack |
+| `winterPackThanks` | Your house is ready for winter! |
+| `winterPackPreviewTitle` | What's inside |
+
+### 5. Progress schema 5
+
+New keys: `winterPack` (bool), `winterGift` (bool), `winterGiftShown` (bool, only true together with `winterGift`),
+`winterOfferDay` ("YYYY-MM-DD" or ""). Stored styles may now be 3 (values above 3 still fall back to 2, values below 0
+to 0). A schema 4 save loads with every value unchanged and the new keys at defaults (tested with a 1.2 fixture).
+`reset()` keeps the pack (purchase), the gift and its reveal flag (keepsake) and the offer day.
+
 ## Contract B 1.3 (B fills this in before finishing)
 B also writes `store/release-notes-1.3.0.txt` (4 languages, each <=500 chars, tags <en-US> <tr-TR> <de-DE> <ar>),
 `store/listing-1.3.0.json` (mention the Winter Cozy Pack and free winter gift; keep limits), and the product

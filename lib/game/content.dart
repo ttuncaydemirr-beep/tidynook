@@ -10,6 +10,7 @@ import 'dart:math' as math;
 import 'dart:ui' show Offset, Rect, Size;
 
 import 'art.dart';
+import 'winter_pack.dart';
 
 export 'bonus.dart'
     show
@@ -23,6 +24,7 @@ export 'bonus.dart'
         kindsLookAlike;
 export 'tasks.dart';
 export 'winter.dart';
+export 'winter_pack.dart';
 
 /// One slot in a box: which kind of item belongs at (x, y) in board space.
 class Slot {
@@ -122,8 +124,11 @@ const int supporterPet = 5;
 /// Number of pets (milestone pets plus the puppy); petPreviewSvg takes 0..5.
 const int petCount = 6;
 
-/// Furniture styles: 0 and 1 are free, 2 is earned (bonus boxes, surprise box)
-/// or bought (Supporter Pack).
+/// Furniture styles every piece has: 0 and 1 are free, 2 is earned (bonus
+/// boxes, surprise box) or bought (Supporter Pack). 1.3: six pieces also have
+/// a 4th, winter style ([winterStyle] = 3, Winter Cozy Pack); this constant
+/// stays 3, so pickers that loop over it show 3 styles. For one piece's
+/// picker use Progress.styleChoices(level) / styleCountOf(level).
 const int styleCount = 3;
 
 /// LROOM: room index for each level.
@@ -712,12 +717,57 @@ const List<Map<String, String>> _variants2 = <Map<String, String>>[
   {'#D9825B': '#8FB8E8', '#C46F49': '#7AA6DA', '#6FA05E': '#4E8A6C'}, // 44
 ];
 
+/// 1.3: the winter style ([winterStyle], Winter Cozy Pack) of the pieces in
+/// [winterStylePieces]: cranberry, pine and snow colours plus a small knit or
+/// holly touch drawn over the piece (inside its bounds).
+const Map<int, Map<String, String>> _winterVariants = <int, Map<String, String>>{
+  1: {'#F2B48C': '#C9452E', '#F6D26B': '#FFE9A8'}, // floor lamp
+  2: {'#F2B48C': '#C9452E', '#F6D26B': '#FFFFFF'}, // rug
+  5: {'#CDBFE3': '#C9452E', '#F4F1EA': '#E6F1F7'}, // bed
+  7: {'#E57A5B': '#FFFFFF', '#F4F1EA': '#C9452E'}, // kitchen table
+  8: {'#8FB8E8': '#C9452E', '#B7D0EF': '#F4F1EA', '#7AA6DA': '#A8382A'}, // armchair
+  19: {'#9FD3C0': '#C9452E', '#F6D26B': '#4E8A6C'}, // rocking chair
+};
+
+const Map<int, String> _winterTouches = <int, String>{
+  1: '<rect x="114" y="57" width="23" height="3" rx="1.5" fill="#FFFFFF"/>'
+      '<ellipse cx="122.5" cy="49" rx="3" ry="1.6" fill="#4E8A6C"/>'
+      '<ellipse cx="128.5" cy="49" rx="3" ry="1.6" fill="#4E8A6C"/>'
+      '<circle cx="125.5" cy="49" r="1.6" fill="#E5BE4E"/>',
+  2: '<ellipse cx="56" cy="136" rx="14" ry="1.6" fill="#4E8A6C"/>'
+      '<circle cx="27" cy="136" r="1.2" fill="#FFFFFF"/>'
+      '<circle cx="85" cy="136" r="1.2" fill="#FFFFFF"/>',
+  5: '<rect x="88" y="112" width="56" height="2.5" fill="#FFFFFF" opacity=".85"/>'
+      '<rect x="88" y="123" width="56" height="2.5" fill="#FFFFFF" opacity=".85"/>'
+      '<polygon points="98,121 102,115.5 106,121" fill="#4E8A6C"/>'
+      '<polygon points="112,121 116,115.5 120,121" fill="#4E8A6C"/>'
+      '<polygon points="126,121 130,115.5 134,121" fill="#4E8A6C"/>',
+  7: '<rect x="80" y="100" width="42" height="3" fill="#C9452E"/>'
+      '<circle cx="109" cy="95.5" r="2" fill="#B07D52"/>'
+      '<circle cx="115" cy="95.5" r="2" fill="#B07D52"/>',
+  8: '<rect x="44" y="92" width="16" height="26" rx="3" fill="#4E8A6C"/>'
+      '<rect x="44" y="104" width="16" height="2.5" fill="#FFFFFF"/>'
+      '<rect x="44" y="110" width="16" height="2.5" fill="#FFFFFF"/>',
+  19: '<rect x="125" y="74" width="12" height="2" fill="#FFFFFF" opacity=".8"/>'
+      '<rect x="125" y="88" width="11" height="2" fill="#FFFFFF" opacity=".8"/>',
+};
+
 final RegExp _hexColour = RegExp(r'#[0-9A-F]{6}');
 
 /// SVG fragment (room-local coordinates, no svg wrapper) of furniture [i] in
-/// style [v] (0 = style A, 1 = style B, 2 = style C). Other values draw style A.
+/// style [v] (0 = style A, 1 = style B, 2 = style C, 3 = the winter style of
+/// the Winter Cozy Pack for the pieces in [winterStylePieces]). Other values,
+/// and style 3 of a piece without a winter style, draw style A.
 String decorSvg(int i, int v) {
   final s = _decorSvgs[i];
+  if (v == winterStyle) {
+    final w = _winterVariants[i];
+    if (w == null) {
+      return s;
+    }
+    return s.replaceAllMapped(_hexColour, (Match m) => w[m[0]!] ?? m[0]!) +
+        (_winterTouches[i] ?? '');
+  }
   if (v != 1 && v != 2) {
     return s;
   }
@@ -958,6 +1008,11 @@ String _floorDetail(int ri) {
 /// [snowman] draws the winter event snowman in the Patio of the garden (kept
 /// forever once earned). [chestDecors] are the task chest decor pieces owned
 /// (indexes 0..[chestDecorCount]-1).
+///
+/// 1.3 (only with [extended]): [winterPack] draws the five winter decorations
+/// of the Winter Cozy Pack (pass progress.winterPackOwned), [winterGift] the
+/// free winter gift, the little fir tree (pass progress.winterGift). Both are
+/// shown all year, with or without snow.
 String houseSvg({
   required Set<int> done,
   required Map<int, int> styles,
@@ -969,6 +1024,8 @@ String houseSvg({
   bool snow = false,
   bool snowman = false,
   Set<int> chestDecors = const <int>{},
+  bool winterPack = false,
+  bool winterGift = false,
 }) {
   final hl = houseLine;
   final s = StringBuffer();
@@ -1059,6 +1116,15 @@ String houseSvg({
     }
     if (snow) {
       s.write(_snowSvg);
+    }
+    // 1.3: drawn over the snow so the lights and the sled stay visible
+    if (winterGift) {
+      s.write('<g>${winterGiftSvg()}</g>');
+    }
+    if (winterPack) {
+      for (var d = 0; d < winterDecorCount; d++) {
+        s.write('<g>${winterDecorSvg(d)}</g>');
+      }
     }
   }
   return svgDocument(extended ? houseViewBox : houseViewBoxLegacy, s.toString());
@@ -1277,6 +1343,33 @@ Rect decorHitRect(int levelIndex) {
   }
   return rect;
 }
+
+/// 1.3: bounds of furniture [levelIndex] in house space (the drawn piece, not
+/// the enlarged tap area of [decorHitRect]).
+Rect decorBounds(int levelIndex) {
+  final room = rooms[levelRoom[levelIndex]];
+  final b = _decorBox[levelIndex];
+  return Rect.fromLTRB(room.x + b[0], room.y + b[1], room.x + b[2], room.y + b[3]);
+}
+
+/// 1.3: bounds of pet [pet] in house space (the flower garden, pet 2, has two
+/// bushes: this is the left one; see [petSpots]).
+Rect petBounds(int pet) {
+  final p = _pets[pet.clamp(0, _pets.length - 1).toInt()];
+  final dx = p.room < 0 ? 0.0 : rooms[p.room].x;
+  final dy = p.room < 0 ? 0.0 : rooms[p.room].y;
+  return Rect.fromLTRB(dx + p.box[0], dy + p.box[1], dx + p.box[2], dy + p.box[3]);
+}
+
+/// 1.3: bounds of chest decor [i] in house space.
+Rect chestDecorBounds(int i) {
+  final b = _chestDecorBox[i.clamp(0, chestDecorCount - 1).toInt()];
+  return Rect.fromLTRB(b[0], b[1], b[2], b[3]);
+}
+
+/// 1.3: one picture of the Winter Cozy Pack for the shop row and the offer
+/// card (viewBox "0 0 300 200": five decoration tiles and the winter armchair).
+String winterPackPreviewSvg() => winterPackPreviewSvgWith(decorSvg(8, winterStyle));
 
 /// viewBox string that zooms onto [box] (left, top, right, bottom), like
 /// zoomPreviews() in the HTML.

@@ -548,7 +548,7 @@ void main() {
         expect(p.interstitialCounter, 0);
         expect(p.lastFullScreenAdMs, 0);
         expect(p.streakSaveDay, '');
-        expect(p.toJson()['v'], 4);
+        expect(p.toJson()['v'], Progress.schemaVersion);
       }
     });
 

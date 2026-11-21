@@ -15,6 +15,12 @@
 // keeps its value and the new keys start at their defaults (migration in
 // fromJson; nothing is renamed or dropped).
 //
+// Schema 5 (1.3) adds "winterPack" (cached entitlement of the Winter Cozy
+// Pack), "winterGift" and "winterGiftShown" (the free winter gift and whether
+// its reveal was shown) and "winterOfferDay" (the last day the pack was
+// offered on a card). A schema 4 save loads without loss, the new keys at
+// their defaults. Stored styles may now be 3 (the winter style).
+//
 // The core logic (fromJson / toJson / every method) needs no plugin; only
 // load() and save() touch shared_preferences.
 
@@ -110,7 +116,7 @@ class Progress extends ChangeNotifier {
 
   /// Schema version written as "v" in the saved JSON (files without it are
   /// still read).
-  static const int schemaVersion = 4;
+  static const int schemaVersion = 5;
 
   /// null = follow the device (tr if the device language is not one of the four).
   String? lang;
@@ -193,12 +199,30 @@ class Progress extends ChangeNotifier {
   /// The drawer tip of the 1.2 mechanic was shown once.
   bool mechanicTipSeen;
 
+  // --- schema 5 (1.3) -------------------------------------------------------
+
+  /// Cached entitlement of the Winter Cozy Pack (written by billing through
+  /// [setEntitlements]). Kept over a reset, like the other purchases.
+  bool winterPack;
+
+  /// The free winter gift (the little fir tree) was earned. Kept forever,
+  /// also after a reset.
+  bool winterGift;
+
+  /// The reveal of the winter gift was shown ([markWinterGiftShown]).
+  bool winterGiftShown;
+
+  /// Day ("YYYY-MM-DD") the Winter Cozy Pack was last offered on a card
+  /// ([markWinterPackOffered]), "" if never.
+  String winterOfferDay;
+
   /// The clock used by methods that take no date (completeLevel,
   /// completeBonus, setStyle) to credit today's tasks. Tests replace it.
   DateTime Function() clock = DateTime.now;
 
   final List<int> _freshTasks = <int>[];
   bool _freshChestStep = false;
+  bool _freshWinterGift = false;
 
   bool _autoSave = false;
 
@@ -233,6 +257,10 @@ class Progress extends ChangeNotifier {
     Set<int>? winterDone,
     this.snowman = false,
     this.mechanicTipSeen = false,
+    this.winterPack = false,
+    this.winterGift = false,
+    this.winterGiftShown = false,
+    this.winterOfferDay = '',
   })  : done = done ?? <int>{},
         styles = styles ?? <int, int>{},
         daily = daily ?? DailyState(),
@@ -269,7 +297,9 @@ class Progress extends ChangeNotifier {
         final i = k is int ? k : int.tryParse(k.toString());
         final s = _asInt(v);
         if (i != null && s != null && i >= 0 && i < levels.length) {
-          p.styles[i] = s < 0 ? 0 : (s > styleCount - 1 ? styleCount - 1 : s);
+          // 0..3 are kept (3 = winter style, schema 5); anything above
+          // falls back to style C as in 1.1 / 1.2
+          p.styles[i] = s < 0 ? 0 : (s > winterStyle ? styleCount - 1 : s);
         }
       });
     }
@@ -343,6 +373,12 @@ class Progress extends ChangeNotifier {
     }
     p.snowman = _asBool(json['snowman']) ?? false;
     p.mechanicTipSeen = _asBool(json['mechanicTipSeen']) ?? false;
+    // schema 5 fields (migration from 4: all absent, so all keep defaults)
+    p.winterPack = _asBool(json['winterPack']) ?? false;
+    p.winterGift = _asBool(json['winterGift']) ?? false;
+    p.winterGiftShown = p.winterGift && (_asBool(json['winterGiftShown']) ?? false);
+    final wo = json['winterOfferDay'];
+    p.winterOfferDay = wo is String && _dayFormat.hasMatch(wo) ? wo : '';
     return p;
   }
 
@@ -407,6 +443,10 @@ class Progress extends ChangeNotifier {
         },
         'snowman': snowman,
         'mechanicTipSeen': mechanicTipSeen,
+        'winterPack': winterPack,
+        'winterGift': winterGift,
+        'winterGiftShown': winterGiftShown,
+        'winterOfferDay': winterOfferDay,
       };
 
   /// Loads the saved progress (shared_preferences, key "tidynook-v1"). Never
@@ -507,18 +547,18 @@ class Progress extends ChangeNotifier {
     return -1;
   }
 
-  /// Style shown for [level]: 0..2. A stored 3rd style that is no longer
-  /// available (for example a refunded Supporter Pack) shows as style 0; it
-  /// comes back if the style becomes available again.
+  /// Style shown for [level]: 0..2, or 3 (winter style, Winter Cozy Pack). A
+  /// stored style that is no longer available (for example a refunded pack)
+  /// shows as style 0; it comes back if the style becomes available again.
   int styleOf(int level) {
     final s = styles[level] ?? 0;
-    if (s < 0 || s >= styleCount) {
+    if (s < 0 || s >= maxStyleCount) {
       return 0;
     }
     return styleAvailable(level, s) ? s : 0;
   }
 
-  /// Chooses style [variant] (0..2) for [level] and saves. Ignored when that
+  /// Chooses style [variant] (0..3) for [level] and saves. Ignored when that
   /// style is not available.
   void setStyle(int level, int variant) {
     if (!styleAvailable(level, variant)) {
@@ -533,7 +573,8 @@ class Progress extends ChangeNotifier {
   }
 
   /// Styles 0 and 1 are always available; style 2 when it was unlocked for
-  /// [level] ([extraStyles]) or with the Supporter Pack.
+  /// [level] ([extraStyles]) or with the Supporter Pack; style 3 (winter) for
+  /// the pieces in [winterStylePieces] with the Winter Cozy Pack.
   bool styleAvailable(int level, int variant) {
     if (variant == 0 || variant == 1) {
       return true;
@@ -541,7 +582,37 @@ class Progress extends ChangeNotifier {
     if (variant == 2) {
       return supporter || extraStyles.contains(level);
     }
+    if (variant == winterStyle) {
+      return winterPack && hasWinterStyle(level);
+    }
     return false;
+  }
+
+  /// 1.3: number of style tiles the picker of [level] shows: 4 for a piece
+  /// with a winter style when the Winter Cozy Pack is owned, else
+  /// [styleCount] (3; style 2 may still be locked, as in 1.2).
+  int styleCountOf(int level) =>
+      winterPack && hasWinterStyle(level) ? maxStyleCount : styleCount;
+
+  /// 1.3: the style indexes the picker of [level] shows, in order
+  /// (0, 1, 2 and, with the pack, 3 for a piece with a winter style).
+  List<int> styleChoices(int level) =>
+      <int>[for (var v = 0; v < styleCountOf(level); v++) v];
+
+  /// 1.3: the next available style of [level] after the current one, cycling
+  /// over [styleChoices] (0 -> 1 -> 2 -> 3 -> 0, skipping locked ones). Use it
+  /// for the tap-to-change on the house screen instead of looping over
+  /// [styleCount].
+  int nextStyleOf(int level) {
+    final n = styleCountOf(level);
+    final cur = styleOf(level);
+    for (var k = 1; k <= n; k++) {
+      final v = (cur + k) % n;
+      if (styleAvailable(level, v)) {
+        return v;
+      }
+    }
+    return cur;
   }
 
   /// Unlocks the 3rd style of [level]. Returns [level] if it was newly
@@ -572,13 +643,83 @@ class Progress extends ChangeNotifier {
   bool get noAds => adsRemoved || supporter;
 
   /// Stores the entitlements reported by billing and saves when they changed.
-  void setEntitlements({required bool adsRemoved, required bool supporter}) {
-    if (this.adsRemoved == adsRemoved && this.supporter == supporter) {
+  ///
+  /// 1.3: [winterPack] is the Winter Cozy Pack. Leaving it out (null, what
+  /// 1.1 / 1.2 callers do) keeps the stored value, so an older caller can
+  /// never take the pack away; billing passes true or false once it knows.
+  void setEntitlements({
+    required bool adsRemoved,
+    required bool supporter,
+    bool? winterPack,
+  }) {
+    final wp = winterPack ?? this.winterPack;
+    if (this.adsRemoved == adsRemoved &&
+        this.supporter == supporter &&
+        this.winterPack == wp) {
       return;
     }
     this.adsRemoved = adsRemoved;
     this.supporter = supporter;
+    this.winterPack = wp;
     _changed();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1.3: the Winter Cozy Pack and the free winter gift
+  // ---------------------------------------------------------------------------
+
+  /// The Winter Cozy Pack is owned (its decor and winter styles show).
+  bool get winterPackOwned => winterPack;
+
+  /// The pack may be offered on a card now (the winter event card's "Cozy
+  /// Pack" offer, the secondary line on the 7th winter box's win card): not
+  /// owned, the winter event runs and it was not offered on a card today.
+  /// The shop row in settings does not need this (always shown, "Owned" for
+  /// owners). Call [markWinterPackOffered] when such an offer is shown.
+  bool canOfferWinterPack(DateTime now) {
+    if (winterPack || !winterActive(now)) {
+      return false;
+    }
+    // "YYYY-MM-DD" sorts like dates; a later stored day (clock set back)
+    // also counts as offered
+    return winterOfferDay.compareTo(dayString(now)) < 0;
+  }
+
+  /// Remembers that the pack was offered on a card today (once per day) and
+  /// saves. Returns false (and changes nothing) when it was already offered
+  /// today.
+  bool markWinterPackOffered(DateTime now) {
+    final today = dayString(now);
+    if (winterOfferDay.compareTo(today) >= 0) {
+      return false;
+    }
+    winterOfferDay = today;
+    _changed();
+    return true;
+  }
+
+  /// The winter gift was earned and its reveal not shown yet: show the reveal
+  /// card / toast (winterGiftTitle, winterGiftText, [winterGiftPreviewSvg])
+  /// and sparkles at [winterGiftSpot], then call [markWinterGiftShown].
+  /// Saved, so a reveal missed by closing the app comes back.
+  bool get winterGiftToReveal => winterGift && !winterGiftShown;
+
+  /// Marks the winter gift reveal as shown. True only the first time.
+  bool markWinterGiftShown() {
+    if (!winterGift || winterGiftShown) {
+      return false;
+    }
+    winterGiftShown = true;
+    _changed();
+    return true;
+  }
+
+  /// True once right after [completeWinter] granted the winter gift (log the
+  /// winter_gift_granted event then). Not saved.
+  bool takeWinterGiftGranted() {
+    final v = _freshWinterGift;
+    _freshWinterGift = false;
+    return v;
   }
 
   /// True when enough levels are done for the bonus boxes.
@@ -800,6 +941,9 @@ class Progress extends ChangeNotifier {
   /// 1.2: the daily tasks, the task chest (steps and decor) and this season's
   /// winter boxes start over too; the snowman (a seasonal keepsake that cannot
   /// be earned again until next winter) and the mechanic tip flag stay.
+  ///
+  /// 1.3: the Winter Cozy Pack (a purchase), the winter gift (a keepsake),
+  /// its reveal flag and the last offer day stay too.
   void reset() {
     done = <int>{};
     styles = <int, int>{};
@@ -818,6 +962,7 @@ class Progress extends ChangeNotifier {
     winterDone = <int>{};
     _freshTasks.clear();
     _freshChestStep = false;
+    _freshWinterGift = false;
     _changed();
   }
 
@@ -1061,6 +1206,13 @@ class Progress extends ChangeNotifier {
       winterDone = <int>{};
     }
     final fresh = winterDone.add(i);
+    // 1.3: the first finished winter box gives the free winter gift (kept
+    // forever); see winterGiftToReveal / takeWinterGiftGranted
+    if (!winterGift) {
+      winterGift = true;
+      winterGiftShown = false;
+      _freshWinterGift = true;
+    }
     var got = false;
     if (winterDone.length >= winterLevelCount && !snowman) {
       snowman = true;

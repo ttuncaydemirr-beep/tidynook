@@ -694,8 +694,8 @@ void main() {
         }
         expect(jsonEncode(out[k]), jsonEncode(old[k]), reason: k);
       }
-      expect(out['v'], 4);
-      expect(Progress.schemaVersion, 4);
+      expect(out['v'], Progress.schemaVersion);
+      expect(Progress.schemaVersion, greaterThanOrEqualTo(4));
       expect(p.styleOf(5), 2);
       expect(p.styleOf(21), 2);
       expect(p.styleOf(3), 1);
