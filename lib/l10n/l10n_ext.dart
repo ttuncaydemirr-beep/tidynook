@@ -177,6 +177,17 @@ extension TidyL10n on AppLocalizations {
 
   String chestDecorName(int i) => _pick(chestDecorNames, i);
 
+  /// 5 Winter Cozy Pack decorations (winterDecorName0..4).
+  List<String> get winterDecorNames => <String>[
+        winterDecorName0,
+        winterDecorName1,
+        winterDecorName2,
+        winterDecorName3,
+        winterDecorName4,
+      ];
+
+  String winterDecorName(int i) => _pick(winterDecorNames, i);
+
   /// Text of a daily task. [typeIndex] is `TaskType.index` (boxes, newLevel,
   /// daily, bonus, style, hint, mystery, replay, drawer, winter); [target] is
   /// only used for the "finish N boxes" task.

@@ -107,7 +107,7 @@
       }
     }
   },
-  "ver": "Version 1.2.0",
+  "ver": "Version 1.3.0",
   "@ver": {
     "description": "App version label shown in settings"
   },
@@ -658,5 +658,32 @@
   },
   "@privacyText": {
     "description": "Full privacy policy as plain text; paragraphs separated by blank lines, short headings on their own lines"
+  },
+  "winterDecorName0": "Pine garland",
+  "winterDecorName1": "Holly wreath",
+  "winterDecorName2": "Warm roof lights",
+  "winterDecorName3": "Wooden sled",
+  "winterDecorName4": "Paper star lantern",
+  "winterGiftName": "Little fir tree",
+  "winterGiftTitle": "A winter gift for you!",
+  "winterGiftText": "Thanks for playing the winter boxes. A little fir tree now stands by your greenhouse, yours to keep.",
+  "winterGiftGot": "A little fir tree for your garden!",
+  "styleWinter": "Winter style",
+  "winterPackName": "Winter Cozy Pack",
+  "winterPackBlurb": "Make your house cozy for winter. Yours to keep, all year.",
+  "winterPackFeature1": "5 winter decorations for your house",
+  "winterPackFeature2": "A winter style for 6 pieces of furniture",
+  "winterPackFeature3": "One-time purchase, kept forever",
+  "winterPackNote": "Ads and hints stay as they are.",
+  "winterPackShopText": "5 winter decorations and a winter style for 6 pieces.",
+  "winterPackPill": "Cozy Pack",
+  "winterPackSnowmanLine": "Make it even cozier with the Winter Cozy Pack",
+  "winterPackThanks": "Your house is ready for winter!",
+  "winterPackPreviewTitle": "What's inside",
+  "@winterPackPill": {
+    "description": "Small pill on the winter event card that opens the Winter Cozy Pack offer"
+  },
+  "@winterPackSnowmanLine": {
+    "description": "Secondary line on the win card of the 7th winter box (snowman reveal)"
   }
 }

@@ -50,3 +50,34 @@ Phase 3: QA on the web build. Release: manager merges and pushes `[play]`. Build
 B also writes `store/release-notes-1.3.0.txt` (4 languages, each <=500 chars, tags <en-US> <tr-TR> <de-DE> <ar>),
 `store/listing-1.3.0.json` (mention the Winter Cozy Pack and free winter gift; keep limits), and the product
 texts for `winter_pack` in 4 languages (name <= 55 chars, description <= 200 chars) in `store/products-1.3.0.md`.
+
+Status: implemented on branch `v13-b`. All four ARB files have every key below, using exactly the names from Contract A 1.3
+section 4 (nothing renamed or removed; `ver` now says 1.3.0). A's pack content is reflected in the store texts (gift =
+little fir tree on the greenhouse lawn, decor = garland, wreath, roof lights, sled, star lantern).
+
+`lib/l10n/l10n_ext.dart`: new `winterDecorNames` (5 entries) and the clamped helper `winterDecorName(int i)`.
+Store files: `store/release-notes-1.3.0.txt` (each language <= 500), `store/listing-1.3.0.json` (versionCode 6, counts
+recomputed, full_description <= 4000), `store/products-1.3.0.md` (`winter_pack` name and description, 4 languages).
+
+### New keys (English)
+| key | English |
+| --- | --- |
+| `winterDecorName0..4` | Pine garland, Holly wreath, Warm roof lights, Wooden sled, Paper star lantern |
+| `winterGiftName` | Little fir tree |
+| `winterGiftTitle` | A winter gift for you! |
+| `winterGiftText` | Thanks for playing the winter boxes. A little fir tree now stands by your greenhouse, yours to keep. |
+| `winterGiftGot` | A little fir tree for your garden! |
+| `styleWinter` | Winter style |
+| `winterPackName` | Winter Cozy Pack |
+| `winterPackBlurb` | Make your house cozy for winter. Yours to keep, all year. |
+| `winterPackFeature1` | 5 winter decorations for your house |
+| `winterPackFeature2` | A winter style for 6 pieces of furniture |
+| `winterPackFeature3` | One-time purchase, kept forever |
+| `winterPackNote` | Ads and hints stay as they are. |
+| `winterPackShopText` | 5 winter decorations and a winter style for 6 pieces. |
+| `winterPackPill` | Cozy Pack |
+| `winterPackSnowmanLine` | Make it even cozier with the Winter Cozy Pack |
+| `winterPackThanks` | Your house is ready for winter! |
+| `winterPackPreviewTitle` | What's inside |
+
+No plural keys were needed (all counts are fixed). Existing keys reused by C: `owned`, `buyFor(price)`, `styleN(n)`.

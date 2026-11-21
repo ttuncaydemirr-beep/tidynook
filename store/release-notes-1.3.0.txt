@@ -1,28 +1,28 @@
 <tr-TR>
 1.3 ile yenilikler:
 - Sıcacık Kış Paketi: evin için 5 kış süsü ve 6 eşya için kış stili; tek seferlik, sonsuza dek senin
-- Ücretsiz kış hediyesi: ilk kış kutunu bitirince patio masana bir fincan kakao gelir
+- Ücretsiz kış hediyesi: ilk kış kutunu bitirince seranın yanına küçük bir köknar ağacı gelir
 - Paket reklamları kaldırmaz ve ipucu içermez; tamamen isteğe bağlıdır
 - Kış etkinliği 1 Aralık - 15 Ocak arasında devam ediyor
 </tr-TR>
 <en-US>
 New in 1.3:
 - Winter Cozy Pack: 5 winter decorations for your home and a winter style for 6 pieces, one-time and yours forever
-- Free winter gift: finish your first winter box and a cup of cocoa lands on your patio table
+- Free winter gift: finish your first winter box and a little fir tree appears by your greenhouse
 - The pack does not remove ads or include hints; it is completely optional
 - The winter event runs from 1 December to 15 January
 </en-US>
 <de-DE>
 Neu in 1.3:
 - Gemütliches Winter-Paket: 5 Winterdekos für dein Zuhause und ein Winterstil für 6 Möbelstücke, einmalig und für immer deins
-- Kostenloses Wintergeschenk: Schließ deine erste Winterbox ab und eine Tasse Kakao landet auf deinem Terrassentisch
+- Kostenloses Wintergeschenk: Schließ deine erste Winterbox ab und ein kleiner Tannenbaum steht neben deinem Gewächshaus
 - Das Paket entfernt keine Werbung und enthält keine Tipps; es ist völlig optional
 - Das Winterevent läuft vom 1. Dezember bis 15. Januar
 </de-DE>
 <ar>
 الجديد في 1.3:
 - حزمة الشتاء الدافئة: 5 زينات شتوية لبيتك ونمط شتوي لـ6 قطع أثاث، بعملية شراء واحدة وتبقى لك إلى الأبد
-- هدية شتوية مجانية: أنهِ أول صندوق شتوي ويصلك كوب كاكاو على طاولة الفناء
+- هدية شتوية مجانية: أنهِ أول صندوق شتوي وتظهر شجرة تنوب صغيرة بجانب دفيئتك
 - الحزمة لا تزيل الإعلانات ولا تتضمن تلميحات، وهي اختيارية تماماً
 - فعالية الشتاء تستمر من 1 ديسمبر إلى 15 يناير
 </ar>
